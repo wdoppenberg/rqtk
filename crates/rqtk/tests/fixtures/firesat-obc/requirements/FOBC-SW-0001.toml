@@ -1,0 +1,59 @@
+[requirement]
+id = "FOBC-SW-0001"
+title = "Telemetry Frame Buffer Management"
+category = "SW"
+type = "Performance"
+version = "1.0.0"
+created = "2024-01-22T00:00:00+00:00"
+updated = "2024-03-05T00:00:00+00:00"
+
+[requirement.statement]
+text = "The OBC software shall maintain a circular telemetry frame buffer of at least 1000 frames to prevent data loss during communication blackout periods."
+rationale = "FireSat experiences communication blackouts of up to 15 minutes per orbit; a 1000-frame buffer at 1 Hz acquisition provides 16 minutes 40 seconds of storage with margin."
+assumptions = [
+  "Each telemetry frame is no larger than 256 bytes.",
+  "The OBC has at least 256 KB of non-volatile storage available for the telemetry buffer.",
+]
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Mission-Critical"
+
+[requirement.traceability]
+parents = ["FOBC-SYS-0001"]
+
+[requirement.allocation]
+subsystems = ["OBC"]
+software_modules = ["telemetry_manager", "frame_buffer"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Software Verification Lead"
+success_criteria = "Buffer sustains 1000-frame write/read cycle with zero data corruption; overflow protection prevents new writes from clobbering unread frames."
+
+[[requirement.verification.activities]]
+id = "VA-SW-001-01"
+name = "Buffer capacity test"
+procedure = "Write 1000 frames sequentially to the telemetry buffer and verify all frames can be read back without corruption."
+expected_result = "All 1000 frames read back byte-for-byte identical to written content."
+status = "Passed"
+
+[[requirement.verification.activities]]
+id = "VA-SW-001-02"
+name = "Overflow protection test"
+procedure = "Attempt to write frame 1001 without consuming any prior frames; verify oldest frame is overwritten and a diagnostic flag is set."
+expected_result = "Oldest frame overwritten; overflow counter incremented; no out-of-bounds memory access."
+status = "Passed"
+
+[[requirement.history]]
+version = "1.0.0"
+date = "2024-03-05"
+author = "Bob Jones"
+change = "Derived from FOBC-SYS-0001 at PDR; buffer size confirmed by orbit blackout analysis."
+
+[requirement.tags]
+keywords = ["telemetry", "buffer", "blackout", "memory"]
+labels = ["pdr-approved"]

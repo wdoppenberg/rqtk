@@ -1,11 +1,11 @@
 use crate::error::RqtkError;
+use crate::model::{ProjectConfig, RepositoryLayout, RqtkConfig};
 use crate::model::{
     RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement, Status, Tags,
     Traceability, Verification,
 };
-use crate::model::ProjectConfig;
 use crate::validation::{
-    has_path_to_stake, is_single_shall_sentence_violation, issue_error, issue_warning, LintIssue,
+    LintIssue, has_path_to_stake, is_single_shall_sentence_violation, issue_error, issue_warning,
 };
 use chrono::Utc;
 use petgraph::algo::is_cyclic_directed;
@@ -15,15 +15,11 @@ use regex::Regex;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
+use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone)]
-pub struct RequirementSet {
-    pub config: ProjectConfig,
-    pub requirements: BTreeMap<RequirementId, RequirementFile>,
-    pub files_by_id: BTreeMap<RequirementId, PathBuf>,
-    pub root: PathBuf,
-}
+pub struct Loaded;
+pub struct Validated;
 
 #[derive(Debug, Clone)]
 pub struct TraceView {
@@ -37,46 +33,120 @@ enum TraceEdge {
     Dependency,
 }
 
-impl RequirementSet {
+#[derive(Debug, Clone)]
+pub struct RequirementSet<S = Loaded> {
+    pub config: ProjectConfig,
+    pub requirements: BTreeMap<RequirementId, RequirementFile>,
+    pub files_by_id: BTreeMap<RequirementId, PathBuf>,
+    pub root: PathBuf,
+    pub repo_root: PathBuf,
+    pub config_path: PathBuf,
+    repository_layout: RepositoryLayout,
+    id_regex: Regex,
+    allowed_states: HashSet<String>,
+    allowed_priorities: HashSet<String>,
+    allowed_criticalities: HashSet<String>,
+    allowed_types: HashSet<String>,
+    allowed_methods: HashSet<String>,
+    parent_required: HashSet<String>,
+    _state: PhantomData<S>,
+}
+
+impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
-        let root = repo_root.as_ref().join("requirements");
-        Self::load_from_requirements_dir(root)
+        let repo_root = repo_root.as_ref().to_path_buf();
+        let config_path = repo_root.join("rqtk.toml");
+        let config_str = read_file(&config_path)?;
+        let config: RqtkConfig =
+            toml::from_str(&config_str).map_err(|source| RqtkError::TomlParse {
+                path: config_path.clone(),
+                source,
+            })?;
+
+        let requirements_root = repo_root.join(&config.repository.requirements_dir);
+        Self::load_from_parts(
+            repo_root,
+            requirements_root,
+            config_path,
+            config.project_config,
+            config.repository,
+        )
     }
 
-    pub fn load_from_requirements_dir(requirements_dir: impl AsRef<Path>) -> Result<Self, RqtkError> {
-        let root = requirements_dir.as_ref().to_path_buf();
-        let config_path = root.join("requirements.toml");
+    pub fn load_from_requirements_dir(
+        requirements_dir: impl AsRef<Path>,
+    ) -> Result<Self, RqtkError> {
+        let requirements_root = requirements_dir.as_ref().to_path_buf();
+        let config_path = requirements_root.join("requirements.toml");
         let config_str = read_file(&config_path)?;
-        let config: ProjectConfig = toml::from_str(&config_str).map_err(|source| RqtkError::TomlParse {
-            path: config_path.clone(),
-            source,
+        let config: ProjectConfig =
+            toml::from_str(&config_str).map_err(|source| RqtkError::TomlParse {
+                path: config_path.clone(),
+                source,
+            })?;
+        let repo_root = requirements_root
+            .parent()
+            .map_or_else(|| requirements_root.clone(), Path::to_path_buf);
+        let repository_layout = RepositoryLayout {
+            requirements_dir: requirements_root
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("requirements")
+                .to_owned(),
+            required_files: Vec::new(),
+            required_dirs: Vec::new(),
+        };
+        Self::load_from_parts(
+            repo_root,
+            requirements_root,
+            config_path,
+            config,
+            repository_layout,
+        )
+    }
+
+    fn load_from_parts(
+        repo_root: PathBuf,
+        requirements_root: PathBuf,
+        config_path: PathBuf,
+        config: ProjectConfig,
+        repository_layout: RepositoryLayout,
+    ) -> Result<Self, RqtkError> {
+        let id_regex = Regex::new(&config.identification.id_pattern).map_err(|source| {
+            RqtkError::InvalidIdPattern {
+                pattern: config.identification.id_pattern.clone(),
+                source,
+            }
         })?;
+
+        let allowed_states: HashSet<String> = config.lifecycle.states.iter().cloned().collect();
+        let allowed_priorities: HashSet<String> = config.priority.levels.iter().cloned().collect();
+        let allowed_criticalities: HashSet<String> =
+            config.criticality.levels.iter().cloned().collect();
+        let allowed_types: HashSet<String> = config.req_types.allowed.iter().cloned().collect();
+        let allowed_methods: HashSet<String> =
+            config.verification.methods.iter().cloned().collect();
+        let parent_required: HashSet<String> = config
+            .validation
+            .require_parent_for_levels
+            .iter()
+            .cloned()
+            .collect();
 
         let mut requirements = BTreeMap::new();
         let mut files_by_id = BTreeMap::new();
 
-        let entries = fs::read_dir(&root).map_err(|source| RqtkError::Io {
-            path: root.clone(),
-            source,
-        })?;
-
-        for entry in entries {
-            let entry = entry.map_err(|source| RqtkError::Io {
-                path: root.clone(),
-                source,
-            })?;
-            let path = entry.path();
-            if !is_requirement_file(&path) {
-                continue;
-            }
+        let toml_files = collect_toml_files(&requirements_root)?;
+        for path in toml_files {
             if path.file_name().and_then(|n| n.to_str()) == Some("requirements.toml") {
                 continue;
             }
             let text = read_file(&path)?;
-            let req_file: RequirementFile = toml::from_str(&text).map_err(|source| RqtkError::TomlParse {
-                path: path.clone(),
-                source,
-            })?;
+            let req_file: RequirementFile =
+                toml::from_str(&text).map_err(|source| RqtkError::TomlParse {
+                    path: path.clone(),
+                    source,
+                })?;
             let req_id = req_file.requirement.id.clone();
             if requirements.contains_key(&req_id) {
                 return Err(RqtkError::DuplicateRequirement(req_id));
@@ -89,41 +159,32 @@ impl RequirementSet {
             config,
             requirements,
             files_by_id,
-            root,
+            root: requirements_root,
+            repo_root,
+            config_path,
+            repository_layout,
+            id_regex,
+            allowed_states,
+            allowed_priorities,
+            allowed_criticalities,
+            allowed_types,
+            allowed_methods,
+            parent_required,
+            _state: PhantomData,
         })
     }
 
-    pub fn validate(&self) -> Result<Vec<LintIssue>, RqtkError> {
-        let id_regex = Regex::new(&self.config.identification.id_pattern).map_err(|source| {
-            RqtkError::InvalidIdPattern {
-                pattern: self.config.identification.id_pattern.clone(),
-                source,
-            }
-        })?;
+    pub fn validate(self) -> (RequirementSet<Validated>, Vec<LintIssue>) {
+        let mut issues = Vec::new();
+
         let known_ids: HashSet<_> = self.requirements.keys().cloned().collect();
         let known_categories: HashSet<_> = self.config.categories.keys().cloned().collect();
-        let allowed_types: HashSet<_> = self.config.req_types.allowed.iter().map(|s| s.as_str()).collect();
-        let allowed_states: HashSet<_> = self.config.lifecycle.states.iter().map(|s| s.as_str()).collect();
-        let allowed_priorities: HashSet<_> = self.config.priority.levels.iter().map(|s| s.as_str()).collect();
-        let allowed_criticalities: HashSet<_> =
-            self.config.criticality.levels.iter().map(|s| s.as_str()).collect();
-        let allowed_methods: HashSet<_> =
-            self.config.verification.methods.iter().map(|s| s.as_str()).collect();
-        let parent_required: HashSet<_> = self
-            .config
-            .validation
-            .require_parent_for_levels
-            .iter()
-            .map(|s| s.as_str())
-            .collect();
-
-        let mut issues = Vec::new();
 
         for (req_id, req_file) in &self.requirements {
             let req = &req_file.requirement;
             let path = self.files_by_id.get(req_id).cloned();
 
-            if !id_regex.is_match(&req_id.0) {
+            if !self.id_regex.is_match(&req_id.0) {
                 issues.push(issue_error(
                     "RQ001",
                     format!("ID `{}` does not match configured id_pattern", req_id),
@@ -139,7 +200,7 @@ impl RequirementSet {
                     path.clone(),
                 ));
             }
-            if !allowed_types.contains(req.req_type.as_str()) {
+            if !self.allowed_types.contains(req.req_type.as_str()) {
                 issues.push(issue_error(
                     "RQ003",
                     format!("unknown requirement type `{}`", req.req_type),
@@ -147,7 +208,7 @@ impl RequirementSet {
                     path.clone(),
                 ));
             }
-            if !allowed_states.contains(req.status.state.as_str()) {
+            if !self.allowed_states.contains(req.status.state.as_str()) {
                 issues.push(issue_error(
                     "RQ004",
                     format!("invalid lifecycle state `{}`", req.status.state),
@@ -155,7 +216,10 @@ impl RequirementSet {
                     path.clone(),
                 ));
             }
-            if !allowed_priorities.contains(req.status.priority.as_str()) {
+            if !self
+                .allowed_priorities
+                .contains(req.status.priority.as_str())
+            {
                 issues.push(issue_error(
                     "RQ005",
                     format!("invalid priority `{}`", req.status.priority),
@@ -164,7 +228,7 @@ impl RequirementSet {
                 ));
             }
             if let Some(criticality) = req.status.criticality.as_deref() {
-                if !allowed_criticalities.contains(criticality) {
+                if !self.allowed_criticalities.contains(criticality) {
                     issues.push(issue_error(
                         "RQ006",
                         format!("invalid criticality `{criticality}`"),
@@ -174,7 +238,13 @@ impl RequirementSet {
                 }
             }
             if self.config.validation.require_rationale
-                && req.statement.rationale.as_deref().unwrap_or("").trim().is_empty()
+                && req
+                    .statement
+                    .rationale
+                    .as_deref()
+                    .unwrap_or("")
+                    .trim()
+                    .is_empty()
             {
                 issues.push(issue_error(
                     "RQ007",
@@ -183,7 +253,9 @@ impl RequirementSet {
                     path.clone(),
                 ));
             }
-            if self.config.validation.require_verification_method && req.verification.method.trim().is_empty() {
+            if self.config.validation.require_verification_method
+                && req.verification.method.trim().is_empty()
+            {
                 issues.push(issue_error(
                     "RQ008",
                     "verification.method is required but missing".to_owned(),
@@ -191,7 +263,10 @@ impl RequirementSet {
                     path.clone(),
                 ));
             }
-            if !allowed_methods.contains(req.verification.method.as_str()) {
+            if !self
+                .allowed_methods
+                .contains(req.verification.method.as_str())
+            {
                 issues.push(issue_error(
                     "RQ009",
                     format!("invalid verification method `{}`", req.verification.method),
@@ -199,10 +274,14 @@ impl RequirementSet {
                     path.clone(),
                 ));
             }
-            if is_single_shall_sentence_violation(&req.statement.text, &self.config.validation.shall_keywords) {
+            if is_single_shall_sentence_violation(
+                &req.statement.text,
+                &self.config.validation.shall_keywords,
+            ) {
                 issues.push(issue_error(
                     "RQ010",
-                    "statement must contain exactly one normative sentence with a shall keyword".to_owned(),
+                    "statement must contain exactly one normative sentence with a shall keyword"
+                        .to_owned(),
                     Some(req_id.clone()),
                     path.clone(),
                 ));
@@ -220,7 +299,9 @@ impl RequirementSet {
                     }
                 }
             }
-            if parent_required.contains(req.category.as_str()) && req.traceability.parents.is_empty() {
+            if self.parent_required.contains(req.category.as_str())
+                && req.traceability.parents.is_empty()
+            {
                 issues.push(issue_error(
                     "RQ012",
                     format!("category `{}` requires at least one parent", req.category),
@@ -277,20 +358,55 @@ impl RequirementSet {
                 None,
             ));
         }
-        Ok(issues)
-    }
+        issues.extend(self.check_repository_structure());
 
+        let validated = RequirementSet {
+            config: self.config,
+            requirements: self.requirements,
+            files_by_id: self.files_by_id,
+            root: self.root,
+            repo_root: self.repo_root,
+            config_path: self.config_path,
+            repository_layout: self.repository_layout,
+            id_regex: self.id_regex,
+            allowed_states: self.allowed_states,
+            allowed_priorities: self.allowed_priorities,
+            allowed_criticalities: self.allowed_criticalities,
+            allowed_types: self.allowed_types,
+            allowed_methods: self.allowed_methods,
+            parent_required: self.parent_required,
+            _state: PhantomData,
+        };
+        (validated, issues)
+    }
+}
+
+impl RequirementSet<Validated> {
     pub fn coverage_gaps(&self) -> Vec<RequirementId> {
         let mut gaps = Vec::new();
         for (id, req) in &self.requirements {
             let ver = &req.requirement.verification;
-            if ver.activities.is_empty() || ver.success_criteria.as_deref().unwrap_or("").trim().is_empty() {
+            if ver.activities.is_empty()
+                || ver
+                    .success_criteria
+                    .as_deref()
+                    .unwrap_or("")
+                    .trim()
+                    .is_empty()
+            {
                 gaps.push(id.clone());
             }
         }
         gaps
     }
 
+    pub fn to_dot(&self) -> String {
+        let graph = self.build_trace_graph();
+        format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]))
+    }
+}
+
+impl<S> RequirementSet<S> {
     pub fn trace_view(&self, root_id: &RequirementId) -> Result<TraceView, RqtkError> {
         if !self.requirements.contains_key(root_id) {
             return Err(RqtkError::RequirementNotFound(root_id.clone()));
@@ -336,9 +452,8 @@ impl RequirementSet {
         Ok(TraceView { upward, downward })
     }
 
-    pub fn to_dot(&self) -> String {
-        let graph = self.build_trace_graph();
-        format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]))
+    pub fn category_dir(&self, category: &str) -> PathBuf {
+        self.root.join(category)
     }
 
     pub fn next_requirement_id(&self, category: &str) -> RequirementId {
@@ -440,8 +555,7 @@ impl RequirementSet {
     }
 
     fn has_trace_cycles(&self) -> bool {
-        let graph = self.build_trace_graph();
-        is_cyclic_directed(&graph)
+        is_cyclic_directed(&self.build_trace_graph())
     }
 
     fn build_trace_graph(&self) -> DiGraph<RequirementId, TraceEdge> {
@@ -472,27 +586,35 @@ impl RequirementSet {
 
     fn detect_orphans(&self) -> Vec<LintIssue> {
         let mut issues = Vec::new();
-        let stake_ids: HashSet<_> = self
+        let root_ids: HashSet<_> = self
             .requirements
             .iter()
             .filter_map(|(id, req)| {
-                if req.requirement.category == "STAKE" {
-                    Some(id.clone())
-                } else {
-                    None
-                }
+                let cat = self.config.categories.get(&req.requirement.category)?;
+                if cat.is_root { Some(id.clone()) } else { None }
             })
             .collect();
 
         let mut memo: HashMap<RequirementId, bool> = HashMap::new();
         for (id, req) in &self.requirements {
-            if req.requirement.category == "STAKE" {
+            let is_root = self
+                .config
+                .categories
+                .get(&req.requirement.category)
+                .map_or(false, |c| c.is_root);
+            if is_root {
                 continue;
             }
-            if !has_path_to_stake(id, &self.requirements, &stake_ids, &mut memo, &mut HashSet::new()) {
+            if !has_path_to_stake(
+                id,
+                &self.requirements,
+                &root_ids,
+                &mut memo,
+                &mut HashSet::new(),
+            ) {
                 issues.push(issue_warning(
                     "RQ018",
-                    format!("orphan requirement `{id}` has no path to STAKE"),
+                    format!("orphan requirement `{id}` has no path to a root category"),
                     Some(id.clone()),
                     self.files_by_id.get(id).cloned(),
                 ));
@@ -500,6 +622,54 @@ impl RequirementSet {
         }
         issues
     }
+
+    fn check_repository_structure(&self) -> Vec<LintIssue> {
+        let mut issues = Vec::new();
+        for rel_dir in &self.repository_layout.required_dirs {
+            let path = self.repo_root.join(rel_dir);
+            if !path.is_dir() {
+                issues.push(issue_error(
+                    "RQ019",
+                    format!("repository is missing required directory `{rel_dir}`"),
+                    None,
+                    Some(path),
+                ));
+            }
+        }
+        for rel_file in &self.repository_layout.required_files {
+            let path = self.repo_root.join(rel_file);
+            if !path.is_file() {
+                issues.push(issue_error(
+                    "RQ020",
+                    format!("repository is missing required file `{rel_file}`"),
+                    None,
+                    Some(path),
+                ));
+            }
+        }
+        issues
+    }
+}
+
+fn collect_toml_files(dir: &Path) -> Result<Vec<PathBuf>, RqtkError> {
+    let mut result = Vec::new();
+    let entries = fs::read_dir(dir).map_err(|source| RqtkError::Io {
+        path: dir.to_path_buf(),
+        source,
+    })?;
+    for entry in entries {
+        let entry = entry.map_err(|source| RqtkError::Io {
+            path: dir.to_path_buf(),
+            source,
+        })?;
+        let path = entry.path();
+        if path.is_dir() {
+            result.extend(collect_toml_files(&path)?);
+        } else if is_requirement_file(&path) {
+            result.push(path);
+        }
+    }
+    Ok(result)
 }
 
 fn read_file(path: &Path) -> Result<String, RqtkError> {
@@ -513,7 +683,12 @@ fn is_requirement_file(path: &Path) -> bool {
     path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("toml")
 }
 
-fn parse_requirement_ordinal(req_id: &RequirementId, category: &str, prefix: &str, sep: &str) -> Option<usize> {
+fn parse_requirement_ordinal(
+    req_id: &RequirementId,
+    category: &str,
+    prefix: &str,
+    sep: &str,
+) -> Option<usize> {
     let expected_prefix = format!("{prefix}{sep}{category}{sep}");
     if !req_id.0.starts_with(&expected_prefix) {
         return None;

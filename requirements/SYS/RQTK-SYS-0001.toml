@@ -1,0 +1,50 @@
+[requirement]
+id = "RQTK-SYS-0001"
+title = "Requirement Lifecycle Management"
+category = "SYS"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "rqtk shall enable engineers to create, update, validate, version, and retire individual requirements throughout their full lifecycle."
+rationale = "A requirement that cannot be tracked from creation to retirement loses traceability and becomes a maintenance liability; lifecycle coverage is the minimum unit of value for any requirements tool."
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Mission-Critical"
+
+[requirement.traceability]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Release"
+owner = "Project Lead"
+success_criteria = "All lifecycle state transitions (Draft → Review → Approved → Implemented → Verified → Deprecated) can be expressed in a TOML file and round-trip through load/validate without data loss."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-001-01"
+name = "Lifecycle round-trip test"
+procedure = "Write a requirement through each lifecycle state, serialize to TOML, reload, and assert all fields are preserved."
+expected_result = "Field-for-field equality after round-trip for each state value."
+status = "Planned"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-001-02"
+name = "Requirement update verification"
+procedure = ""
+expected_result = "Field-for-field equality after round-trip for each state value."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft — self-hosted requirements bootstrapped via dogfooding session."
+
+[requirement.tags]
+keywords = ["lifecycle", "crud", "core"]
+labels = ["bootstrap"]

@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0007"
+title = "Baseline Versioning"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk baseline command shall accept a semantic version string, validate it as a valid semver, update the project version field in the project config, and record a timestamp of the baseline event."
+rationale = "Baselines are formal configuration-management milestones; enforcing semver syntax prevents freeform version strings that break sorting and automated version comparisons."
+
+[requirement.status]
+state = "Approved"
+priority = "Medium"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0001"]
+
+[requirement.allocation]
+software_modules = ["cli::baseline"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "rqtk baseline 2.0.0 updates project.version to '2.0.0' in requirements.toml; rqtk baseline not-a-semver exits non-zero without modifying requirements.toml."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-007-01"
+name = "Baseline update test"
+procedure = "Copy firesat-obc fixture to a temp dir; run rqtk baseline 2.0.0; parse resulting requirements.toml and assert project.version == '2.0.0'."
+expected_result = "project.version field updated to '2.0.0'."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["baseline", "semver", "versioning", "configuration-management"]
+labels = ["bootstrap"]

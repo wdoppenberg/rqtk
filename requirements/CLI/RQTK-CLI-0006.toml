@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0006"
+title = "Requirement Export"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk export command shall serialize the validated requirement set to JSON, CSV, or Markdown as selected by --format, and shall write output to stdout or to the path given by --output."
+rationale = "Exporting only validated requirements prevents corrupted or policy-violating data from propagating into downstream tools and documents."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0005"]
+
+[requirement.allocation]
+software_modules = ["cli::export"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "JSON output validates with serde_json; CSV has correct header and row count; Markdown contains one H2 heading per requirement; --output writes file at specified path."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-006-01"
+name = "Export format correctness test"
+procedure = "Run rqtk export --format json/csv/markdown against the firesat-obc fixture; assert format-specific correctness and record count equals 8."
+expected_result = "All three formats valid; each contains 8 requirement entries."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["export", "json", "csv", "markdown"]
+labels = ["bootstrap"]

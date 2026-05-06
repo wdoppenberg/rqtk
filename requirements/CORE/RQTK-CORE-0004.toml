@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CORE-0004"
+title = "Config-Driven Policy Engine"
+category = "CORE"
+type = "Design"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "rqtk-core shall derive all validation rules — allowed categories, types, states, priorities, verification methods, and parent-hierarchy constraints — exclusively from the ProjectConfig loaded at startup, with no hard-coded policy values in library code."
+rationale = "Hard-coded policy values make rqtk domain-specific; a config-driven engine lets any project (aerospace, automotive, software-only) enforce its own vocabulary without forking the library."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0004"]
+
+[requirement.allocation]
+software_modules = ["rqtk_core::model", "rqtk_core::validation"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "A project with a custom category 'MECH' and type 'Safety' defined in requirements.toml passes validation; the same category absent from config causes an RQ002 lint error; no changes to rqtk-core source code required."
+
+[[requirement.verification.activities]]
+id = "VA-CORE-004-01"
+name = "Custom category acceptance test"
+procedure = "Create a fixture with category MECH defined in config and a requirement using it; run rqtk lint; assert exit code 0. Remove MECH from config; rerun; assert RQ002 in output."
+expected_result = "Exit 0 with config; exit 2 with RQ002 without config."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["config", "policy", "extensibility", "no-hard-code"]
+labels = ["bootstrap"]

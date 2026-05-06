@@ -1,0 +1,77 @@
+[repository]
+requirements_dir = "requirements"
+required_files = []
+required_dirs = []
+
+[project]
+name = "rqtk — Requirements Toolkit"
+short_name = "rqtk"
+description = "Self-hosted requirements for the rqtk CLI and core library"
+version = "0.1.0"
+mission_phase = "Phase-A"
+classification = "Open Source"
+
+[project.organization]
+program = "rqtk"
+responsible_engineer = "Wouter Doppenberg"
+cognizant_authority = "Project Lead"
+
+[identification]
+id_pattern = "^RQTK-(SYS|CLI|CORE)-\\d{4}$"
+id_separator = "-"
+prefix = "RQTK"
+zero_padding = 4
+
+[categories.SYS]
+name = "System"
+level = 1
+description = "Top-level product requirements derived from user and stakeholder needs"
+is_root = true
+
+[categories.CLI]
+name = "Command-Line Interface"
+level = 2
+description = "Requirements for the rqtk CLI binary"
+
+[categories.CORE]
+name = "Core Library"
+level = 2
+description = "Requirements for the rqtk-core library crate"
+
+[types]
+allowed = ["Functional", "Performance", "Interface", "Constraint", "Design"]
+
+[verification]
+methods = ["Test", "Analysis", "Inspection", "Demonstration"]
+levels = ["Unit", "Integration", "System", "Acceptance"]
+phases = ["Development", "Pre-release", "Release"]
+
+[lifecycle]
+states = ["Draft", "Review", "Approved", "Implemented", "Verified", "Deprecated"]
+default_state = "Draft"
+
+[priority]
+levels = ["Critical", "High", "Medium", "Low"]
+
+[criticality]
+levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
+
+[change_control]
+ccb_required_after = "Approved"
+require_signoff = false
+approvers = ["Project Lead"]
+
+[validation]
+require_rationale = true
+require_verification_method = true
+require_parent_for_levels = ["CLI", "CORE"]
+forbid_orphans = true
+forbid_circular_traces = true
+allow_tbd = false
+allow_tbr = false
+shall_keywords = ["shall"]
+forbidden_keywords = []
+
+[export]
+formats = ["json", "csv", "markdown"]
+default_output_dir = "exports"

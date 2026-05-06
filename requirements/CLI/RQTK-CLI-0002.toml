@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0002"
+title = "Lint Command"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk lint command shall validate all requirements in the project directory against the configured policy rules, print each issue in a human-readable format, and exit with code 0 on success, 2 when any Error-severity issue is present."
+rationale = "A predictable exit code allows CI pipelines to gate merges on requirement quality; code 2 (not 1) is reserved so that standard shell errors remain distinguishable from lint failures."
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0004"]
+
+[requirement.allocation]
+software_modules = ["cli::lint"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "Clean fixture exits 0; fixture with an Error-severity lint violation exits 2; output includes rule code, severity, and requirement ID for each issue."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-002-01"
+name = "Exit code test"
+procedure = "Run rqtk lint on the firesat-obc clean fixture; assert exit code 0. Inject a missing-rationale violation; run again; assert exit code 2 and RQ007 in output."
+expected_result = "Exit codes 0 and 2 respectively; RQ007 present in second run."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["lint", "validation", "ci", "exit-code"]
+labels = ["bootstrap"]

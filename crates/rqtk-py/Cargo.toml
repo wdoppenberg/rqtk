@@ -1,0 +1,14 @@
+[package]
+name = "rqtk-py"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pyo3 = "0.28.3"
+rqtk-core = { path = "../rqtk-core", default-features = false, features = ["verification-lookup"] }
+
+[lib]
+name = "rqtk"
+
+[tool.maturin]
+module-name = "rqtk"

@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CORE-0001"
+title = "Type-State Validation Pipeline"
+category = "CORE"
+type = "Design"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "rqtk-core shall model the requirement set as a type-state machine such that coverage and graph operations are only accessible on a Validated set, making it a compile-time error to query coverage or export a graph without first running validation."
+rationale = "Runtime guards on state are easy to omit and leave no trace in the API; type-state makes the wrong order of operations impossible to compile, eliminating an entire class of misuse without defensive code."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0004"]
+
+[requirement.allocation]
+software_modules = ["rqtk_core::repository"]
+
+[requirement.verification]
+method = "Analysis"
+level = "Unit"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "RequirementSet<Loaded> does not expose coverage_gaps() or to_dot(); RequirementSet<Validated> exposes both; verified by attempting to call these methods on Loaded and observing a compile error."
+
+[[requirement.verification.activities]]
+id = "VA-CORE-001-01"
+name = "Type-state compile-time enforcement analysis"
+procedure = "Write a test that calls coverage_gaps() on a RequirementSet<Loaded> value; verify the Rust compiler rejects the program with a type error."
+expected_result = "Compiler error referencing method not found on RequirementSet<Loaded>."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["type-state", "phantom-data", "api-safety", "rust"]
+labels = ["bootstrap"]

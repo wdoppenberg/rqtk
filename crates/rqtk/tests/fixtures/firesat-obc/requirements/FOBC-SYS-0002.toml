@@ -1,0 +1,59 @@
+[requirement]
+id = "FOBC-SYS-0002"
+title = "Hardware Fault Detection and Response"
+category = "SYS"
+type = "Functional"
+version = "1.0.0"
+created = "2024-01-15T00:00:00+00:00"
+updated = "2024-03-01T00:00:00+00:00"
+
+[requirement.statement]
+text = "The OBC software shall detect and respond to critical hardware faults within 500 milliseconds of fault occurrence."
+rationale = "A 500 ms response budget ensures the spacecraft can be placed in a safe power configuration before a latent fault propagates into a mission-ending failure."
+assumptions = [
+  "Hardware fault signals are routed to the OBC interrupt controller within 10 ms of fault onset.",
+  "Safe mode entry does not require ground-in-the-loop intervention.",
+]
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Safety-Critical"
+
+[requirement.traceability]
+
+[requirement.risk]
+hazards = ["Undetected hardware fault leading to permanent spacecraft damage"]
+mitigations = ["Redundant fault detection paths", "Autonomous safe-mode transition"]
+safety_critical = true
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Pre-launch"
+owner = "Safety Verification Lead"
+success_criteria = "Injected hardware fault triggers OBC response within 500 ms in all 20 test cases covering each fault class."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-002-01"
+name = "Hardware fault injection test"
+procedure = "Use the fault injection harness to inject representative faults for each hardware fault class and measure OBC response latency."
+expected_result = "All 20 fault injections produce OBC response (interrupt handler entry) within 500 ms."
+status = "Passed"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-002-02"
+name = "Fault response timing analysis"
+procedure = "Perform worst-case execution time analysis of the fault interrupt handler."
+expected_result = "WCET analysis confirms handler completes within 400 ms, leaving 100 ms margin."
+status = "Passed"
+
+[[requirement.history]]
+version = "1.0.0"
+date = "2024-03-01"
+author = "Jane Smith"
+change = "Approved at PDR."
+
+[requirement.tags]
+keywords = ["fault-detection", "fdir", "safety", "response-time"]
+labels = ["pdr-approved", "safety-critical"]

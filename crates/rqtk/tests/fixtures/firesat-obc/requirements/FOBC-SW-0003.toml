@@ -1,0 +1,63 @@
+[requirement]
+id = "FOBC-SW-0003"
+title = "Autonomous Safe Mode Entry"
+category = "SW"
+type = "Functional"
+version = "0.2.0"
+created = "2024-01-22T00:00:00+00:00"
+updated = "2024-04-10T00:00:00+00:00"
+
+[requirement.statement]
+text = "The OBC software shall autonomously transition the spacecraft to safe mode upon detection of three consecutive unrecoverable processor errors."
+rationale = "Three consecutive unrecoverable errors indicate a systemic failure condition that exceeds the autonomous recovery capability; safe mode conserves power and awaits ground intervention."
+assumptions = [
+  "A processor error is classified as unrecoverable when the error handler cannot restore nominal execution within 100 ms.",
+  "Safe mode is defined in the FireSat Safe Mode Design Document.",
+]
+
+[requirement.status]
+state = "Review"
+priority = "Critical"
+criticality = "Safety-Critical"
+
+[requirement.traceability]
+parents = ["FOBC-SYS-0002"]
+
+[requirement.risk]
+hazards = [
+  "Premature safe mode entry causing unnecessary mission interruption",
+  "Failure to enter safe mode leading to unconstrained fault propagation",
+]
+mitigations = [
+  "Three-fault threshold prevents single-event upsets from triggering safe mode",
+  "Independent watchdog provides backup safe mode trigger",
+]
+safety_critical = true
+
+[requirement.allocation]
+subsystems = ["OBC"]
+software_modules = ["fault_manager", "safe_mode_controller"]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Pre-launch"
+owner = "Safety Verification Lead"
+# No success_criteria defined yet — verification plan pending CDR
+# No activities defined yet — this requirement is a coverage gap
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2024-01-22"
+author = "Alice Chen"
+change = "Initial draft."
+
+[[requirement.history]]
+version = "0.2.0"
+date = "2024-04-10"
+author = "Alice Chen"
+change = "Updated threshold from 5 to 3 consecutive errors following safety review."
+
+[requirement.tags]
+keywords = ["safe-mode", "fault-management", "autonomy", "safety"]
+labels = ["safety-critical", "pending-verification-plan"]

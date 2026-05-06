@@ -2,8 +2,8 @@
 
 Type-driven requirements toolkit with:
 
-- `rqtk-core`: NASA-style requirement schema, validation, and traceability graph logic.
-- `rqtk`: CLI for scaffolding, linting, tracing, coverage checks, graph export, baseline updates, and basic exports.
+- NASA-style requirement schema, validation, and traceability graph logic.
+- CLI for scaffolding, linting, tracing, coverage checks, graph export, baseline updates, and basic exports.
 
 ## Workspace Layout
 
@@ -22,14 +22,15 @@ cargo run -p rqtk -- --help
 Expected repository requirements directory:
 
 ```text
+rqtk.toml
 requirements/
-  requirements.toml
   REQ-*.toml
 ```
 
 ## Commands
 
 ```bash
+rqtk init [--requirements-dir reqs]
 rqtk new --category SYS --type Performance --title "..." --statement "..." [--rationale "..."]
 rqtk lint
 rqtk trace REQ-SYS-0042

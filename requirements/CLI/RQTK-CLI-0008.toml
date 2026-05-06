@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0008"
+title = "Version Diff"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk diff command shall accept two version labels and report which requirements have a history entry in one version but not the other, indicating additions or removals between baselines."
+rationale = "Change-control boards need a concise delta between baselines to assess scope; a diff command removes the need to manually compare two snapshots of a large requirement set."
+
+[requirement.status]
+state = "Approved"
+priority = "Medium"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0001"]
+
+[requirement.allocation]
+software_modules = ["cli::diff"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "Given a requirement present in version 1.0.0 history but absent in 0.9.0 history, rqtk diff 0.9.0 1.0.0 lists that requirement as added."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-008-01"
+name = "Diff addition detection test"
+procedure = "Use firesat-obc fixture which has requirements with history entries for 1.0.0; run rqtk diff 0.9.0 1.0.0; assert at least one requirement is listed."
+expected_result = "At least one requirement ID printed as differing between versions."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["diff", "baseline", "change-control", "delta"]
+labels = ["bootstrap"]

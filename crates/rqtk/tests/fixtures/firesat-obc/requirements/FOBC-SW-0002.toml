@@ -1,0 +1,57 @@
+[requirement]
+id = "FOBC-SW-0002"
+title = "Hardware Watchdog Timer Servicing"
+category = "SW"
+type = "Functional"
+version = "1.0.0"
+created = "2024-01-22T00:00:00+00:00"
+updated = "2024-03-05T00:00:00+00:00"
+
+[requirement.statement]
+text = "The OBC software shall service the hardware watchdog timer at a minimum interval of 250 milliseconds during normal operation."
+rationale = "The hardware watchdog timeout is set to 1 second; servicing at 250 ms provides a 4× margin and ensures any software lockup is detected and the processor reset within the watchdog window."
+assumptions = [
+  "The hardware watchdog timer has a fixed 1-second timeout configured at manufacturing.",
+  "Servicing is performed by the highest-priority periodic task.",
+]
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Safety-Critical"
+
+[requirement.traceability]
+parents = ["FOBC-SYS-0002"]
+
+[requirement.risk]
+hazards = ["Software lockup causing undetected loss of OBC control"]
+mitigations = ["Watchdog serviced by highest-priority task", "Lockup detection triggers processor reset"]
+safety_critical = true
+
+[requirement.allocation]
+subsystems = ["OBC"]
+software_modules = ["watchdog_manager"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Software Verification Lead"
+success_criteria = "Watchdog service interval measured over 1 hour of continuous operation is ≤250 ms with no missed service windows."
+
+[[requirement.verification.activities]]
+id = "VA-SW-002-01"
+name = "Watchdog service timing test"
+procedure = "Instrument the watchdog service call and record inter-service intervals over a 1-hour run on the flight hardware."
+expected_result = "All recorded intervals are ≤250 ms; no watchdog timeout event occurs."
+status = "Passed"
+
+[[requirement.history]]
+version = "1.0.0"
+date = "2024-03-05"
+author = "Bob Jones"
+change = "Derived from FOBC-SYS-0002; interval set at 1/4 of hardware watchdog timeout."
+
+[requirement.tags]
+keywords = ["watchdog", "fault-detection", "timing", "safety"]
+labels = ["pdr-approved", "safety-critical"]

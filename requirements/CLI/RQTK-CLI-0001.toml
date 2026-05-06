@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0001"
+title = "Scaffold New Requirement"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk new command shall generate a requirement TOML file with an auto-incremented ID, applying project-config defaults for state, priority, verification method, level, and phase."
+rationale = "Manual ID assignment is error-prone and slows authoring; auto-increment with config defaults ensures every new requirement starts in a valid, policy-conformant state without requiring the engineer to memorise allowed values."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0001", "RQTK-SYS-0002"]
+
+[requirement.allocation]
+software_modules = ["cli::new"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "Running rqtk new --category X produces a TOML file whose ID is one greater than the previous maximum for category X and whose default fields match requirements.toml config values."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-001-01"
+name = "ID auto-increment test"
+procedure = "Given a fixture with RQTK-SYS-0001 and RQTK-SYS-0002, run rqtk new --category SYS --title T --statement S; assert the created file has ID RQTK-SYS-0003."
+expected_result = "File created with ID RQTK-SYS-0003."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["new", "scaffold", "auto-increment"]
+labels = ["bootstrap"]

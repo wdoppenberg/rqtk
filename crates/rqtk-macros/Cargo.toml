@@ -1,0 +1,16 @@
+[package]
+name = "rqtk-macros"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+rqtk-core = { path = "../rqtk-core", default-features = false, features = ["verification-lookup"] }
+syn = { version = "2", features = ["full"] }
+
+[dev-dependencies]
+trybuild = "1"

@@ -33,6 +33,34 @@ pub struct ProjectConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RqtkConfig {
+    #[serde(default)]
+    pub repository: RepositoryLayout,
+    #[serde(flatten)]
+    pub project_config: ProjectConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RepositoryLayout {
+    #[serde(default = "default_requirements_dir")]
+    pub requirements_dir: String,
+    #[serde(default)]
+    pub required_files: Vec<String>,
+    #[serde(default)]
+    pub required_dirs: Vec<String>,
+}
+
+impl Default for RepositoryLayout {
+    fn default() -> Self {
+        Self {
+            requirements_dir: default_requirements_dir(),
+            required_files: Vec::new(),
+            required_dirs: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectMeta {
     pub name: String,
     pub short_name: Option<String>,
@@ -70,6 +98,10 @@ pub struct Category {
     pub name: String,
     pub level: u8,
     pub description: Option<String>,
+    /// Marks this category as a traceability root (replaces the hard-coded "STAKE" sentinel).
+    /// At least one category should set this to `true` for orphan detection to work.
+    #[serde(default)]
+    pub is_root: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -335,4 +367,8 @@ fn default_prefix() -> String {
 
 fn default_padding() -> usize {
     4
+}
+
+fn default_requirements_dir() -> String {
+    "requirements".to_owned()
 }

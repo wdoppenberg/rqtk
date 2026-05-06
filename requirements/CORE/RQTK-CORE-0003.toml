@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CORE-0003"
+title = "Auto-Increment ID Generation"
+category = "CORE"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "rqtk-core shall provide a next_requirement_id function that scans the loaded requirement set for the highest ordinal within a given category and returns the next ID formatted with the zero-padding width configured in the project config."
+rationale = "Centralising ID generation in the core library ensures the CLI and any future integrations (IDE plugins, web UI) produce IDs that are consistent with the project's configured padding and prefix."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0001", "RQTK-SYS-0002"]
+
+[requirement.allocation]
+software_modules = ["rqtk_core::repository"]
+
+[requirement.verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "Given requirements with IDs ending in 0001 and 0002 for category SYS, next_requirement_id(SYS) returns RQTK-SYS-0003 with four-digit zero padding."
+
+[[requirement.verification.activities]]
+id = "VA-CORE-003-01"
+name = "ID generation unit test"
+procedure = "Construct a RequirementSet with two SYS requirements (0001, 0002) and call next_requirement_id('SYS'); assert result equals 'RQTK-SYS-0003'."
+expected_result = "next_requirement_id returns 'RQTK-SYS-0003'."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["id-generation", "auto-increment", "padding"]
+labels = ["bootstrap"]

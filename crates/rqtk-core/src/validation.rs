@@ -48,7 +48,8 @@ pub fn issue_warning(
 }
 
 pub fn is_single_shall_sentence_violation(text: &str, shall_keywords: &[String]) -> bool {
-    let sentence_count = text.matches('.').count() + text.matches('!').count() + text.matches('?').count();
+    let sentence_count =
+        text.matches('.').count() + text.matches('!').count() + text.matches('?').count();
     if sentence_count != 1 {
         return true;
     }

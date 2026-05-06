@@ -1,0 +1,59 @@
+[requirement]
+id = "FOBC-HW-0001"
+title = "Non-Volatile Memory Write Endurance"
+category = "HW"
+type = "Constraint"
+version = "1.0.0"
+created = "2024-01-22T00:00:00+00:00"
+updated = "2024-03-05T00:00:00+00:00"
+
+[requirement.statement]
+text = "The OBC non-volatile memory shall support a minimum of 100000 write cycles per sector without data corruption across the full operating temperature range."
+rationale = "At 1 Hz telemetry writes the busiest sectors will accumulate approximately 31 million write cycles over a 3-year mission; the 100 000-cycle minimum with a wear-levelling algorithm provides the required operational lifetime margin."
+assumptions = [
+  "The flight software implements sector wear-levelling to distribute writes evenly.",
+  "Operating temperature range is -40 °C to +85 °C per the spacecraft thermal analysis.",
+]
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Mission-Critical"
+
+[requirement.traceability]
+parents = ["FOBC-SYS-0001"]
+
+[requirement.allocation]
+subsystems = ["OBC"]
+components = ["flash-memory-module"]
+
+[requirement.verification]
+method = "Analysis"
+level = "Acceptance"
+phase = "Development"
+owner = "Hardware Verification Lead"
+success_criteria = "Vendor datasheet and independent qualification test report confirm ≥100 000 write cycles per sector at all temperatures in the specified range."
+
+[[requirement.verification.activities]]
+id = "VA-HW-001-01"
+name = "Vendor datasheet review"
+procedure = "Review the flash memory vendor qualification datasheet for minimum endurance specifications."
+expected_result = "Datasheet specifies ≥100 000 P/E cycles at the required temperatures."
+status = "Passed"
+
+[[requirement.verification.activities]]
+id = "VA-HW-001-02"
+name = "Independent endurance qualification test"
+procedure = "Subject three flight-representative memory modules to accelerated cycling at temperature extremes and verify data integrity after 100 000 cycles."
+expected_result = "No sector failures or data corruption events observed on any of the three units."
+status = "Planned"
+
+[[requirement.history]]
+version = "1.0.0"
+date = "2024-03-05"
+author = "Carlos Ruiz"
+change = "Derived from FOBC-SYS-0001; endurance value confirmed by mission lifetime analysis."
+
+[requirement.tags]
+keywords = ["non-volatile-memory", "flash", "endurance", "hardware"]
+labels = ["pdr-approved"]

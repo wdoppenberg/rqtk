@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0005"
+title = "Graph Export"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk graph command shall export the traceability graph in Graphviz DOT format, writing output to stdout by default or to a file when --output is specified."
+rationale = "DOT is the de-facto interchange format for directed graphs; it can be rendered by Graphviz, Mermaid converters, and CI visualisation pipelines without additional tooling installed alongside rqtk."
+
+[requirement.status]
+state = "Approved"
+priority = "Medium"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0003"]
+
+[requirement.allocation]
+software_modules = ["cli::graph"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "Output starts with 'digraph'; each requirement ID appears as a node label; each parent→child relationship appears as a directed edge in the DOT source."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-005-01"
+name = "DOT format validation"
+procedure = "Run rqtk graph on firesat-obc; pipe output through dot -Tsvg and assert no parse errors; check that FOBC-SYS-0001 -> FOBC-SW-0001 edge is present in DOT source."
+expected_result = "Valid DOT; expected edge present."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["graph", "dot", "graphviz", "visualisation"]
+labels = ["bootstrap"]

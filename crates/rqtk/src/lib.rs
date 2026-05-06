@@ -1,13 +1,16 @@
-use rqtk_core::{LintSeverity, RequirementId, RequirementSet, RqtkError};
+use rqtk_core::{LintSeverity, Loaded, RequirementId, RequirementSet, RqtkError};
 use semver::Version;
 use std::fs;
 use std::path::Path;
 
-pub fn load_requirements(path: &Path) -> Result<RequirementSet, RqtkError> {
-    RequirementSet::load_from_requirements_dir(path)
+pub fn load_requirements(path: &Path) -> Result<RequirementSet<Loaded>, RqtkError> {
+    RequirementSet::load_from_repo_root(path)
 }
 
-pub fn write_requirement_file(path: &Path, file: &rqtk_core::RequirementFile) -> Result<(), RqtkError> {
+pub fn write_requirement_file(
+    path: &Path,
+    file: &rqtk_core::RequirementFile,
+) -> Result<(), RqtkError> {
     let text = toml::to_string_pretty(file)?;
     fs::write(path, text).map_err(|source| RqtkError::Io {
         path: path.to_path_buf(),
@@ -15,10 +18,13 @@ pub fn write_requirement_file(path: &Path, file: &rqtk_core::RequirementFile) ->
     })
 }
 
-pub fn bump_baseline_version(set: &mut RequirementSet, next: &Version) -> Result<(), RqtkError> {
+pub fn bump_baseline_version<S>(
+    set: &mut RequirementSet<S>,
+    next: &Version,
+) -> Result<(), RqtkError> {
     set.config.project.version = next.clone();
     set.config.project.updated = Some(chrono::Utc::now().date_naive());
-    let config_path = set.root.join("requirements.toml");
+    let config_path = set.config_path.clone();
     let text = toml::to_string_pretty(&set.config)?;
     fs::write(&config_path, text).map_err(|source| RqtkError::Io {
         path: config_path,
@@ -26,9 +32,7 @@ pub fn bump_baseline_version(set: &mut RequirementSet, next: &Version) -> Result
     })
 }
 
-pub fn format_lint(
-    issues: &[rqtk_core::LintIssue],
-) -> (usize, usize, Vec<String>) {
+pub fn format_lint(issues: &[rqtk_core::LintIssue]) -> (usize, usize, Vec<String>) {
     let mut errors = 0usize;
     let mut warnings = 0usize;
     let mut lines = Vec::with_capacity(issues.len());
@@ -49,7 +53,10 @@ pub fn format_lint(
             .map(RequirementId::to_string)
             .or_else(|| issue.path.as_ref().map(|p| p.display().to_string()))
             .unwrap_or_else(|| "-".to_owned());
-        lines.push(format!("[{severity}] {} {}: {}", issue.code, target, issue.message));
+        lines.push(format!(
+            "[{severity}] {} {}: {}",
+            issue.code, target, issue.message
+        ));
     }
     (errors, warnings, lines)
 }

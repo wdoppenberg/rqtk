@@ -1,0 +1,50 @@
+[requirement]
+id = "RQTK-SYS-0003"
+title = "Requirement Traceability"
+category = "SYS"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "rqtk shall maintain a directed traceability graph between requirements and shall detect cycles, orphans, and broken references at validation time."
+rationale = "Undetected cycles or dangling parent links silently invalidate traceability matrices; automated graph validation prevents those defects from reaching reviews or audits."
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Mission-Critical"
+
+[requirement.traceability]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Release"
+owner = "Project Lead"
+success_criteria = "Lint exits with code 2 when a cycle is introduced; lint exits with code 2 when a parent reference points to a non-existent ID; lint exits with code 0 for a clean, fully-connected set."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-003-01"
+name = "Cycle detection test"
+procedure = "Introduce a circular parent chain (A→B→A) in a fixture set and run rqtk lint; assert exit code 2 and RQ017 issue present."
+expected_result = "Exit code 2; output contains RQ017."
+status = "Planned"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-003-02"
+name = "Broken reference test"
+procedure = "Add a parent reference to a non-existent ID and run rqtk lint; assert exit code 2 and RQ015 issue present."
+expected_result = "Exit code 2; output contains RQ015."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["traceability", "graph", "cycle-detection"]
+labels = ["bootstrap"]

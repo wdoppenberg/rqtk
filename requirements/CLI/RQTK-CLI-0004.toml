@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0004"
+title = "Coverage Gap Detection"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk coverage command shall identify and report all requirements that lack success criteria or have no verification activities defined, and shall exit with code 3 when any gaps are present."
+rationale = "Verification coverage is a contractual obligation on most engineering programmes; an automated gap report prevents unverified requirements from reaching design reviews undetected."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0004"]
+
+[requirement.allocation]
+software_modules = ["cli::coverage"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "A fixture with one requirement missing success_criteria causes exit code 3 and lists that requirement ID; a fully-covered fixture exits 0."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-004-01"
+name = "Coverage gap exit code test"
+procedure = "Add a requirement with no success_criteria to a fixture; run rqtk coverage; assert exit code 3 and the requirement ID in output. Remove the gap; rerun; assert exit code 0."
+expected_result = "Exit code 3 with gap present; exit code 0 without."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["coverage", "verification", "gaps"]
+labels = ["bootstrap"]

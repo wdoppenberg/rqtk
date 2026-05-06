@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0003"
+title = "Traceability Query"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-06T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk trace command shall accept a requirement ID and print both the upward path (ancestors) and the downward path (descendants) of that requirement in the traceability graph."
+rationale = "Engineers need to answer two questions: 'what stakeholder need justifies this requirement?' (upward) and 'what lower-level requirements implement this?' (downward); a single command that shows both eliminates manual graph traversal."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0003"]
+
+[requirement.allocation]
+software_modules = ["cli::trace"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "For a three-level hierarchy (SYS→SW→ICD), rqtk trace SW-ID prints the SYS parent in the upward section and the ICD child in the downward section."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-003-01"
+name = "Bidirectional trace test"
+procedure = "Using firesat-obc fixture, run rqtk trace FOBC-SW-0001; assert FOBC-SYS-0001 appears in upward output."
+expected_result = "FOBC-SYS-0001 present in upward path section."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-06"
+author = "Wouter Doppenberg"
+change = "Initial draft."
+
+[requirement.tags]
+keywords = ["trace", "traceability", "ancestors", "descendants"]
+labels = ["bootstrap"]
