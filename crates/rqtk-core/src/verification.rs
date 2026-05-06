@@ -78,10 +78,10 @@ fn scan_dir_for_activity(dir: &Path, activity_id: &str) -> Result<Option<Activit
             if let Some(info) = scan_dir_for_activity(&path, activity_id)? {
                 return Ok(Some(info));
             }
-        } else if path.extension().and_then(|e| e.to_str()) == Some("toml") {
-            if let Some(info) = extract_activity_info(&path, activity_id)? {
-                return Ok(Some(info));
-            }
+        } else if path.extension().and_then(|e| e.to_str()) == Some("toml")
+            && let Some(info) = extract_activity_info(&path, activity_id)?
+        {
+            return Ok(Some(info));
         }
     }
     Ok(None)

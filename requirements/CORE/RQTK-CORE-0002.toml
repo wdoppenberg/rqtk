@@ -8,7 +8,7 @@ created = "2026-05-06T00:00:00+00:00"
 updated = "2026-05-06T00:00:00+00:00"
 
 [requirement.statement]
-text = "rqtk-core shall detect cycles in the parent–child traceability graph using a directed-graph algorithm and shall report each cycle as a lint issue with code RQ017."
+text = "rqtk-core shall detect cycles in the parent–child traceability graph and shall report each cycle as a lint issue with code RQ017."
 rationale = "A cyclic dependency between requirements is logically incoherent (A derives from B which derives from A) and would cause infinite loops in any traversal that assumes a DAG; early detection prevents downstream tool failures."
 
 [requirement.status]

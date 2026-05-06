@@ -227,15 +227,15 @@ impl RequirementSet<Loaded> {
                     path.clone(),
                 ));
             }
-            if let Some(criticality) = req.status.criticality.as_deref() {
-                if !self.allowed_criticalities.contains(criticality) {
-                    issues.push(issue_error(
-                        "RQ006",
-                        format!("invalid criticality `{criticality}`"),
-                        Some(req_id.clone()),
-                        path.clone(),
-                    ));
-                }
+            if let Some(criticality) = req.status.criticality.as_deref()
+                && !self.allowed_criticalities.contains(criticality)
+            {
+                issues.push(issue_error(
+                    "RQ006",
+                    format!("invalid criticality `{criticality}`"),
+                    Some(req_id.clone()),
+                    path.clone(),
+                ));
             }
             if self.config.validation.require_rationale
                 && req
@@ -601,7 +601,7 @@ impl<S> RequirementSet<S> {
                 .config
                 .categories
                 .get(&req.requirement.category)
-                .map_or(false, |c| c.is_root);
+                .is_some_and(|c| c.is_root);
             if is_root {
                 continue;
             }

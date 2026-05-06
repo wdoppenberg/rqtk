@@ -201,7 +201,7 @@ fn load_project_requirements_without_errors() {
         "expected at least one requirement to be loaded"
     );
 
-    for (id, _req) in &set.requirements {
+    for id in set.requirements.keys() {
         assert!(!id.0.is_empty(), "requirement ID must not be empty");
     }
 }

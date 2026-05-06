@@ -1,10 +1,13 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use schemars::JsonSchema;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(transparent)]
 pub struct RequirementId(pub String);
 
@@ -14,7 +17,7 @@ impl Display for RequirementId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProjectConfig {
     pub project: ProjectMeta,
     pub identification: IdentificationScheme,
@@ -32,7 +35,7 @@ pub struct ProjectConfig {
     pub export: ExportConfig,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct RqtkConfig {
     #[serde(default)]
     pub repository: RepositoryLayout,
@@ -40,7 +43,7 @@ pub struct RqtkConfig {
     pub project_config: ProjectConfig,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryLayout {
     #[serde(default = "default_requirements_dir")]
     pub requirements_dir: String,
@@ -60,11 +63,12 @@ impl Default for RepositoryLayout {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProjectMeta {
     pub name: String,
     pub short_name: Option<String>,
     pub description: Option<String>,
+    #[schemars(with = "String")]
     pub version: Version,
     pub mission_phase: Option<String>,
     pub classification: Option<String>,
@@ -74,7 +78,7 @@ pub struct ProjectMeta {
     pub organization: Option<ProjectOrganization>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProjectOrganization {
     pub program: Option<String>,
     pub center: Option<String>,
@@ -82,7 +86,7 @@ pub struct ProjectOrganization {
     pub cognizant_authority: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct IdentificationScheme {
     pub id_pattern: String,
     #[serde(default = "default_separator")]
@@ -93,7 +97,7 @@ pub struct IdentificationScheme {
     pub zero_padding: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Category {
     pub name: String,
     pub level: u8,
@@ -104,42 +108,42 @@ pub struct Category {
     pub is_root: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TypePolicy {
     pub allowed: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct VerificationPolicy {
     pub methods: Vec<String>,
     pub levels: Vec<String>,
     pub phases: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct LifecyclePolicy {
     pub states: Vec<String>,
     pub default_state: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PriorityPolicy {
     pub levels: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CriticalityPolicy {
     pub levels: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Standard {
     pub id: String,
     pub title: String,
     pub revision: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ChangeControl {
     pub ccb_required_after: String,
     pub require_signoff: bool,
@@ -147,7 +151,7 @@ pub struct ChangeControl {
     pub approvers: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ValidationRules {
     pub require_rationale: bool,
     pub require_verification_method: bool,
@@ -163,25 +167,26 @@ pub struct ValidationRules {
     pub forbidden_keywords: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ExportConfig {
     #[serde(default)]
     pub formats: Vec<String>,
     pub default_output_dir: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct RequirementFile {
     pub requirement: RequirementBody,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct RequirementBody {
     pub id: RequirementId,
     pub title: String,
     pub category: String,
     #[serde(rename = "type")]
     pub req_type: String,
+    #[schemars(with = "String")]
     pub version: Version,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
@@ -204,10 +209,11 @@ pub struct RequirementBody {
     #[serde(default)]
     pub tags: Tags,
     #[serde(default)]
+    #[schemars(with = "std::collections::BTreeMap<String, serde_json::Value>")]
     pub custom: BTreeMap<String, toml::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Statement {
     pub text: String,
     pub rationale: Option<String>,
@@ -216,7 +222,7 @@ pub struct Statement {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Status {
     pub state: String,
     pub priority: String,
@@ -228,7 +234,7 @@ pub struct Status {
     pub tbr: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Approval {
     pub baselined_at: Option<NaiveDate>,
     pub baselined_by: Option<String>,
@@ -238,16 +244,17 @@ pub struct Approval {
     pub ecr_ids: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Parameter {
     pub name: String,
     pub operator: String,
+    #[schemars(with = "serde_json::Value")]
     pub value: toml::Value,
     pub unit: Option<String>,
     pub tolerance: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 pub struct Traceability {
     #[serde(default)]
     pub parents: Vec<RequirementId>,
@@ -267,7 +274,7 @@ pub struct Traceability {
     pub external: Vec<ExternalTrace>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ExternalTrace {
     #[serde(rename = "type")]
     pub trace_type: String,
@@ -275,7 +282,7 @@ pub struct ExternalTrace {
     pub reference: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Verification {
     pub method: String,
     pub level: String,
@@ -286,7 +293,7 @@ pub struct Verification {
     pub activities: Vec<VerificationActivity>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct VerificationActivity {
     pub id: String,
     pub name: String,
@@ -298,7 +305,7 @@ pub struct VerificationActivity {
     pub evidence: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ValidationSpec {
     pub method: Option<String>,
     pub stakeholder: Option<String>,
@@ -306,7 +313,7 @@ pub struct ValidationSpec {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Risk {
     #[serde(default)]
     pub hazards: Vec<String>,
@@ -319,7 +326,7 @@ pub struct Risk {
     pub security_sensitive: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Allocation {
     #[serde(default)]
     pub subsystems: Vec<String>,
@@ -331,8 +338,9 @@ pub struct Allocation {
     pub source_files: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct HistoryEntry {
+    #[schemars(with = "String")]
     pub version: Version,
     pub date: NaiveDate,
     pub author: String,
@@ -340,7 +348,7 @@ pub struct HistoryEntry {
     pub ecr: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 pub struct Tags {
     #[serde(default)]
     pub keywords: Vec<String>,

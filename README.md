@@ -19,6 +19,20 @@ crates/
 cargo run -p rqtk -- --help
 ```
 
+## Dev Tooling
+
+Generate TOML JSON schemas:
+
+```bash
+cargo run -p rqtk-core --bin generate_schemas
+```
+
+Install the repository-managed pre-commit hook:
+
+```bash
+./scripts/install-hooks.sh
+```
+
 Expected repository requirements directory:
 
 ```text
