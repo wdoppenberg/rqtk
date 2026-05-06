@@ -508,7 +508,7 @@ fn new_creates_requirement_file_with_correct_id() {
     let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
     // Existing SW requirements are 0001–0003, so the next ID is 0004.
     rqtk(&req_dir)
-        .arg("new")
+        .arg("add")
         .arg("--category").arg("SW")
         .arg("--type").arg("Functional")
         .arg("--title").arg("Telemetry Compression")
@@ -529,7 +529,7 @@ fn new_creates_requirement_file_with_correct_id() {
 fn new_created_file_passes_lint() {
     let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
     rqtk(&req_dir)
-        .arg("new")
+        .arg("add")
         .arg("--category").arg("HW")
         .arg("--type").arg("Constraint")
         .arg("--title").arg("Radiation Tolerance")

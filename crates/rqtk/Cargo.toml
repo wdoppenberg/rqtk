@@ -4,13 +4,26 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-chrono = "0.4.42"
-clap = { version = "4.5.53", features = ["derive"] }
-rqtk-cpp = { path = "../rqtk-cpp" }
+toml = { workspace = true }
+rqtk-cpp = { path = "../rqtk-cpp", optional = true }
+rqtk-macros = { path = "../rqtk-macros", optional = true }
+rqtk-report = { path = "../rqtk-report", optional = true }
 rqtk-core = { path = "../rqtk-core" }
+clap = { version = "4.5.53", features = ["derive"], optional = true }
+chrono = "0.4.42"
 semver = "1.0.27"
 serde_json = "1.0.145"
-toml = { workspace = true }
+
+[features]
+macros = ["dep:rqtk-macros"]
+cpp = ["dep:rqtk-cpp"]
+report = ["dep:rqtk-report"]
+cli = ["dep:clap"]
+
+[[bin]]
+name = "rqtk"
+path = "src/main.rs"
+required-features = ["cli"]
 
 [dev-dependencies]
 assert_cmd = "2.0"

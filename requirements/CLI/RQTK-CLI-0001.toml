@@ -1,6 +1,6 @@
 [requirement]
 id = "RQTK-CLI-0001"
-title = "Scaffold New Requirement"
+title = "Scaffold Add Requirement"
 category = "CLI"
 type = "Functional"
 version = "0.1.0"
@@ -8,7 +8,7 @@ created = "2026-05-06T00:00:00+00:00"
 updated = "2026-05-06T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk new command shall generate a requirement TOML file with an auto-incremented ID, applying project-config defaults for state, priority, verification method, level, and phase."
+text = "The rqtk add command shall generate a requirement TOML file with an auto-incremented ID, applying project-config defaults for state, priority, verification method, level, and phase."
 rationale = "Manual ID assignment is error-prone and slows authoring; auto-increment with config defaults ensures every new requirement starts in a valid, policy-conformant state without requiring the engineer to memorise allowed values."
 
 [requirement.status]

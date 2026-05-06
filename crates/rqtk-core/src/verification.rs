@@ -1,4 +1,6 @@
 use crate::model::RqtkConfig;
+use crate::repository::{RequirementSet, Validated};
+use crate::validation::LintSeverity;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -47,6 +49,42 @@ pub fn find_activity_from_current_dir(activity_id: &str) -> Result<Option<Activi
     scan_dir_for_activity(&requirements_dir, activity_id)
 }
 
+pub fn build_requirements_doc_from_manifest_dir() -> Result<String, String> {
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+        .map_err(|_| "CARGO_MANIFEST_DIR is not set".to_owned())?;
+    let repo_root = find_repo_root_from(PathBuf::from(manifest_dir))?
+        .ok_or_else(|| "no `rqtk.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned())?;
+    build_requirements_doc_from_repo_root(&repo_root)
+}
+
+pub fn build_requirements_doc_from_repo_root(repo_root: &Path) -> Result<String, String> {
+    let set = RequirementSet::load_from_repo_root(repo_root).map_err(|e| {
+        format!(
+            "cannot load requirements from `{}`: {e}",
+            repo_root.display()
+        )
+    })?;
+    let (set, issues) = set.validate();
+    let errors: Vec<_> = issues
+        .into_iter()
+        .filter(|issue| issue.severity == LintSeverity::Error)
+        .collect();
+    if !errors.is_empty() {
+        let mut msg = format!(
+            "cannot generate docs: {} validation error(s) in requirements",
+            errors.len()
+        );
+        for issue in errors.iter().take(8) {
+            msg.push_str(&format!("\n- [{}] {}", issue.code, issue.message));
+        }
+        if errors.len() > 8 {
+            msg.push_str("\n- ...");
+        }
+        return Err(msg);
+    }
+    Ok(render_requirements_doc(&set))
+}
+
 fn find_requirements_dir_from(mut dir: PathBuf) -> Result<Option<PathBuf>, String> {
     loop {
         let config_path = dir.join("rqtk.toml");
@@ -64,6 +102,112 @@ fn find_requirements_dir_from(mut dir: PathBuf) -> Result<Option<PathBuf>, Strin
         if !dir.pop() {
             return Ok(None);
         }
+    }
+}
+
+fn find_repo_root_from(mut dir: PathBuf) -> Result<Option<PathBuf>, String> {
+    loop {
+        let config_path = dir.join("rqtk.toml");
+        if config_path.is_file() {
+            return Ok(Some(dir));
+        }
+        if !dir.pop() {
+            return Ok(None);
+        }
+    }
+}
+
+fn render_requirements_doc(set: &RequirementSet<Validated>) -> String {
+    let requirements_dir_display = match set.root.strip_prefix(&set.repo_root) {
+        Ok(path) if path.as_os_str().is_empty() => ".".to_owned(),
+        Ok(path) => path.display().to_string(),
+        Err(_) => set.root.display().to_string(),
+    };
+
+    let mut doc = String::new();
+    doc.push_str("# Requirements\n\n");
+    doc.push_str(&format!(
+        "**Project**: {}  \n**Requirements Dir**: `{}`\n\n",
+        set.config.project.name, requirements_dir_display
+    ));
+    doc.push_str(&format!(
+        "Total requirements: **{}**\n\n",
+        set.requirements.len()
+    ));
+
+    if set.requirements.is_empty() {
+        doc.push_str("No requirements were found.\n");
+        return doc;
+    }
+
+    for (category_id, category) in &set.config.categories {
+        let reqs: Vec<_> = set
+            .requirements
+            .iter()
+            .filter(|(_, req_file)| req_file.requirement.category == *category_id)
+            .collect();
+        doc.push_str(&format!(
+            "## {} — {}\n\nRequirements: **{}**\n\n",
+            category_id,
+            category.name,
+            reqs.len()
+        ));
+        if let Some(description) = &category.description {
+            push_blockquote(&mut doc, description);
+            doc.push('\n');
+        }
+        if reqs.is_empty() {
+            doc.push_str("_No requirements in this category._\n\n");
+            continue;
+        }
+
+        for (id, req_file) in reqs {
+            let req = &req_file.requirement;
+            doc.push_str(&format!("### `{}` — {}\n\n", id.0, req.title));
+            doc.push_str(&format!(
+                "- Type: `{}`\n- State: `{}`\n- Priority: `{}`\n- Verification Method: `{}`\n\n",
+                req.req_type, req.status.state, req.status.priority, req.verification.method
+            ));
+            doc.push_str("**Statement**\n\n");
+            push_blockquote(&mut doc, &req.statement.text);
+            if let Some(rationale) = &req.statement.rationale {
+                doc.push_str("\n**Rationale**\n\n");
+                push_blockquote(&mut doc, rationale);
+            }
+            if !req.traceability.parents.is_empty() {
+                doc.push_str("\n**Parents**\n\n");
+                for parent in &req.traceability.parents {
+                    doc.push_str(&format!("- `{}`\n", parent.0));
+                }
+            }
+            if let Some(criteria) = &req.verification.success_criteria {
+                doc.push_str("\n**Verification Success Criteria**\n\n");
+                push_blockquote(&mut doc, criteria);
+            }
+            if req.verification.activities.is_empty() {
+                doc.push_str("\n**Verification Activities**\n\n- _None defined_\n");
+            } else {
+                doc.push_str("\n**Verification Activities**\n\n");
+                for activity in &req.verification.activities {
+                    doc.push_str(&format!("- `{}` {}", activity.id, activity.name));
+                    if let Some(status) = &activity.status {
+                        doc.push_str(&format!(" _(status: {})_", status));
+                    }
+                    doc.push('\n');
+                }
+            }
+            doc.push('\n');
+        }
+    }
+
+    doc
+}
+
+fn push_blockquote(doc: &mut String, text: &str) {
+    for line in text.lines() {
+        doc.push_str("> ");
+        doc.push_str(line);
+        doc.push('\n');
     }
 }
 

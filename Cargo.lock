@@ -744,6 +744,7 @@ dependencies = [
  "rqtk-core",
  "rqtk-cpp",
  "rqtk-macros",
+ "rqtk-report",
  "semver",
  "serde_json",
  "tempfile",
@@ -793,6 +794,15 @@ version = "0.1.0"
 dependencies = [
  "pyo3",
  "rqtk-core",
+]
+
+[[package]]
+name = "rqtk-report"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rqtk-core",
+ "thiserror",
 ]
 
 [[package]]

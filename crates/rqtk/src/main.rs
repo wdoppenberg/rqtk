@@ -1,10 +1,14 @@
 use clap::{Parser, Subcommand};
-use rqtk::{bump_baseline_version, format_lint, load_requirements, write_requirement_file};
-use rqtk_core::{RequirementId, RequirementSet, RqtkError, ScaffoldInput, Validated};
-use rqtk_cpp::generate_header_file;
+use rqtk_core::io::{bump_baseline_version, write_requirement_file};
+use rqtk_core::{
+    LintIssue, LintSeverity, RequirementId, RequirementSet, RqtkError, ScaffoldInput, Validated,
+};
 use semver::Version;
 use std::error::Error;
 use std::path::PathBuf;
+
+#[cfg(feature = "cpp")]
+use rqtk_cpp::generate_header_file;
 
 #[derive(Debug, Parser)]
 #[command(name = "rqtk", version, about = "Requirements Toolkit")]
@@ -17,13 +21,15 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Scaffold a new or existing requirement set in the current repo.
     Init {
         #[arg(long)]
         requirements_dir: Option<String>,
         #[arg(long)]
         force: bool,
     },
-    New {
+    /// Add a new requirement to the requirement set.
+    Add {
         #[arg(long)]
         category: String,
         #[arg(long = "type")]
@@ -35,11 +41,16 @@ enum Command {
         #[arg(long)]
         rationale: Option<String>,
     },
+    /// Lint the requirement set in the current repo for common errors and inconsistencies.
     Lint,
+    /// Trace the lifecycle of a requirement by its ID.
     Trace {
         id: String,
     },
+    /// Assess the coverage of requirements in the current repo by evaluating the completeness of
+    /// the verification activities.
     Coverage,
+    /// Generate a graph visualization of the requirement set.
     Graph {
         #[arg(long, default_value = "dot")]
         format: String,
@@ -57,6 +68,15 @@ enum Command {
         from: String,
         to: String,
     },
+    /// Generate a PDF requirements report using the Typst typesetting system.
+    /// Use --output report.typ to write the Typst source without compiling.
+    #[cfg(feature = "report")]
+    Report {
+        /// Output path. Extension determines output: .pdf compiles via typst CLI, .typ writes source.
+        #[arg(long, default_value = "requirements-report.pdf")]
+        output: PathBuf,
+    },
+    #[cfg(feature = "cpp")]
     CodegenCppVerifies {
         #[arg(long)]
         output: PathBuf,
@@ -82,14 +102,14 @@ fn run() -> Result<(), Box<dyn Error>> {
             scaffold_repository(&cli.repo_root, requirements_dir.as_deref(), force)?;
             println!("initialized {}", cli.repo_root.display());
         }
-        Command::New {
+        Command::Add {
             category,
             req_type,
             title,
             statement,
             rationale,
         } => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let file = set.scaffold_requirement(ScaffoldInput {
                 category: &category,
                 req_type: &req_type,
@@ -108,7 +128,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             println!("created {}", path.display());
         }
         Command::Lint => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let (_, issues) = set.validate();
             let (errors, warnings, lines) = format_lint(&issues);
             for line in lines {
@@ -120,7 +140,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             }
         }
         Command::Trace { id } => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let view = set.trace_view(&RequirementId(id))?;
             println!("upward:");
             for req_id in view.upward {
@@ -132,7 +152,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             }
         }
         Command::Coverage => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let (set, _) = set.validate();
             let gaps = set.coverage_gaps();
             if gaps.is_empty() {
@@ -146,7 +166,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             }
         }
         Command::Graph { format } => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             if format != "dot" {
                 return Err(Box::new(RqtkError::UnsupportedExportFormat(format)));
             }
@@ -154,20 +174,20 @@ fn run() -> Result<(), Box<dyn Error>> {
             println!("{}", set.to_dot());
         }
         Command::Baseline { version } => {
-            let mut set = load_requirements(&cli.repo_root)?;
+            let mut set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let parsed = Version::parse(&version)?;
             bump_baseline_version(&mut set, &parsed)?;
             println!("updated baseline version to {parsed}");
         }
         Command::Export { format, output } => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let (set, _) = set.validate();
             let out = output.unwrap_or_else(|| default_export_path(&set.root, &format));
             export_set(&set, &format, &out)?;
             println!("exported {}", out.display());
         }
         Command::Diff { from, to } => {
-            let set = load_requirements(&cli.repo_root)?;
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
             let mut changed = Vec::new();
             for (id, req) in &set.requirements {
                 let has_from = req
@@ -193,6 +213,14 @@ fn run() -> Result<(), Box<dyn Error>> {
                 }
             }
         }
+        #[cfg(feature = "report")]
+        Command::Report { output } => {
+            let set = RequirementSet::load_from_repo_root(&cli.repo_root)?;
+            let (set, _) = set.validate();
+            rqtk_report::generate_report(&set, &output)?;
+            println!("report written to {}", output.display());
+        }
+        #[cfg(feature = "cpp")]
         Command::CodegenCppVerifies { output, macro_name } => {
             let count = generate_header_file(&cli.repo_root, &output, &macro_name)?;
             println!(
@@ -348,4 +376,33 @@ fn export_set(
 fn escape_csv(text: &str) -> String {
     let escaped = text.replace('"', "\"\"");
     format!("\"{escaped}\"")
+}
+
+fn format_lint(issues: &[LintIssue]) -> (usize, usize, Vec<String>) {
+    let mut errors = 0usize;
+    let mut warnings = 0usize;
+    let mut lines = Vec::with_capacity(issues.len());
+    for issue in issues {
+        let severity = match issue.severity {
+            LintSeverity::Error => {
+                errors += 1;
+                "error"
+            }
+            LintSeverity::Warning => {
+                warnings += 1;
+                "warning"
+            }
+        };
+        let target = issue
+            .requirement_id
+            .as_ref()
+            .map(RequirementId::to_string)
+            .or_else(|| issue.path.as_ref().map(|p| p.display().to_string()))
+            .unwrap_or_else(|| "-".to_owned());
+        lines.push(format!(
+            "[{severity}] {} {}: {}",
+            issue.code, target, issue.message
+        ));
+    }
+    (errors, warnings, lines)
 }

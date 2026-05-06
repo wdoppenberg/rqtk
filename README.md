@@ -1,24 +1,33 @@
 # rqtk
 
-Type-driven requirements toolkit with:
+An opinionated system requirements toolkit with:
 
+- Requirements embedded right in your repository as checked in TOML files
 - NASA-style requirement schema, validation, and traceability graph logic.
-- CLI for scaffolding, linting, tracing, coverage checks, graph export, baseline updates, and basic exports.
-
-## Workspace Layout
-
-```text
-crates/
-  rqtk-cpp/
-  rqtk-core/
-  rqtk/
-```
+- CLI for scaffolding, linting, tracing, coverage checks, graph export, baseline updates, and exports.
 
 ## Quick Start
 
 ```bash
-cargo run -p rqtk -- --help
+cargo install rqtk
+rqtk --help
 ```
+
+## Commands
+
+```bash
+rqtk init [--requirements-dir reqs]
+rqtk new --category SYS --type Performance --title "..." --statement "..." [--rationale "..."]
+rqtk lint
+rqtk trace REQ-SYS-0042
+rqtk coverage
+rqtk graph --format dot
+rqtk baseline 2.5.0
+rqtk export --format json|csv|markdown [--output path]
+rqtk diff 2.4.0 2.5.0
+rqtk codegen-cpp-verifies --output path/to/rqtk_verification_ids.hpp [--macro-name VERIFIES]
+```
+
 
 ## Dev Tooling
 
@@ -50,17 +59,3 @@ requirements/
   REQ-*.toml
 ```
 
-## Commands
-
-```bash
-rqtk init [--requirements-dir reqs]
-rqtk new --category SYS --type Performance --title "..." --statement "..." [--rationale "..."]
-rqtk lint
-rqtk trace REQ-SYS-0042
-rqtk coverage
-rqtk graph --format dot
-rqtk baseline 2.5.0
-rqtk export --format json|csv|markdown [--output path]
-rqtk diff 2.4.0 2.5.0
-rqtk codegen-cpp-verifies --output path/to/rqtk_verification_ids.hpp [--macro-name VERIFIES]
-```

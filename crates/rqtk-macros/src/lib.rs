@@ -1,7 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use rqtk_core::verification::{build_verification_doc, find_activity_from_manifest_dir};
+use rqtk_core::verification::{
+    build_requirements_doc_from_manifest_dir, build_verification_doc,
+    find_activity_from_manifest_dir,
+};
 use syn::{LitStr, parse_macro_input};
 
 /// Asserts at compile time that a verification activity ID exists in the requirements tree.
@@ -44,6 +47,40 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
                 "rqtk-macros: could not search requirements for `{}`: {}",
                 id_value, e
             );
+            TokenStream::from(syn::Error::new(Span::call_site(), msg).to_compile_error())
+        }
+    }
+}
+
+/// Generates a structured rustdoc requirements page from `rqtk` requirements at compile time.
+///
+/// Apply to a module (or any item that can carry doc attributes):
+///
+/// ```rust,ignore
+/// #[requirements_docs]
+/// pub mod requirements {}
+/// ```
+///
+/// The macro loads and validates requirements by walking up from `CARGO_MANIFEST_DIR`
+/// until `rqtk.toml` is found. Generation fails with a compile error if requirements
+/// are missing or invalid.
+#[proc_macro_attribute]
+pub fn requirements_docs(attr: TokenStream, item: TokenStream) -> TokenStream {
+    if !attr.is_empty() {
+        let msg = "requirements_docs does not accept any attribute arguments";
+        return TokenStream::from(syn::Error::new(Span::call_site(), msg).to_compile_error());
+    }
+
+    match build_requirements_doc_from_manifest_dir() {
+        Ok(doc) => {
+            let item_ts: proc_macro2::TokenStream = item.into();
+            TokenStream::from(quote! {
+                #[doc = #doc]
+                #item_ts
+            })
+        }
+        Err(e) => {
+            let msg = format!("rqtk-macros: could not generate requirements docs: {}", e);
             TokenStream::from(syn::Error::new(Span::call_site(), msg).to_compile_error())
         }
     }
