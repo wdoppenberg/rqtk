@@ -9,6 +9,3 @@ rqtk-core = { path = "../rqtk-core", default-features = false, features = ["veri
 
 [lib]
 name = "rqtk"
-
-[tool.maturin]
-module-name = "rqtk"

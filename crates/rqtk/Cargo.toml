@@ -6,10 +6,11 @@ edition = "2024"
 [dependencies]
 chrono = "0.4.42"
 clap = { version = "4.5.53", features = ["derive"] }
+rqtk-cpp = { path = "../rqtk-cpp" }
 rqtk-core = { path = "../rqtk-core" }
 semver = "1.0.27"
 serde_json = "1.0.145"
-toml = "0.9.8"
+toml = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = "2.0"

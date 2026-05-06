@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use rqtk::{bump_baseline_version, format_lint, load_requirements, write_requirement_file};
 use rqtk_core::{RequirementId, RequirementSet, RqtkError, ScaffoldInput, Validated};
+use rqtk_cpp::generate_header_file;
 use semver::Version;
 use std::error::Error;
 use std::path::PathBuf;
@@ -55,6 +56,12 @@ enum Command {
     Diff {
         from: String,
         to: String,
+    },
+    CodegenCppVerifies {
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "VERIFIES")]
+        macro_name: String,
     },
 }
 
@@ -185,6 +192,14 @@ fn run() -> Result<(), Box<dyn Error>> {
                     println!("  {id}");
                 }
             }
+        }
+        Command::CodegenCppVerifies { output, macro_name } => {
+            let count = generate_header_file(&cli.repo_root, &output, &macro_name)?;
+            println!(
+                "generated {} with {} verification activity IDs",
+                output.display(),
+                count
+            );
         }
     }
     Ok(())

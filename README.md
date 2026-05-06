@@ -9,6 +9,7 @@ Type-driven requirements toolkit with:
 
 ```text
 crates/
+  rqtk-cpp/
   rqtk-core/
   rqtk/
 ```
@@ -27,11 +28,19 @@ Generate TOML JSON schemas:
 cargo run -p rqtk-core --bin generate_schemas
 ```
 
+Generate a C++ verification-ID header for compile-time test linkage:
+
+```bash
+cargo run -p rqtk -- --repo-root . codegen-cpp-verifies --output /tmp/rqtk_verification_ids.hpp
+```
+
 Install the repository-managed pre-commit hook:
 
 ```bash
 ./scripts/install-hooks.sh
 ```
+
+See [docs/cpp-verification.md](docs/cpp-verification.md) for CMake integration and C++ usage.
 
 Expected repository requirements directory:
 
@@ -53,4 +62,5 @@ rqtk graph --format dot
 rqtk baseline 2.5.0
 rqtk export --format json|csv|markdown [--output path]
 rqtk diff 2.4.0 2.5.0
+rqtk codegen-cpp-verifies --output path/to/rqtk_verification_ids.hpp [--macro-name VERIFIES]
 ```
