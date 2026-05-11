@@ -3,13 +3,13 @@ id = "RQTK-SYS-0005"
 title = "Multi-Format Export"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "rqtk shall export the full requirement set in JSON, CSV, and Markdown formats, writing output either to stdout or to a caller-specified file path."
-rationale = "Downstream tools (spreadsheets, document generators, CI dashboards) consume different formats; supporting all three removes the need for bespoke conversion scripts and keeps rqtk as the single source of truth."
+text = "rqtk shall export the validated requirement set in JSON, CSV, and Markdown formats, writing output either to stdout or to a user-specified file path."
+rationale = "Downstream tools (spreadsheets, document generators, CI dashboards) consume different formats; supporting all three removes the need for bespoke conversion scripts and keeps rqtk as the single source of truth. Exporting only the validated set prevents policy-violating data from propagating into downstream artefacts."
 
 [requirement.status]
 state = "Approved"
@@ -37,6 +37,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Changed 'full requirement set' to 'validated requirement set' to align with child RQTK-CLI-0006; changed 'caller-specified' to 'user-specified'."
 
 [requirement.tags]
 keywords = ["export", "json", "csv", "markdown"]

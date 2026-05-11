@@ -3,12 +3,12 @@ id = "RQTK-CLI-0005"
 title = "Graph Export"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk graph command shall export the traceability graph in Graphviz DOT format, writing output to stdout by default or to a file when --output is specified."
+text = "The rqtk graph command shall export the traceability graph in Graphviz DOT format and write the output to stdout unless a file path is provided via --output."
 rationale = "DOT is the de-facto interchange format for directed graphs; it can be rendered by Graphviz, Mermaid converters, and CI visualisation pipelines without additional tooling installed alongside rqtk."
 
 [requirement.status]
@@ -41,6 +41,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Replaced dangling participial phrase 'writing output to stdout by default' with a full predicate joined to the main clause."
 
 [requirement.tags]
 keywords = ["graph", "dot", "graphviz", "visualisation"]

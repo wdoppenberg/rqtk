@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0009"
+title = "Lint Command Exit Codes"
+category = "CLI"
+type = "Interface"
+version = "0.1.0"
+created = "2026-05-07T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk lint command shall exit with code 0 when no violations are present and with code 2 when at least one Error-severity violation is present."
+rationale = "A predictable exit code allows CI pipelines to gate merges on requirement quality; code 2 (not 1) is chosen so that standard shell errors (exit 1) remain distinguishable from lint failures."
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0004", "RQTK-SYS-0008"]
+
+[requirement.allocation]
+software_modules = ["cli::lint"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "Clean fixture exits 0; fixture with an Error-severity violation exits 2; fixture with only Warning-severity violations exits 0."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-009-01"
+name = "Exit code test"
+procedure = "Run rqtk lint on the clean firesat-obc fixture; assert exit code 0. Inject a missing-rationale (Error-severity) violation; run again; assert exit code 2."
+expected_result = "Exit codes 0 and 2 respectively."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split from RQTK-CLI-0002 to separate output format (CLI-0002) from exit-code behavior."
+
+[requirement.tags]
+keywords = ["lint", "exit-code", "ci"]
+labels = ["bootstrap"]

@@ -1,15 +1,15 @@
 [requirement]
 id = "RQTK-CLI-0007"
-title = "Baseline Versioning"
+title = "Baseline Version Validation"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk baseline command shall accept a semantic version string, validate it as a valid semver, update the project version field in the project config, and record a timestamp of the baseline event."
-rationale = "Baselines are formal configuration-management milestones; enforcing semver syntax prevents freeform version strings that break sorting and automated version comparisons."
+text = "The rqtk baseline command shall exit non-zero without modifying any project files when the provided version string does not conform to the Semantic Versioning 2.0.0 specification."
+rationale = "Baselines are formal configuration-management milestones; rejecting non-semver strings prevents freeform version labels that break sorting and automated version comparisons from entering the project record."
 
 [requirement.status]
 state = "Approved"
@@ -27,13 +27,13 @@ method = "Test"
 level = "Integration"
 phase = "Development"
 owner = "Project Lead"
-success_criteria = "rqtk baseline 2.0.0 updates project.version to '2.0.0' in requirements.toml; rqtk baseline not-a-semver exits non-zero without modifying requirements.toml."
+success_criteria = "rqtk baseline not-a-semver exits with a non-zero exit code and rqtk.toml is byte-for-byte identical to its pre-command state."
 
 [[requirement.verification.activities]]
 id = "VA-CLI-007-01"
-name = "Baseline update test"
-procedure = "Copy firesat-obc fixture to a temp dir; run rqtk baseline 2.0.0; parse resulting requirements.toml and assert project.version == '2.0.0'."
-expected_result = "project.version field updated to '2.0.0'."
+name = "Invalid semver rejection test"
+procedure = "Copy a fixture to a temp dir; record the SHA-256 of rqtk.toml; run rqtk baseline not-a-semver; assert exit code is non-zero and SHA-256 of rqtk.toml is unchanged."
+expected_result = "Non-zero exit code; rqtk.toml SHA-256 unchanged."
 status = "Planned"
 
 [[requirement.history]]
@@ -42,6 +42,12 @@ date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
 
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split four-predicate compound statement; successful update behavior split to RQTK-CLI-0012. Renamed title to 'Baseline Version Validation'. Replaced tautological 'validate it as a valid semver' with 'conform to the Semantic Versioning 2.0.0 specification'."
+
 [requirement.tags]
-keywords = ["baseline", "semver", "versioning", "configuration-management"]
+keywords = ["baseline", "semver", "validation", "configuration-management"]
 labels = ["bootstrap"]

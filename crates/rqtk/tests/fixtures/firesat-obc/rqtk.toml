@@ -52,6 +52,14 @@ methods = ["Test", "Analysis", "Inspection", "Demonstration"]
 levels = ["Unit", "Integration", "System", "Acceptance"]
 phases = ["Development", "Pre-launch", "On-orbit"]
 
+# Enforce NASA Appendix D method-per-type alignment for this programme.
+[verification.method_constraints]
+Design      = ["Analysis", "Inspection"]
+Functional  = ["Test", "Demonstration", "Analysis"]
+Performance = ["Test", "Analysis"]
+Interface   = ["Test", "Inspection"]
+Constraint  = ["Analysis", "Inspection"]
+
 [lifecycle]
 states = ["Draft", "Review", "Approved", "Implemented", "Verified", "Deprecated"]
 default_state = "Draft"
@@ -61,6 +69,15 @@ levels = ["Critical", "High", "Medium", "Low"]
 
 [criticality]
 levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
+
+[traceability]
+# Superseded requirements must exist and be Deprecated before a replacement
+# can reference them — critical for NASA configuration-management audits.
+validate_supersedes = true
+
+# All non-root requirements on this programme must cite their originating
+# standard or stakeholder document in derived_from.
+validate_derived_from = true
 
 [[standards]]
 id = "NASA-STD-8739.8"
@@ -79,13 +96,29 @@ approvers = ["Systems Engineer", "Project Manager", "Safety Engineer"]
 [validation]
 require_rationale = true
 require_verification_method = true
+
+# SYS-level requirements on this programme must state their assumptions
+# explicitly — required by the mission ConOps review board.
+require_assumptions_for_levels = ["SYS"]
+
 require_parent_for_levels = ["SW", "HW", "ICD"]
 forbid_orphans = true
 forbid_circular_traces = true
 allow_tbd = false
-allow_tbr = false
+
+# TBRs are permitted on this programme during Phase-B; they must be resolved
+# before the System Requirements Review (SRR).
+allow_tbr = true
+tbr_required_fields = ["id", "value_estimate", "owner", "closeout_date"]
+
 shall_keywords = ["shall"]
-forbidden_keywords = []
+
+# Enforce NASA Appendix C banned-word policy on all requirement statements.
+forbidden_keywords = [
+  "flexible", "easy", "easily", "sufficient", "robust", "safe",
+  "adequate", "user-friendly", "appropriate", "fast", "quickly",
+  "portable", "lightweight", "maximize", "minimize",
+]
 
 [export]
 formats = ["json", "csv", "markdown"]

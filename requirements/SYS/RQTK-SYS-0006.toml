@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-SYS-0006"
+title = "VCS Merge Compatibility"
+category = "SYS"
+type = "Design"
+version = "0.1.0"
+created = "2026-05-07T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
+
+[requirement.statement]
+text = "Each rqtk requirement file shall contain only plain-text UTF-8 content such that a merge conflict between concurrent edits to different fields of the same file is resolvable by standard three-way VCS merge tooling without rqtk."
+rationale = "Plain-text, field-per-line TOML means git's three-way merge can resolve most concurrent edits automatically; binary or encoded content would make every conflict a manual, tool-assisted exercise."
+assumptions = [
+  "The VCS in use supports three-way merge (e.g., git).",
+  "Each logical field occupies its own line or lines in the TOML file.",
+]
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+
+[requirement.verification]
+method = "Demonstration"
+level = "System"
+phase = "Release"
+owner = "Project Lead"
+success_criteria = "Two concurrent edits to different fields of the same requirement file (e.g., one changes 'priority', the other changes 'state') are merged by 'git merge' without conflict markers; the resulting file passes rqtk lint with exit code 0."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-006-01"
+name = "Concurrent field edit merge demonstration"
+procedure = "In a git repository, create two branches each modifying a different field of RQTK-SYS-0001; merge one branch into the other; assert git reports no conflict and the merged file passes rqtk lint."
+expected_result = "No conflict markers; rqtk lint exits 0 on the merged file."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split from RQTK-SYS-0002 to separate TOML format conformance (SYS-0002) from VCS merge compatibility."
+
+[requirement.tags]
+keywords = ["vcs", "merge", "plain-text", "git"]
+labels = ["bootstrap"]

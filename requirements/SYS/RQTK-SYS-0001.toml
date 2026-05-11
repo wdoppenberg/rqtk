@@ -3,13 +3,13 @@ id = "RQTK-SYS-0001"
 title = "Requirement Lifecycle Management"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "rqtk shall enable engineers to create, update, validate, version, and retire individual requirements throughout their full lifecycle."
-rationale = "A requirement that cannot be tracked from creation to retirement loses traceability and becomes a maintenance liability; lifecycle coverage is the minimum unit of value for any requirements tool."
+text = "rqtk shall support the full lifecycle of individual requirements, including creation, update, validation, versioning, and deprecation."
+rationale = "A requirement that cannot be tracked from creation to deprecation loses traceability and becomes a maintenance liability; lifecycle coverage is the minimum unit of value for any requirements tool."
 
 [requirement.status]
 state = "Approved"
@@ -35,8 +35,8 @@ status = "Planned"
 [[requirement.verification.activities]]
 id = "VA-SYS-001-02"
 name = "Requirement update verification"
-procedure = ""
-expected_result = "Field-for-field equality after round-trip for each state value."
+procedure = "Create a requirement fixture with state='Draft'; invoke rqtk to update the state field to 'Review'; reload the file from disk; assert the state field equals 'Review' and all other fields are unchanged."
+expected_result = "State field equals 'Review'; all other fields retain their initial values."
 status = "Planned"
 
 [[requirement.history]]
@@ -44,6 +44,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft — self-hosted requirements bootstrapped via dogfooding session."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Reworded from operational form ('enable engineers to') to product form; aligned terminal lifecycle state name from 'retire' to 'deprecation'; completed empty VA-SYS-001-02 procedure."
 
 [requirement.tags]
 keywords = ["lifecycle", "crud", "core"]

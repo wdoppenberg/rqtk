@@ -3,12 +3,12 @@ id = "RQTK-CLI-0003"
 title = "Traceability Query"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk trace command shall accept a requirement ID and print both the upward path (ancestors) and the downward path (descendants) of that requirement in the traceability graph."
+text = "The rqtk trace command shall, given a requirement ID, print the full upward path (ancestors) and downward path (descendants) of that requirement within the traceability graph."
 rationale = "Engineers need to answer two questions: 'what stakeholder need justifies this requirement?' (upward) and 'what lower-level requirements implement this?' (downward); a single command that shows both eliminates manual graph traversal."
 
 [requirement.status]
@@ -41,6 +41,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Restructured statement to make ID the input condition and path printing the single predicate, eliminating the implicit dual-predicate form."
 
 [requirement.tags]
 keywords = ["trace", "traceability", "ancestors", "descendants"]

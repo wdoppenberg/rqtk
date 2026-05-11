@@ -48,8 +48,20 @@ pub fn issue_warning(
 }
 
 pub fn is_single_shall_sentence_violation(text: &str, shall_keywords: &[String]) -> bool {
-    let sentence_count =
-        text.matches('.').count() + text.matches('!').count() + text.matches('?').count();
+    // Count only terminal punctuation: '.' followed by whitespace or end-of-string
+    // (excludes dots inside version numbers like "2.0.0" or filenames like "rqtk.toml"),
+    // plus '!' and '?' anywhere.
+    let dot_sentences = text
+        .char_indices()
+        .filter(|&(i, c)| {
+            c == '.'
+                && text[i + 1..]
+                    .chars()
+                    .next()
+                    .is_none_or(|next| next.is_whitespace())
+        })
+        .count();
+    let sentence_count = dot_sentences + text.matches('!').count() + text.matches('?').count();
     if sentence_count != 1 {
         return true;
     }

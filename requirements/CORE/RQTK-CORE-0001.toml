@@ -1,15 +1,18 @@
 [requirement]
 id = "RQTK-CORE-0001"
-title = "Type-State Validation Pipeline"
+title = "Validation-Gated API"
 category = "CORE"
 type = "Design"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "rqtk-core shall model the requirement set as a type-state machine such that coverage and graph operations are only accessible on a Validated set, making it a compile-time error to query coverage or export a graph without first running validation."
-rationale = "Runtime guards on state are easy to omit and leave no trace in the API; type-state makes the wrong order of operations impossible to compile, eliminating an entire class of misuse without defensive code."
+text = "rqtk-core shall prevent coverage queries and graph exports on requirement sets that have not successfully completed the validation pass."
+rationale = "A guard on operation order eliminates an entire class of misuse: querying coverage or exporting a graph before validation would produce results that silently ignore policy violations. Enforcing this at the API level means the misuse cannot occur without deliberate circumvention."
+assumptions = [
+  "rqtk-core is implemented in a language that supports compile-time or type-level enforcement of operation preconditions.",
+]
 
 [requirement.status]
 state = "Approved"
@@ -27,13 +30,13 @@ method = "Analysis"
 level = "Unit"
 phase = "Development"
 owner = "Project Lead"
-success_criteria = "RequirementSet<Loaded> does not expose coverage_gaps() or to_dot(); RequirementSet<Validated> exposes both; verified by attempting to call these methods on Loaded and observing a compile error."
+success_criteria = "The public API of rqtk-core does not expose coverage_gaps() or to_dot() on an unvalidated RequirementSet, confirmed by inspection of the public API surface and a compilation-failure test that attempts to call these methods before validate() returns."
 
 [[requirement.verification.activities]]
 id = "VA-CORE-001-01"
-name = "Type-state compile-time enforcement analysis"
-procedure = "Write a test that calls coverage_gaps() on a RequirementSet<Loaded> value; verify the Rust compiler rejects the program with a type error."
-expected_result = "Compiler error referencing method not found on RequirementSet<Loaded>."
+name = "API enforcement analysis"
+procedure = "Inspect the public API surface of rqtk_core::repository; confirm that coverage_gaps() and to_dot() are absent on the pre-validation type. Attempt to call coverage_gaps() on an unvalidated RequirementSet in a test and confirm the program is rejected."
+expected_result = "Methods absent on unvalidated type; program is rejected (compile-time or runtime error depending on enforcement mechanism)."
 status = "Planned"
 
 [[requirement.history]]
@@ -42,6 +45,12 @@ date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
 
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Removed implementation prescription ('type-state machine', 'compile-time error') from requirement statement; restated as behavioral constraint. Design choice (type-state) moved to rationale and architecture documentation. Added assumption about language capabilities."
+
 [requirement.tags]
-keywords = ["type-state", "phantom-data", "api-safety", "rust"]
+keywords = ["api-safety", "validation-gate", "precondition"]
 labels = ["bootstrap"]

@@ -4,3 +4,4 @@ resolver = "3"
 
 [workspace.dependencies]
 toml = "1.1.2"
+serde = "1"

@@ -1,15 +1,15 @@
 [requirement]
 id = "RQTK-CLI-0006"
-title = "Requirement Export"
+title = "Requirement Export Serialization"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk export command shall serialize the validated requirement set to JSON, CSV, or Markdown as selected by --format, and shall write output to stdout or to the path given by --output."
-rationale = "Exporting only validated requirements prevents corrupted or policy-violating data from propagating into downstream tools and documents."
+text = "The rqtk export command shall serialize the validated requirement set to the format selected by --format, supporting JSON, CSV, and Markdown."
+rationale = "Exporting only the validated set prevents corrupted or policy-violating data from propagating into downstream tools and documents."
 
 [requirement.status]
 state = "Approved"
@@ -27,13 +27,13 @@ method = "Test"
 level = "Integration"
 phase = "Development"
 owner = "Project Lead"
-success_criteria = "JSON output validates with serde_json; CSV has correct header and row count; Markdown contains one H2 heading per requirement; --output writes file at specified path."
+success_criteria = "JSON output validates with serde_json and contains one object per requirement; CSV has a header row and one data row per requirement; Markdown contains one H2 heading per requirement."
 
 [[requirement.verification.activities]]
 id = "VA-CLI-006-01"
 name = "Export format correctness test"
-procedure = "Run rqtk export --format json/csv/markdown against the firesat-obc fixture; assert format-specific correctness and record count equals 8."
-expected_result = "All three formats valid; each contains 8 requirement entries."
+procedure = "Run rqtk export --format json, --format csv, and --format markdown against the firesat-obc fixture; assert format-specific correctness for each and that record count equals the total number of requirements in the fixture."
+expected_result = "All three formats valid; each contains the correct number of requirement entries."
 status = "Planned"
 
 [[requirement.history]]
@@ -42,6 +42,12 @@ date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
 
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split compound 'shall…and shall' statement; output destination split to RQTK-CLI-0011. Renamed title to reflect serialization scope. Removed hard-coded record count (8) from success criteria."
+
 [requirement.tags]
-keywords = ["export", "json", "csv", "markdown"]
+keywords = ["export", "json", "csv", "markdown", "serialization"]
 labels = ["bootstrap"]

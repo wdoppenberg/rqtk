@@ -3,13 +3,13 @@ id = "RQTK-SYS-0002"
 title = "TOML-Based File Storage"
 category = "SYS"
 type = "Design"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "rqtk shall store each requirement as a standalone TOML file that is human-readable, diff-friendly, and manageable under standard version-control systems."
-rationale = "One-file-per-requirement makes merge conflicts local to individual requirements; TOML is readable without tooling and has stable semantics that survive editor reformatting."
+text = "rqtk shall store each requirement as a single standalone TOML file conforming to the TOML 1.0 specification."
+rationale = "One-file-per-requirement isolates merge conflicts to individual requirements; TOML 1.0 has stable semantics that survive editor reformatting and are parseable without preprocessing."
 assumptions = [
   "Users have access to a POSIX filesystem.",
   "A version-control system (e.g., git) is used alongside rqtk.",
@@ -27,13 +27,13 @@ method = "Inspection"
 level = "System"
 phase = "Release"
 owner = "Project Lead"
-success_criteria = "Each requirement file contains exactly one [requirement] TOML table; files parse with the standard TOML parser without preprocessing; two independent engineers can resolve a conflicting edit without rqtk tooling."
+success_criteria = "Each requirement file contains exactly one [requirement] TOML table and parses without preprocessing using a TOML 1.0-compliant parser."
 
 [[requirement.verification.activities]]
 id = "VA-SYS-002-01"
 name = "File format inspection"
-procedure = "Open any requirement TOML file in a plain text editor and verify it contains valid TOML that maps to the RequirementBody schema without any binary or encoded blobs."
-expected_result = "File is valid TOML, human-readable, and schema-conformant."
+procedure = "Open any requirement TOML file in a plain text editor and verify it contains valid TOML 1.0 that maps to the RequirementBody schema without any binary or encoded blobs."
+expected_result = "File is valid TOML 1.0, contains exactly one [requirement] table, and is schema-conformant."
 status = "Planned"
 
 [[requirement.history]]
@@ -41,6 +41,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Removed unverifiable qualifiers ('human-readable', 'diff-friendly', 'manageable'); scoped to TOML 1.0 conformance only. VCS merge-compatibility split to RQTK-SYS-0006."
 
 [requirement.tags]
 keywords = ["storage", "toml", "version-control"]

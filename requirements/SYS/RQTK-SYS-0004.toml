@@ -3,13 +3,13 @@ id = "RQTK-SYS-0004"
 title = "Policy-Driven Validation"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "rqtk shall enforce a configurable set of lint rules against all loaded requirements and shall report each violation with a stable rule code, severity, affected requirement ID, and source file path."
-rationale = "Stable rule codes enable CI gates, suppression lists, and audit trails; structured output allows downstream tooling to parse and filter results without string matching."
+text = "rqtk shall evaluate all loaded requirements against the lint rules defined in the project configuration."
+rationale = "Config-driven evaluation is the core value proposition; it decouples domain vocabulary (allowed states, categories, types) from the tool and lets any project enforce its own policy without modifying rqtk."
 
 [requirement.status]
 state = "Approved"
@@ -23,12 +23,12 @@ method = "Test"
 level = "System"
 phase = "Release"
 owner = "Project Lead"
-success_criteria = "Each of the 18 lint rules (RQ001–RQ018) is triggered by at least one fixture; output for each violation includes code, severity, requirement ID, and file path; exit code is 0 for a clean set and 2 when any Error-severity issue is present."
+success_criteria = "Each of the 18 lint rules (RQ001–RQ018) is triggered by at least one fixture and produces output; no false positives appear on the clean firesat-obc fixture."
 
 [[requirement.verification.activities]]
 id = "VA-SYS-004-01"
 name = "Lint rule coverage matrix"
-procedure = "For each lint rule RQ001–RQ018, construct a minimal fixture that triggers it; run rqtk lint and verify the expected code appears in output."
+procedure = "For each lint rule RQ001–RQ018, construct a minimal fixture that triggers it; run rqtk lint and verify the expected rule code appears in the output."
 expected_result = "All 18 codes reachable; no false positives on the clean firesat-obc fixture."
 status = "Planned"
 
@@ -37,6 +37,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split compound 'shall…and shall' statement; evaluation retained here. Structured violation reporting split to RQTK-SYS-0008. Replaced 'configurable set of lint rules' with 'rules defined in the project configuration'."
 
 [requirement.tags]
 keywords = ["validation", "lint", "policy", "ci"]

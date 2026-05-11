@@ -1,14 +1,14 @@
 [requirement]
 id = "RQTK-CLI-0001"
-title = "Scaffold Add Requirement"
+title = "Add Requirement"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk add command shall generate a requirement TOML file with an auto-incremented ID, applying project-config defaults for state, priority, verification method, level, and phase."
+text = "The rqtk add command shall generate a requirement TOML file with an auto-incremented ID, with default field values for state, priority, verification method, level, and phase drawn from the project configuration."
 rationale = "Manual ID assignment is error-prone and slows authoring; auto-increment with config defaults ensures every new requirement starts in a valid, policy-conformant state without requiring the engineer to memorise allowed values."
 
 [requirement.status]
@@ -20,19 +20,19 @@ criticality = "Non-Critical"
 parents = ["RQTK-SYS-0001", "RQTK-SYS-0002"]
 
 [requirement.allocation]
-software_modules = ["cli::new"]
+software_modules = ["cli::add"]
 
 [requirement.verification]
 method = "Test"
 level = "Integration"
 phase = "Development"
 owner = "Project Lead"
-success_criteria = "Running rqtk new --category X produces a TOML file whose ID is one greater than the previous maximum for category X and whose default fields match requirements.toml config values."
+success_criteria = "Running rqtk add --category X produces a TOML file whose ID is one greater than the previous maximum for category X and whose default fields match the values configured in rqtk.toml."
 
 [[requirement.verification.activities]]
 id = "VA-CLI-001-01"
 name = "ID auto-increment test"
-procedure = "Given a fixture with RQTK-SYS-0001 and RQTK-SYS-0002, run rqtk new --category SYS --title T --statement S; assert the created file has ID RQTK-SYS-0003."
+procedure = "Given a fixture with RQTK-SYS-0001 and RQTK-SYS-0002, run rqtk add --category SYS --title T --statement S; assert the created file has ID RQTK-SYS-0003."
 expected_result = "File created with ID RQTK-SYS-0003."
 status = "Planned"
 
@@ -42,6 +42,12 @@ date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
 
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Renamed title from 'Scaffold Add Requirement' to 'Add Requirement'; fixed participial phrase 'applying project-config defaults' to a full predicate; confirmed command and module names as 'add' and 'cli::add'."
+
 [requirement.tags]
-keywords = ["new", "scaffold", "auto-increment"]
+keywords = ["add", "scaffold", "auto-increment"]
 labels = ["bootstrap"]

@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0012"
+title = "Baseline Record Update"
+category = "CLI"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-07T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk baseline command shall, upon receiving a version string that conforms to the Semantic Versioning 2.0.0 specification, update the project.version field in rqtk.toml to that version and record the baseline timestamp in the same file."
+rationale = "Updating the project config and recording the timestamp in a single atomic step prevents a partially-applied baseline (version updated but no timestamp) from entering the project record."
+
+[requirement.status]
+state = "Approved"
+priority = "Medium"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0001"]
+
+[requirement.allocation]
+software_modules = ["cli::baseline"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "After rqtk baseline 2.0.0, rqtk.toml has project.version = '2.0.0' and a baseline timestamp field set to a valid ISO 8601 datetime."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-012-01"
+name = "Baseline update test"
+procedure = "Copy a fixture to a temp dir; run rqtk baseline 2.0.0; parse the resulting rqtk.toml and assert project.version equals '2.0.0' and the baseline timestamp is a valid ISO 8601 datetime."
+expected_result = "project.version field equals '2.0.0'; baseline timestamp is a valid ISO 8601 datetime."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split from RQTK-CLI-0007 to separate rejection of invalid input (CLI-0007) from the successful update behavior."
+
+[requirement.tags]
+keywords = ["baseline", "semver", "versioning", "configuration-management"]
+labels = ["bootstrap"]

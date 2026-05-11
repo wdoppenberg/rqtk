@@ -1,0 +1,43 @@
+[requirement]
+id = "RQTK-SYS-0008"
+title = "Structured Violation Reporting"
+category = "SYS"
+type = "Functional"
+version = "0.1.0"
+created = "2026-05-07T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
+
+[requirement.statement]
+text = "rqtk shall report each lint violation as a record containing a stable rule code, a severity level, the affected requirement ID, and the source file path."
+rationale = "Stable rule codes enable CI gates, suppression lists, and audit trails; structured output allows downstream tooling to parse and filter violations without fragile string matching."
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+criticality = "Mission-Critical"
+
+[requirement.traceability]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Release"
+owner = "Project Lead"
+success_criteria = "For each triggered lint rule, the output record contains a non-empty rule code matching the pattern RQnnn, one of the defined severity levels, the ID of the offending requirement, and an absolute or relative path to the source TOML file."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-008-01"
+name = "Violation record structure test"
+procedure = "Trigger lint rule RQ007 (missing rationale) on a fixture; parse the output and assert that all four fields — rule code, severity, requirement ID, file path — are present and non-empty."
+expected_result = "Output record contains rule code 'RQ007', severity 'Error', the fixture requirement ID, and the file path of the offending TOML file."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split from RQTK-SYS-0004 to separate evaluation (SYS-0004) from structured violation reporting."
+
+[requirement.tags]
+keywords = ["lint", "violation", "reporting", "rule-code", "ci"]
+labels = ["bootstrap"]

@@ -1,0 +1,47 @@
+[requirement]
+id = "RQTK-CLI-0011"
+title = "Export Output Destination"
+category = "CLI"
+type = "Interface"
+version = "0.1.0"
+created = "2026-05-07T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
+
+[requirement.statement]
+text = "The rqtk export command shall write serialized output to stdout when no output path is specified and to the path provided by --output when specified."
+rationale = "Defaulting to stdout keeps the command composable with shell pipelines; --output enables writing directly to a file for use in CI artefact collection without shell redirection."
+
+[requirement.status]
+state = "Approved"
+priority = "High"
+criticality = "Non-Critical"
+
+[requirement.traceability]
+parents = ["RQTK-SYS-0005"]
+
+[requirement.allocation]
+software_modules = ["cli::export"]
+
+[requirement.verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+owner = "Project Lead"
+success_criteria = "rqtk export --format json with no --output flag writes JSON to stdout; rqtk export --format json --output /tmp/out.json writes the same content to /tmp/out.json and produces no stdout output."
+
+[[requirement.verification.activities]]
+id = "VA-CLI-011-01"
+name = "Export output destination test"
+procedure = "Run rqtk export --format json against the firesat-obc fixture; capture stdout and assert it is valid JSON. Run again with --output /tmp/test-export.json; assert stdout is empty and /tmp/test-export.json contains valid JSON with the same content."
+expected_result = "Stdout contains JSON without --output; file contains JSON and stdout is empty with --output."
+status = "Planned"
+
+[[requirement.history]]
+version = "0.1.0"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split from RQTK-CLI-0006 to separate serialization format (CLI-0006) from output destination behavior."
+
+[requirement.tags]
+keywords = ["export", "output", "stdout", "file"]
+labels = ["bootstrap"]

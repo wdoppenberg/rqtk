@@ -151,19 +151,18 @@ fn lint_prints_summary_with_zero_errors() {
     rqtk(&req_dir)
         .arg("lint")
         .assert()
-        .stdout(predicate::str::contains("lint summary:"))
-        .stdout(predicate::str::contains("0 error(s)"));
+        .stdout(predicate::str::contains("All requirements passed lint"));
 }
 
 #[test]
 fn lint_prints_all_requirement_ids_in_issues_when_present() {
     // The fixture has no errors so the output should not contain error lines,
-    // but the summary line must always be present.
+    // but the success line must always be present.
     let req_dir = fixture_requirements("firesat-obc");
     rqtk(&req_dir)
         .arg("lint")
         .assert()
-        .stdout(predicate::str::contains("lint summary:"));
+        .stdout(predicate::str::contains("All requirements passed lint"));
 }
 
 /// VA-CLI-002-01 (negative): missing rationale should exit 2 and report RQ007.
@@ -214,7 +213,7 @@ fn trace_upward_path_reaches_system_root() {
         .arg("FOBC-SW-0001")
         .assert()
         .success()
-        .stdout(predicate::str::contains("upward:"))
+        .stdout(predicate::str::contains("Parents"))
         .stdout(predicate::str::contains("FOBC-SYS-0001"));
 }
 
@@ -227,7 +226,7 @@ fn trace_downward_path_from_root_includes_children() {
         .arg("FOBC-SYS-0001")
         .assert()
         .success()
-        .stdout(predicate::str::contains("downward:"))
+        .stdout(predicate::str::contains("Children"))
         .stdout(predicate::str::contains("FOBC-SW-0001"))
         .stdout(predicate::str::contains("FOBC-HW-0001"));
 }
@@ -258,8 +257,8 @@ fn trace_leaf_has_empty_downward_section() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    // "downward:" section exists but contains only the root ID itself
-    let downward_start = text.find("downward:").unwrap();
+    // "Children" section exists but contains only the root ID itself
+    let downward_start = text.find("Children").unwrap();
     let downward_section = &text[downward_start..];
     assert!(downward_section.contains("FOBC-ICD-0001"));
     assert!(!downward_section.contains("FOBC-SW-0001"));
@@ -480,9 +479,7 @@ fn diff_reports_no_deltas_for_unknown_versions() {
         .arg("9.9.9")
         .assert()
         .success()
-        .stdout(predicate::str::contains(
-            "no requirement history deltas found",
-        ));
+        .stdout(predicate::str::contains("No deltas between"));
 }
 
 #[verifies("VA-CLI-008-01")]
@@ -557,9 +554,8 @@ fn baseline_updates_project_version() {
         .arg("2.0.0")
         .assert()
         .success()
-        .stdout(predicate::str::contains(
-            "updated baseline version to 2.0.0",
-        ));
+        .stdout(predicate::str::contains("Baseline updated"))
+        .stdout(predicate::str::contains("2.0.0"));
     let config = std::fs::read_to_string(req_dir.parent().unwrap().join("rqtk.toml")).unwrap();
     assert!(
         config.contains("2.0.0"),
@@ -652,7 +648,7 @@ phase = "Development"
 
 // ── VA-SYS-003-02: broken reference via CLI ───────────────────────────────────
 
-#[verifies("VA-SYS-003-02")]
+// #[verifies("VA-SYS-003-02")]
 #[test]
 fn lint_broken_parent_exits_2_and_reports_rq015() {
     let req_toml = r#"[requirement]

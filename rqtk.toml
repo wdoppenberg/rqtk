@@ -46,6 +46,19 @@ methods = ["Test", "Analysis", "Inspection", "Demonstration"]
 levels = ["Unit", "Integration", "System", "Acceptance"]
 phases = ["Development", "Pre-release", "Release"]
 
+# Optional: constrain which verification methods are valid per requirement type.
+# When populated, lint rule RQ019 fires if a type/method combination is not listed.
+# Leave empty (default) for no constraint — any method is valid for any type.
+#
+# Example (NASA Appendix D alignment):
+# [verification.method_constraints]
+# Design      = ["Analysis", "Inspection"]
+# Functional  = ["Test", "Demonstration", "Analysis"]
+# Performance = ["Test", "Analysis"]
+# Interface   = ["Test", "Inspection"]
+# Constraint  = ["Analysis", "Inspection"]
+[verification.method_constraints]
+
 [lifecycle]
 states = ["Draft", "Review", "Approved", "Implemented", "Verified", "Deprecated"]
 default_state = "Draft"
@@ -56,6 +69,16 @@ levels = ["Critical", "High", "Medium", "Low"]
 [criticality]
 levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
 
+[traceability]
+# When true, lint verifies that any ID listed in a requirement's `supersedes`
+# field exists in the repository and has state = "Deprecated".
+validate_supersedes = true
+
+# When true, non-root requirements must carry a `derived_from` field naming
+# the external standard, stakeholder need, or higher-level document from which
+# they are derived (in addition to the parent ID chain).
+validate_derived_from = false
+
 [change_control]
 ccb_required_after = "Approved"
 require_signoff = false
@@ -64,12 +87,30 @@ approvers = ["Project Lead"]
 [validation]
 require_rationale = true
 require_verification_method = true
+
+# Levels listed here must have at least one entry in `statement.assumptions`.
+# Leave empty (default) to allow assumption-free requirements at any level.
+require_assumptions_for_levels = []
+
 require_parent_for_levels = ["CLI", "CORE"]
 forbid_orphans = true
 forbid_circular_traces = true
 allow_tbd = false
 allow_tbr = false
+
+# Fields that must be present on a [requirement.status.tbr] block when
+# allow_tbr = true. Has no effect when allow_tbr = false.
+tbr_required_fields = ["id", "value_estimate", "owner", "closeout_date"]
+
 shall_keywords = ["shall"]
+
+# Uncomment to enforce NASA Systems Engineering Handbook Appendix C
+# banned-word policy (lint rule RQ020 — forbidden keyword in statement text):
+# forbidden_keywords = [
+#   "flexible", "easy", "easily", "sufficient", "robust", "safe",
+#   "adequate", "user-friendly", "appropriate", "fast", "quickly",
+#   "portable", "lightweight", "maximize", "minimize",
+# ]
 forbidden_keywords = []
 
 [export]

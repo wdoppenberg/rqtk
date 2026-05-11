@@ -3,12 +3,12 @@ id = "RQTK-CLI-0004"
 title = "Coverage Gap Detection"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk coverage command shall identify and report all requirements that lack success criteria or have no verification activities defined, and shall exit with code 3 when any gaps are present."
+text = "The rqtk coverage command shall identify and report all requirements that either have an empty success_criteria field or have zero verification activities defined."
 rationale = "Verification coverage is a contractual obligation on most engineering programmes; an automated gap report prevents unverified requirements from reaching design reviews undetected."
 
 [requirement.status]
@@ -17,7 +17,7 @@ priority = "High"
 criticality = "Non-Critical"
 
 [requirement.traceability]
-parents = ["RQTK-SYS-0004"]
+parents = ["RQTK-SYS-0004", "RQTK-SYS-0008"]
 
 [requirement.allocation]
 software_modules = ["cli::coverage"]
@@ -27,13 +27,13 @@ method = "Test"
 level = "Integration"
 phase = "Development"
 owner = "Project Lead"
-success_criteria = "A fixture with one requirement missing success_criteria causes exit code 3 and lists that requirement ID; a fully-covered fixture exits 0."
+success_criteria = "A fixture with one requirement whose success_criteria field is empty causes that requirement ID to appear in the coverage report; a fixture where all requirements have non-empty success_criteria and at least one activity produces no gap entries."
 
 [[requirement.verification.activities]]
 id = "VA-CLI-004-01"
-name = "Coverage gap exit code test"
-procedure = "Add a requirement with no success_criteria to a fixture; run rqtk coverage; assert exit code 3 and the requirement ID in output. Remove the gap; rerun; assert exit code 0."
-expected_result = "Exit code 3 with gap present; exit code 0 without."
+name = "Coverage gap report test"
+procedure = "Add a requirement with an empty success_criteria field to a fixture; run rqtk coverage; assert the requirement ID appears in the output. Remove the gap; rerun; assert no IDs appear in the output."
+expected_result = "Requirement ID present in output when gap exists; no IDs in output when no gaps exist."
 status = "Planned"
 
 [[requirement.history]]
@@ -41,6 +41,12 @@ version = "0.1.0"
 date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
+
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split compound 'shall…and shall' statement; exit-code behavior split to RQTK-CLI-0010. Defined 'gap' explicitly as empty success_criteria or zero activities. Updated parents to include RQTK-SYS-0008."
 
 [requirement.tags]
 keywords = ["coverage", "verification", "gaps"]

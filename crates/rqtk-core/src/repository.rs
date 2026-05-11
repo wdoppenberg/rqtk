@@ -77,31 +77,22 @@ impl RequirementSet<Loaded> {
         requirements_dir: impl AsRef<Path>,
     ) -> Result<Self, RqtkError> {
         let requirements_root = requirements_dir.as_ref().to_path_buf();
-        let config_path = requirements_root.join("requirements.toml");
+        let repo_root = requirements_root
+            .parent()
+            .map_or_else(|| requirements_root.clone(), Path::to_path_buf);
+        let config_path = repo_root.join("rqtk.toml");
         let config_str = read_file(&config_path)?;
-        let config: ProjectConfig =
+        let config: RqtkConfig =
             toml::from_str(&config_str).map_err(|source| RqtkError::TomlParse {
                 path: config_path.clone(),
                 source,
             })?;
-        let repo_root = requirements_root
-            .parent()
-            .map_or_else(|| requirements_root.clone(), Path::to_path_buf);
-        let repository_layout = RepositoryLayout {
-            requirements_dir: requirements_root
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("requirements")
-                .to_owned(),
-            required_files: Vec::new(),
-            required_dirs: Vec::new(),
-        };
         Self::load_from_parts(
             repo_root,
             requirements_root,
             config_path,
-            config,
-            repository_layout,
+            config.project_config,
+            config.repository,
         )
     }
 
@@ -138,9 +129,6 @@ impl RequirementSet<Loaded> {
 
         let toml_files = collect_toml_files(&requirements_root)?;
         for path in toml_files {
-            if path.file_name().and_then(|n| n.to_str()) == Some("requirements.toml") {
-                continue;
-            }
             let text = read_file(&path)?;
             let req_file: RequirementFile =
                 toml::from_str(&text).map_err(|source| RqtkError::TomlParse {

@@ -1,13 +1,13 @@
 pub mod ffi;
 
-use rqtk_core::{Loaded, RequirementSet};
+use rqtk_core::RequirementSet;
 use std::collections::BTreeSet;
 use std::path::Path;
 
 pub fn collect_verification_activity_ids_from_repo_root(
     repo_root: &Path,
 ) -> Result<Vec<String>, String> {
-    let set = RequirementSet::<Loaded>::load_from_repo_root(repo_root).map_err(|e| {
+    let set = RequirementSet::load_from_repo_root(repo_root).map_err(|e| {
         format!(
             "cannot load requirements from `{}`: {e}",
             repo_root.display()

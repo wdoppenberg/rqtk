@@ -1,15 +1,15 @@
 [requirement]
 id = "RQTK-CLI-0002"
-title = "Lint Command"
+title = "Lint Command Output"
 category = "CLI"
 type = "Functional"
-version = "0.1.0"
+version = "0.1.1"
 created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-06T00:00:00+00:00"
+updated = "2026-05-07T00:00:00+00:00"
 
 [requirement.statement]
-text = "The rqtk lint command shall validate all requirements in the project directory against the configured policy rules, print each issue in a human-readable format, and exit with code 0 on success, 2 when any Error-severity issue is present."
-rationale = "A predictable exit code allows CI pipelines to gate merges on requirement quality; code 2 (not 1) is reserved so that standard shell errors remain distinguishable from lint failures."
+text = "The rqtk lint command shall evaluate all requirements in the configured requirements directory against the policy rules defined in rqtk.toml and print each violation as a single line containing the rule code, severity, requirement ID, and file path."
+rationale = "Structured, one-violation-per-line output allows CI pipelines and downstream tools to parse results without fragile string matching; using the configured requirements directory keeps behavior reproducible across environments."
 
 [requirement.status]
 state = "Approved"
@@ -17,7 +17,7 @@ priority = "Critical"
 criticality = "Non-Critical"
 
 [requirement.traceability]
-parents = ["RQTK-SYS-0004"]
+parents = ["RQTK-SYS-0004", "RQTK-SYS-0008"]
 
 [requirement.allocation]
 software_modules = ["cli::lint"]
@@ -27,13 +27,13 @@ method = "Test"
 level = "Integration"
 phase = "Development"
 owner = "Project Lead"
-success_criteria = "Clean fixture exits 0; fixture with an Error-severity lint violation exits 2; output includes rule code, severity, and requirement ID for each issue."
+success_criteria = "Each output line for a violation contains the rule code, severity, and requirement ID as colon-separated fields; no output is produced for a clean fixture."
 
 [[requirement.verification.activities]]
 id = "VA-CLI-002-01"
-name = "Exit code test"
-procedure = "Run rqtk lint on the firesat-obc clean fixture; assert exit code 0. Inject a missing-rationale violation; run again; assert exit code 2 and RQ007 in output."
-expected_result = "Exit codes 0 and 2 respectively; RQ007 present in second run."
+name = "Violation output format test"
+procedure = "Inject a missing-rationale violation into a fixture; run rqtk lint; assert each output line for the violation contains rule code RQ007, severity, and the requirement ID. Run against the clean firesat-obc fixture; assert no violation lines are printed."
+expected_result = "Violation line contains RQ007, severity, and requirement ID; clean fixture produces no output."
 status = "Planned"
 
 [[requirement.history]]
@@ -42,6 +42,12 @@ date = "2026-05-06"
 author = "Wouter Doppenberg"
 change = "Initial draft."
 
+[[requirement.history]]
+version = "0.1.1"
+date = "2026-05-07"
+author = "Wouter Doppenberg"
+change = "Split three-predicate compound statement; exit-code behavior split to RQTK-CLI-0009. Replaced 'human-readable format' with specific field list. Replaced 'project directory' with 'configured requirements directory'. Updated parents to include RQTK-SYS-0008."
+
 [requirement.tags]
-keywords = ["lint", "validation", "ci", "exit-code"]
+keywords = ["lint", "validation", "output-format"]
 labels = ["bootstrap"]
