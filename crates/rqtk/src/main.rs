@@ -59,15 +59,34 @@ enum Command {
     },
     /// Show requirements that changed between two baseline tags.
     Diff { from: String, to: String },
+    /// Search requirements by string matching across fields.
+    Search {
+        /// Pattern to search for.
+        pattern: String,
+        /// Case-insensitive matching.
+        #[arg(short = 'i', long)]
+        ignore_case: bool,
+        /// Restrict search to specific fields: id, title, statement, rationale, notes, keywords.
+        #[arg(short, long, value_delimiter = ',')]
+        field: Option<Vec<String>>,
+    },
+    /// Open a requirement file in $EDITOR.
+    Open { id: String },
     /// Show the git commit history for a single requirement.
     Log { id: String },
+    /// Install a git pre-commit hook that runs `rqtk rehash` and `rqtk lint`.
+    InstallHook {
+        /// Overwrite an existing pre-commit hook.
+        #[arg(long)]
+        force: bool,
+    },
     /// Recompute and write content hashes for all requirements.
     Rehash,
     /// Generate a PDF requirements report via the Typst typesetting system.
     #[cfg(feature = "report")]
     Report {
         /// Output path: .pdf compiles via typst CLI, .typ writes the source.
-        #[arg(long, default_value = "requirements-report.pdf")]
+        #[arg(short, long, default_value = "requirements-report.pdf")]
         output: PathBuf,
     },
     /// Generate a C++ header with compile-time verification activity checks.
@@ -136,8 +155,28 @@ fn run() -> Result<(), Box<dyn Error>> {
         Command::Diff { from, to } => {
             commands::diff::run(root, from, to)?;
         }
+        Command::Search {
+            pattern,
+            ignore_case,
+            field,
+        } => {
+            commands::search::run(
+                root,
+                commands::search::SearchArgs {
+                    pattern,
+                    ignore_case,
+                    field,
+                },
+            )?;
+        }
+        Command::Open { id } => {
+            commands::open::run(root, id)?;
+        }
         Command::Log { id } => {
             commands::log::run(root, id)?;
+        }
+        Command::InstallHook { force } => {
+            commands::install_hook::run(root, force)?;
         }
         Command::Rehash => {
             commands::rehash::run(root)?;

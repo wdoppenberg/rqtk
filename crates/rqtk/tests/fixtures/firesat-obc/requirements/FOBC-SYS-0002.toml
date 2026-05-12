@@ -4,6 +4,15 @@ title = "Hardware Fault Detection and Response"
 category = "SYS"
 type = "Functional"
 
+keywords = [
+    "fault-detection",
+    "fdir",
+    "safety",
+    "response-time",
+    "pdr-approved",
+    "safety-critical",
+]
+
 [requirement.statement]
 text = "The OBC software shall detect and respond to critical hardware faults within 500 milliseconds of fault occurrence."
 rationale = "A 500 ms response budget ensures the spacecraft can be placed in a safe power configuration before a latent fault propagates into a mission-ending failure."
@@ -44,7 +53,3 @@ name = "Fault response timing analysis"
 procedure = "Perform worst-case execution time analysis of the fault interrupt handler."
 expected_result = "WCET analysis confirms handler completes within 400 ms, leaving 100 ms margin."
 status = "Passed"
-
-[requirement.tags]
-keywords = ["fault-detection", "fdir", "safety", "response-time"]
-labels = ["pdr-approved", "safety-critical"]

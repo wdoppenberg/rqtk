@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "c4840c50d521695c105c51a03754e3e909940c031c6a9b94a8e653d9a529c5c9"
 parameters = []
 
+keywords = [
+    "diff",
+    "baseline",
+    "change-control",
+    "delta",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk diff command shall, given two semver version strings previously recorded by rqtk baseline, report all requirements whose history array contains an entry for one version but not the other, indicating additions and removals between those baselines."
 rationale = "Change-control boards need a concise delta between baselines to assess scope; a diff command removes the need to manually compare two snapshots of a large requirement set."
@@ -56,14 +64,5 @@ subsystems = []
 components = []
 software_modules = ["cli::diff"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "diff",
-    "baseline",
-    "change-control",
-    "delta",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

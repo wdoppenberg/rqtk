@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "20c0561f8dddaf28d8221149eeebd1498628df28a696f37b3a8f388c10282662"
 parameters = []
 
+keywords = [
+    "export",
+    "json",
+    "csv",
+    "markdown",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk shall export the validated requirement set in JSON, CSV, and Markdown formats, writing output either to stdout or to a user-specified file path."
 rationale = "Downstream tools (spreadsheets, document generators, CI dashboards) consume different formats; supporting all three removes the need for bespoke conversion scripts and keeps rqtk as the single source of truth. Exporting only the validated set prevents policy-violating data from propagating into downstream artefacts."
@@ -42,14 +50,5 @@ procedure = "Run rqtk export --format json/csv/markdown against the firesat-obc 
 expected_result = "All three formats valid and contain the correct number of requirement entries."
 status = "Planned"
 evidence = []
-
-[requirement.tags]
-keywords = [
-    "export",
-    "json",
-    "csv",
-    "markdown",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

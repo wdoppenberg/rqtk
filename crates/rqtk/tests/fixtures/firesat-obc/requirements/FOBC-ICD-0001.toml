@@ -4,6 +4,14 @@ title = "Payload Subsystem MIL-STD-1553B Interface"
 category = "ICD"
 type = "Interface"
 
+keywords = [
+    "interface",
+    "1553",
+    "payload",
+    "bus",
+    "pending-acceptance-criteria",
+]
+
 [requirement.statement]
 text = "The OBC software shall communicate with the payload subsystem via MIL-STD-1553B data bus operating at 1 Mbps."
 rationale = "MIL-STD-1553B is a radiation-tolerant, deterministic bus standard widely used in spacecraft; its bus controller architecture ensures the OBC maintains full command authority over the payload."
@@ -43,7 +51,3 @@ name = "MIL-STD-1553B loopback connectivity test"
 procedure = "Configure OBC as Bus Controller and payload simulator as Remote Terminal; transmit 1000 command/response message pairs and verify round-trip integrity."
 expected_result = "All 1000 message pairs complete without error; measured bus utilisation below 50%."
 status = "Planned"
-
-[requirement.tags]
-keywords = ["interface", "1553", "payload", "bus"]
-labels = ["pending-acceptance-criteria"]

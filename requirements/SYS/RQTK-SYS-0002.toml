@@ -6,6 +6,13 @@ type = "Design"
 content_hash = "df906ed46684a632c5246b758fcf77b3d8e46db05ccc09078f393d4b829d729e"
 parameters = []
 
+keywords = [
+    "storage",
+    "toml",
+    "version-control",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk shall store each requirement as a single standalone TOML file conforming to the TOML 1.0 specification."
 rationale = "One-file-per-requirement isolates merge conflicts to individual requirements; TOML 1.0 has stable semantics that survive editor reformatting and are parseable without preprocessing."
@@ -45,13 +52,5 @@ procedure = "Open any requirement TOML file in a plain text editor and verify it
 expected_result = "File is valid TOML 1.0, contains exactly one [requirement] table, and is schema-conformant."
 status = "Planned"
 evidence = []
-
-[requirement.tags]
-keywords = [
-    "storage",
-    "toml",
-    "version-control",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

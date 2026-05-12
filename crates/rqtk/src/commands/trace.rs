@@ -18,6 +18,7 @@ pub fn run(repo_root: &Path, id: String) -> Result<(), Box<dyn Error>> {
         }
     }
     output::subsection("▼", &format!("Children ({})", view.downward.len()));
+    output::item(&req_id.to_string());
     if view.downward.is_empty() {
         output::item("—  no children");
     } else {

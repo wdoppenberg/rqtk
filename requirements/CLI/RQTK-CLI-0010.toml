@@ -6,6 +6,13 @@ type = "Interface"
 content_hash = "3970d6b0a634fe22091594dde0719b2c861b835f24e5a11cb7ee2eabc9bc670f"
 parameters = []
 
+keywords = [
+    "coverage",
+    "exit-code",
+    "ci",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk coverage command shall exit with code 3 when at least one coverage gap is present and with code 0 when all requirements have a non-empty success_criteria field and at least one verification activity."
 rationale = "Exit code 3 is distinct from lint's exit code 2 and the shell error code 1, allowing CI pipelines to distinguish coverage failures from lint failures and process errors independently."
@@ -48,13 +55,5 @@ subsystems = []
 components = []
 software_modules = ["cli::coverage"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "coverage",
-    "exit-code",
-    "ci",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

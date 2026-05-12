@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "b4f2fe32ba9b3817769f42a78e6531168dbee938b250563195222b28a8a375b1"
 parameters = []
 
+keywords = [
+    "baseline",
+    "semver",
+    "validation",
+    "configuration-management",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk baseline command shall exit non-zero without modifying any project files when the provided version string does not conform to the Semantic Versioning 2.0.0 specification."
 rationale = "Baselines are formal configuration-management milestones; rejecting non-semver strings prevents freeform version labels that break sorting and automated version comparisons from entering the project record."
@@ -48,14 +56,5 @@ subsystems = []
 components = []
 software_modules = ["cli::baseline"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "baseline",
-    "semver",
-    "validation",
-    "configuration-management",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

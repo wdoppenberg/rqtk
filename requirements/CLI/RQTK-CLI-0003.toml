@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "b644da2f9e4d69d7f2266c3bab353169b5e1a63edc4abf059ac725969562e173"
 parameters = []
 
+keywords = [
+    "trace",
+    "traceability",
+    "ancestors",
+    "descendants",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk trace command shall, given a requirement ID, print the full upward path (ancestors) and downward path (descendants) of that requirement within the traceability graph."
 rationale = "Engineers need to answer two questions: 'what stakeholder need justifies this requirement?' (upward) and 'what lower-level requirements implement this?' (downward); a single command that shows both eliminates manual graph traversal."
@@ -48,14 +56,5 @@ subsystems = []
 components = []
 software_modules = ["cli::trace"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "trace",
-    "traceability",
-    "ancestors",
-    "descendants",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

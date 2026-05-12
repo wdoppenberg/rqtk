@@ -6,6 +6,13 @@ type = "Design"
 content_hash = "06404eb5db5e93e3e97ab47498acb452cf47c6078082670abcbbb26ae9acb3e3"
 parameters = []
 
+keywords = [
+    "config",
+    "policy",
+    "extensibility",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk-core shall derive all validation rules — including allowed categories, types, states, priorities, verification methods, and parent-hierarchy constraints — exclusively from the ProjectConfig provided at library initialization."
 rationale = "Config-driven policy lets any project (aerospace, automotive, software-only) enforce its own vocabulary without forking the library. The corollary is that the library ships with no domain vocabulary of its own; a project that omits a field from its config receives no default policy for that field."
@@ -51,13 +58,5 @@ software_modules = [
     "rqtk_core::validation",
 ]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "config",
-    "policy",
-    "extensibility",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

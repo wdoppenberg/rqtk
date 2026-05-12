@@ -6,6 +6,13 @@ type = "Functional"
 content_hash = "e82dffec87d10e8a66d22d90dba207e3dd86c06f504ab7232539b151cf693612"
 parameters = []
 
+keywords = [
+    "id-generation",
+    "auto-increment",
+    "padding",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk-core shall generate the next available requirement ID for a given category by scanning the loaded requirement set for the highest existing ordinal within that category and formatting the result with the zero-padding width specified in the project configuration."
 rationale = "Centralising ID generation in the core library ensures the CLI and any future integrations (IDE plugins, web UI) produce IDs that are consistent with the project's configured padding and prefix."
@@ -51,13 +58,5 @@ subsystems = []
 components = []
 software_modules = ["rqtk_core::repository"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "id-generation",
-    "auto-increment",
-    "padding",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

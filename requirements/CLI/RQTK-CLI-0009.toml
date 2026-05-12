@@ -6,6 +6,13 @@ type = "Interface"
 content_hash = "585a476b2aa535a5328d9265be554420af25dcb6c0c190d1d9de136a19d6388a"
 parameters = []
 
+keywords = [
+    "lint",
+    "exit-code",
+    "ci",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk lint command shall exit with code 0 when no violations are present and with code 2 when at least one Error-severity violation is present."
 rationale = "A predictable exit code allows CI pipelines to gate merges on requirement quality; code 2 (not 1) is chosen so that standard shell errors (exit 1) remain distinguishable from lint failures."
@@ -51,13 +58,5 @@ subsystems = []
 components = []
 software_modules = ["cli::lint"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "lint",
-    "exit-code",
-    "ci",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

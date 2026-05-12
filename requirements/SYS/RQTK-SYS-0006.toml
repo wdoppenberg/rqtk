@@ -6,6 +6,14 @@ type = "Design"
 content_hash = "7eabd787d021fbaec299f1c84f3ffeeafbbb419e02a79878fdf176af20fe0921"
 parameters = []
 
+keywords = [
+    "vcs",
+    "merge",
+    "plain-text",
+    "git",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "Each rqtk requirement file shall contain only plain-text UTF-8 content such that a merge conflict between concurrent edits to different fields of the same file is resolvable by standard three-way VCS merge tooling without rqtk."
 rationale = "Plain-text, field-per-line TOML means git's three-way merge can resolve most concurrent edits automatically; binary or encoded content would make every conflict a manual, tool-assisted exercise."
@@ -45,14 +53,5 @@ procedure = "In a git repository, create two branches each modifying a different
 expected_result = "No conflict markers; rqtk lint exits 0 on the merged file."
 status = "Planned"
 evidence = []
-
-[requirement.tags]
-keywords = [
-    "vcs",
-    "merge",
-    "plain-text",
-    "git",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

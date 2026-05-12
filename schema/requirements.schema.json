@@ -165,6 +165,13 @@
         "id": {
           "type": "string"
         },
+        "keywords": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
         "parameters": {
           "type": "array",
           "default": [],
@@ -188,13 +195,6 @@
         },
         "status": {
           "$ref": "#/$defs/Status"
-        },
-        "tags": {
-          "$ref": "#/$defs/Tags",
-          "default": {
-            "keywords": [],
-            "labels": []
-          }
         },
         "title": {
           "type": "string"
@@ -328,25 +328,6 @@
         "state",
         "priority"
       ]
-    },
-    "Tags": {
-      "type": "object",
-      "properties": {
-        "keywords": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        },
-        "labels": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     },
     "Traceability": {
       "type": "object",

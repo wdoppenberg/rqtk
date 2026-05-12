@@ -4,6 +4,14 @@ title = "Non-Volatile Memory Write Endurance"
 category = "HW"
 type = "Constraint"
 
+keywords = [
+    "non-volatile-memory",
+    "flash",
+    "endurance",
+    "hardware",
+    "pdr-approved",
+]
+
 [requirement.statement]
 text = "The OBC non-volatile memory shall support a minimum of 100000 write cycles per sector without data corruption across the full operating temperature range."
 rationale = "At 1 Hz telemetry writes the busiest sectors will accumulate approximately 31 million write cycles over a 3-year mission; the 100 000-cycle minimum with a wear-levelling algorithm provides the required operational lifetime margin."
@@ -44,7 +52,3 @@ name = "Independent endurance qualification test"
 procedure = "Subject three flight-representative memory modules to accelerated cycling at temperature extremes and verify data integrity after 100 000 cycles."
 expected_result = "No sector failures or data corruption events observed on any of the three units."
 status = "Planned"
-
-[requirement.tags]
-keywords = ["non-volatile-memory", "flash", "endurance", "hardware"]
-labels = ["pdr-approved"]

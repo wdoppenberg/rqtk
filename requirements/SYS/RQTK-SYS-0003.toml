@@ -6,6 +6,13 @@ type = "Functional"
 content_hash = "291f3f95ba38f85ab7900970945b45ee4c8aad2793eb1bde605e19c7acfe2e3a"
 parameters = []
 
+keywords = [
+    "traceability",
+    "graph",
+    "dag",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk shall maintain a directed acyclic graph of parent–child relationships between requirements."
 rationale = "A formal graph model is the prerequisite for automated traceability traversal, coverage analysis, and graph export; without it, requirement relationships exist only as informal annotations."
@@ -42,13 +49,5 @@ procedure = "Load the rqtk self-hosted requirement set; assert that each require
 expected_result = "Edge count equals the total number of parent references across all loaded requirements; no edges are missing or duplicated."
 status = "Planned"
 evidence = []
-
-[requirement.tags]
-keywords = [
-    "traceability",
-    "graph",
-    "dag",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

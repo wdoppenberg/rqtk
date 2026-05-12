@@ -4,6 +4,15 @@ title = "Autonomous Safe Mode Entry"
 category = "SW"
 type = "Functional"
 
+keywords = [
+    "safe-mode",
+    "fault-management",
+    "autonomy",
+    "safety",
+    "safety-critical",
+    "pending-verification-plan",
+]
+
 [requirement.statement]
 text = "The OBC software shall autonomously transition the spacecraft to safe mode upon detection of three consecutive unrecoverable processor errors."
 rationale = "Three consecutive unrecoverable errors indicate a systemic failure condition that exceeds the autonomous recovery capability; safe mode conserves power and awaits ground intervention."
@@ -42,7 +51,3 @@ phase = "Pre-launch"
 owner = "Safety Verification Lead"
 # No success_criteria defined yet — verification plan pending CDR
 # No activities defined yet — this requirement is a coverage gap
-
-[requirement.tags]
-keywords = ["safe-mode", "fault-management", "autonomy", "safety"]
-labels = ["safety-critical", "pending-verification-plan"]

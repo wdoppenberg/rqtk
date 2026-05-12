@@ -206,7 +206,7 @@ pub struct RequirementBody {
     #[serde(default)]
     pub allocation: Option<Allocation>,
     #[serde(default)]
-    pub tags: Tags,
+    pub keywords: Vec<String>,
     #[serde(default)]
     #[schemars(with = "std::collections::BTreeMap<String, serde_json::Value>")]
     pub custom: BTreeMap<String, toml::Value>,
@@ -371,14 +371,6 @@ pub struct Allocation {
     pub software_modules: Vec<String>,
     #[serde(default)]
     pub source_files: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
-pub struct Tags {
-    #[serde(default)]
-    pub keywords: Vec<String>,
-    #[serde(default)]
-    pub labels: Vec<String>,
 }
 
 #[derive(Debug, Clone)]

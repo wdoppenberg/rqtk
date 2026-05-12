@@ -2,7 +2,7 @@ use crate::error::RqtkError;
 use crate::git::GitContext;
 use crate::model::{ProjectConfig, RepositoryLayout, RqtkConfig};
 use crate::model::{
-    RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement, Status, Tags,
+    RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement, Status,
     Traceability, Verification,
 };
 use crate::validation::{
@@ -402,14 +402,14 @@ impl<S> RequirementSet<S> {
         let mut upward = Vec::new();
         let mut stack = vec![root_id.clone()];
         let mut seen = HashSet::new();
+        seen.insert(root_id.clone());
         while let Some(id) = stack.pop() {
-            if !seen.insert(id.clone()) {
-                continue;
-            }
-            upward.push(id.clone());
             if let Some(req) = self.requirements.get(&id) {
                 for p in &req.requirement.traceability.parents {
-                    stack.push(p.clone());
+                    if seen.insert(p.clone()) {
+                        upward.push(p.clone());
+                        stack.push(p.clone());
+                    }
                 }
             }
         }
@@ -424,14 +424,14 @@ impl<S> RequirementSet<S> {
         let mut downward = Vec::new();
         let mut down_stack = vec![root_id.clone()];
         let mut down_seen = HashSet::new();
+        down_seen.insert(root_id.clone());
         while let Some(id) = down_stack.pop() {
-            if !down_seen.insert(id.clone()) {
-                continue;
-            }
-            downward.push(id.clone());
             if let Some(children) = children_map.get(&id) {
                 for child in children {
-                    down_stack.push(child.clone());
+                    if down_seen.insert(child.clone()) {
+                        downward.push(child.clone());
+                        down_stack.push(child.clone());
+                    }
                 }
             }
         }
@@ -531,7 +531,7 @@ impl<S> RequirementSet<S> {
             validation: None,
             risk: None,
             allocation: None,
-            tags: Tags::default(),
+            keywords: Vec::new(),
             custom: BTreeMap::new(),
         };
         body.content_hash = Some(body.compute_content_hash());

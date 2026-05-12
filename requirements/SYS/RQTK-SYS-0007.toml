@@ -6,6 +6,15 @@ type = "Functional"
 content_hash = "1f8ccfa4657358565d979252e8b5409d7adbba1aad95d5bca94fb67a47d18384"
 parameters = []
 
+keywords = [
+    "traceability",
+    "cycle-detection",
+    "orphan",
+    "broken-reference",
+    "lint",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk shall detect and report, at validation time, all cycles, parentless non-root requirements (orphans), and broken parent references within the traceability graph."
 rationale = "Undetected cycles or dangling parent links silently invalidate traceability matrices; automated defect detection prevents those errors from reaching reviews or audits."
@@ -58,15 +67,5 @@ procedure = "Add a non-root requirement with an empty parents list to a fixture 
 expected_result = "Exit code 2; orphan requirement ID present in output."
 status = "Planned"
 evidence = []
-
-[requirement.tags]
-keywords = [
-    "traceability",
-    "cycle-detection",
-    "orphan",
-    "broken-reference",
-    "lint",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

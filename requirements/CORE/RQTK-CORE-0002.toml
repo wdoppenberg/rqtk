@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "5d688cad80885c09673780ad8e4611d602fae57178ce503976a4ef20826d150e"
 parameters = []
 
+keywords = [
+    "cycle",
+    "graph",
+    "dag",
+    "lint",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk-core shall emit a lint issue with code RQ017 for each cycle detected in the parent–child traceability graph."
 rationale = "A cyclic dependency between requirements is logically incoherent (A derives from B which derives from A) and would cause infinite loops in any traversal that assumes a DAG; early detection prevents downstream tool failures."
@@ -51,14 +59,5 @@ software_modules = [
     "rqtk_core::validation",
 ]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "cycle",
-    "graph",
-    "dag",
-    "lint",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

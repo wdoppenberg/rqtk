@@ -4,6 +4,13 @@ title = "Telemetry Data Acquisition"
 category = "SYS"
 type = "Functional"
 
+keywords = [
+    "telemetry",
+    "data-acquisition",
+    "health-monitoring",
+    "pdr-approved",
+]
+
 [requirement.statement]
 text = "The OBC software shall acquire telemetry data from all spacecraft subsystems at a minimum rate of 1 Hz."
 rationale = "Continuous 1 Hz telemetry ensures ground operators have timely visibility into spacecraft health and enables rapid anomaly detection before conditions become mission-threatening."
@@ -32,7 +39,3 @@ name = "End-to-end telemetry acquisition test"
 procedure = "Activate all subsystem simulators on the 1553 bus and record OBC telemetry frame timestamps for 10 minutes."
 expected_result = "Frame arrival rate ≥1 Hz on every channel; zero dropped frames."
 status = "Passed"
-
-[requirement.tags]
-keywords = ["telemetry", "data-acquisition", "health-monitoring"]
-labels = ["pdr-approved"]

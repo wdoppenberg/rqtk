@@ -16,7 +16,7 @@ pub use model::{
     Allocation, Approval, Category, ChangeControl, CriticalityPolicy, ExportConfig, ExternalTrace,
     IdentificationScheme, Parameter, PriorityPolicy, ProjectConfig, ProjectMeta,
     ProjectOrganization, RepositoryLayout, RequirementBody, RequirementFile, RequirementId, Risk,
-    RqtkConfig, ScaffoldInput, Standard, Statement, Status, Tags, Traceability, ValidationRules,
+    RqtkConfig, ScaffoldInput, Standard, Statement, Status, Traceability, ValidationRules,
     ValidationSpec, Verification, VerificationActivity, VerificationPolicy,
 };
 pub use repository::{Loaded, RequirementSet, TraceView, Validated};

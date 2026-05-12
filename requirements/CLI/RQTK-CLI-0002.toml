@@ -6,6 +6,13 @@ type = "Functional"
 content_hash = "68645d1b9152ad2ac860be90967f3280226e066161210c6cdacc0e23e3f36f59"
 parameters = []
 
+keywords = [
+    "lint",
+    "validation",
+    "output-format",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk lint command shall evaluate all requirements in the configured requirements directory against the policy rules defined in rqtk.toml and print each violation as a single line containing the rule code, severity, requirement ID, and file path."
 rationale = "Structured, one-violation-per-line output allows CI pipelines and downstream tools to parse results without fragile string matching; using the configured requirements directory keeps behavior reproducible across environments."
@@ -51,13 +58,5 @@ subsystems = []
 components = []
 software_modules = ["cli::lint"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "lint",
-    "validation",
-    "output-format",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

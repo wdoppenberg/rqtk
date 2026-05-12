@@ -6,6 +6,13 @@ type = "Functional"
 content_hash = "66bcf7cf769ef4c523adf5d5a88599a8bb7868c7105f4372bce9d5fc9c6117fe"
 parameters = []
 
+keywords = [
+    "coverage",
+    "verification",
+    "gaps",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk coverage command shall identify and report all requirements that either have an empty success_criteria field or have zero verification activities defined."
 rationale = "Verification coverage is a contractual obligation on most engineering programmes; an automated gap report prevents unverified requirements from reaching design reviews undetected."
@@ -51,13 +58,5 @@ subsystems = []
 components = []
 software_modules = ["cli::coverage"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "coverage",
-    "verification",
-    "gaps",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

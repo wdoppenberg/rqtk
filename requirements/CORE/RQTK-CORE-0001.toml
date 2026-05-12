@@ -6,6 +6,13 @@ type = "Design"
 content_hash = "5aad8787a35985b16a0a5dfd22df89934dc3755cca7164274f60ba4a6edc35c5"
 parameters = []
 
+keywords = [
+    "api-safety",
+    "validation-gate",
+    "precondition",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk-core shall prevent coverage queries and graph exports on requirement sets that have not successfully completed the validation pass."
 rationale = "A guard on operation order eliminates an entire class of misuse: querying coverage or exporting a graph before validation would produce results that silently ignore policy violations. Enforcing this at the API level means the misuse cannot occur without deliberate circumvention."
@@ -48,13 +55,5 @@ subsystems = []
 components = []
 software_modules = ["rqtk_core::repository"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "api-safety",
-    "validation-gate",
-    "precondition",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

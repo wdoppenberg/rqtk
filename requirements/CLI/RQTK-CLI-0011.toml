@@ -6,6 +6,14 @@ type = "Interface"
 content_hash = "396b839014dbba8fa5eb6c22fdb224fdf39200e001cc299073dd898ba165c598"
 parameters = []
 
+keywords = [
+    "export",
+    "output",
+    "stdout",
+    "file",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk export command shall write serialized output to stdout when no output path is specified and to the path provided by --output when specified."
 rationale = "Defaulting to stdout keeps the command composable with shell pipelines; --output enables writing directly to a file for use in CI artefact collection without shell redirection."
@@ -48,14 +56,5 @@ subsystems = []
 components = []
 software_modules = ["cli::export"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "export",
-    "output",
-    "stdout",
-    "file",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

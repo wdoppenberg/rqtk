@@ -6,6 +6,15 @@ type = "Functional"
 content_hash = "672fa557c004469b555117e754b06a76a5d9b11dad180c0402baca2a1b361195"
 parameters = []
 
+keywords = [
+    "export",
+    "json",
+    "csv",
+    "markdown",
+    "serialization",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk export command shall serialize the validated requirement set to the format selected by --format, supporting JSON, CSV, and Markdown."
 rationale = "Exporting only the validated set prevents corrupted or policy-violating data from propagating into downstream tools and documents."
@@ -48,15 +57,5 @@ subsystems = []
 components = []
 software_modules = ["cli::export"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "export",
-    "json",
-    "csv",
-    "markdown",
-    "serialization",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

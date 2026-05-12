@@ -6,6 +6,13 @@ type = "Functional"
 content_hash = "b17a4a48d437a0827a178d0dff8e3ad505b6b5704011c65d0499f9ee2e35e1b1"
 parameters = []
 
+keywords = [
+    "add",
+    "scaffold",
+    "auto-increment",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk add command shall generate a requirement TOML file with an auto-incremented ID, with default field values for state, priority, verification method, level, and phase drawn from the project configuration."
 rationale = "Manual ID assignment is error-prone and slows authoring; auto-increment with config defaults ensures every new requirement starts in a valid, policy-conformant state without requiring the engineer to memorise allowed values."
@@ -51,13 +58,5 @@ subsystems = []
 components = []
 software_modules = ["cli::add"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "add",
-    "scaffold",
-    "auto-increment",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

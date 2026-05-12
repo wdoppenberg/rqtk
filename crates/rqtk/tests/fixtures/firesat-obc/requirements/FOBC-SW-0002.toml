@@ -4,6 +4,15 @@ title = "Hardware Watchdog Timer Servicing"
 category = "SW"
 type = "Functional"
 
+keywords = [
+    "watchdog",
+    "fault-detection",
+    "timing",
+    "safety",
+    "pdr-approved",
+    "safety-critical",
+]
+
 [requirement.statement]
 text = "The OBC software shall service the hardware watchdog timer at a minimum interval of 250 milliseconds during normal operation."
 rationale = "The hardware watchdog timeout is set to 1 second; servicing at 250 ms provides a 4× margin and ensures any software lockup is detected and the processor reset within the watchdog window."
@@ -42,7 +51,3 @@ name = "Watchdog service timing test"
 procedure = "Instrument the watchdog service call and record inter-service intervals over a 1-hour run on the flight hardware."
 expected_result = "All recorded intervals are ≤250 ms; no watchdog timeout event occurs."
 status = "Passed"
-
-[requirement.tags]
-keywords = ["watchdog", "fault-detection", "timing", "safety"]
-labels = ["pdr-approved", "safety-critical"]

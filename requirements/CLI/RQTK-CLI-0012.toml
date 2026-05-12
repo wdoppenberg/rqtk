@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "f795154ab7341f5e55a3c7d223ce1bbb98007199244cc0d6820ecd814febe2e9"
 parameters = []
 
+keywords = [
+    "baseline",
+    "semver",
+    "versioning",
+    "configuration-management",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk baseline command shall, upon receiving a version string that conforms to the Semantic Versioning 2.0.0 specification, update the project.version field in rqtk.toml to that version and record the baseline timestamp in the same file."
 rationale = "Updating the project config and recording the timestamp in a single atomic step prevents a partially-applied baseline (version updated but no timestamp) from entering the project record."
@@ -48,14 +56,5 @@ subsystems = []
 components = []
 software_modules = ["cli::baseline"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "baseline",
-    "semver",
-    "versioning",
-    "configuration-management",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

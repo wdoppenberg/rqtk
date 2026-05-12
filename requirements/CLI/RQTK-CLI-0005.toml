@@ -6,6 +6,14 @@ type = "Functional"
 content_hash = "02f35acb108e3218cd1a36c2cf6b476f296f693789a17c07c725ce789f0da6e1"
 parameters = []
 
+keywords = [
+    "graph",
+    "dot",
+    "graphviz",
+    "visualisation",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "The rqtk graph command shall export the traceability graph in Graphviz DOT format and write the output to stdout unless a file path is provided via --output."
 rationale = "DOT is the de-facto interchange format for directed graphs; it can be rendered by Graphviz, Mermaid converters, and CI visualisation pipelines without additional tooling installed alongside rqtk."
@@ -48,14 +56,5 @@ subsystems = []
 components = []
 software_modules = ["cli::graph"]
 source_files = []
-
-[requirement.tags]
-keywords = [
-    "graph",
-    "dot",
-    "graphviz",
-    "visualisation",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]

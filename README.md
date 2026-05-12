@@ -20,23 +20,36 @@ id = "FOBC-SYS-0001"
 title = "Telemetry Data Acquisition"
 category = "SYS"
 type = "Functional"
+keywords = ["telemetry", "health-monitoring"]
 
 [requirement.statement]
 text = "The OBC software shall acquire telemetry data from all spacecraft subsystems at a minimum rate of 1 Hz."
 rationale = "Continuous 1 Hz telemetry ensures ground operators have timely visibility into spacecraft health."
+assumptions = ["All subsystems expose a standardised telemetry interface as defined in the ICD."]
+notes = "Applies to nominal mode only."
 
 [requirement.status]
 state = "Approved"
 priority = "Critical"
+criticality = "Mission-Critical"
 
 [requirement.traceability]
-# parents, depends_on, derived_from, supersedes — all just IDs
+# parents, derived_from, satisfies, refines, conflicts_with, depends_on, related — all just IDs
+# external = [{type = "JIRA", ref = "OBC-42"}]
 
 [requirement.verification]
 method = "Test"
 level = "System"
 phase = "Pre-launch"
+owner = "Systems Verification Lead"
 success_criteria = "All channels deliver frames at ≥1 Hz with no frame loss over 10 minutes."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-001-01"
+name = "End-to-end telemetry acquisition test"
+procedure = "Activate all subsystem simulators and record frame timestamps for 10 minutes."
+expected_result = "Frame arrival rate ≥1 Hz on every channel; zero dropped frames."
+status = "Passed"
 ```
 
 ## Why
@@ -67,10 +80,60 @@ rqtk coverage                      # identify requirements missing verification
 rqtk baseline 1.0.0               # tag HEAD as rqtk/1.0.0
 rqtk diff 0.9.0 1.0.0             # semantic diff between two baselines
 rqtk log FOBC-SYS-0001            # git history for a single requirement
+rqtk install-hook                  # install git pre-commit hook (rehash + lint)
+rqtk open FOBC-SYS-0001           # open requirement in $EDITOR
+rqtk search "telemetry"           # full-text search across requirement fields
+rqtk search "telemetry" -i \
+          --field title,statement  # case-insensitive search in specific fields
 rqtk graph --format dot           # export traceability graph
 rqtk export --format json|csv|markdown
 rqtk rehash                        # recompute and write content hashes
 rqtk report                        # generate PDF report via Typst
+```
+
+## Data model
+
+A requirement file has these top-level sections:
+
+| Section | Purpose |
+|---|---|
+| `[requirement]` | Identity: `id`, `title`, `category`, `type`, `keywords`, `content_hash` |
+| `[requirement.statement]` | `text` (shall statement), `rationale`, `assumptions`, `notes` |
+| `[requirement.status]` | `state`, `priority`, `criticality`, `maturity`, `tbd`, `tbr` |
+| `[requirement.approval]` | `baselined_at`, `baselined_by`, `approved_by`, `ecr_ids` |
+| `[requirement.parameters]` | Quantitative constraints: `name`, `operator`, `value`, `unit`, `tolerance` |
+| `[requirement.traceability]` | Link fields below |
+| `[requirement.verification]` | `method`, `level`, `phase`, `owner`, `success_criteria`, activities |
+| `[requirement.validation]` | Stakeholder acceptance: `method`, `stakeholder`, `acceptance_criteria`, `status` |
+| `[requirement.risk]` | `hazards`, `mitigations`, `fmea_ref`, `safety_critical`, `security_sensitive` |
+| `[requirement.allocation]` | `subsystems`, `components`, `software_modules`, `source_files` |
+| `[requirement.custom]` | Arbitrary project-specific key/value pairs |
+
+### Traceability links
+
+```toml
+[requirement.traceability]
+parents        = ["FOBC-SYS-0001"]          # decomposed from
+derived_from   = ["FOBC-SYS-0001"]          # derived from another requirement
+satisfies      = ["STAKE-001"]              # satisfies a stakeholder need (string)
+refines        = ["FOBC-SYS-0001"]          # refines a higher-level requirement
+conflicts_with = ["FOBC-SW-0003"]           # known conflict
+depends_on     = ["FOBC-HW-0001"]           # runtime dependency
+related        = ["FOBC-SW-0002"]           # informational link
+external       = [{type = "JIRA", ref = "OBC-42"}]
+```
+
+### Verification activities
+
+```toml
+[[requirement.verification.activities]]
+id             = "VA-SYS-001-01"
+name           = "End-to-end telemetry acquisition test"
+procedure      = "..."
+expected_result = "..."
+status         = "Passed"
+executed_at    = 2024-11-15
+evidence       = ["test-report-v1.pdf"]
 ```
 
 ## Baselines and diffs
@@ -146,7 +209,7 @@ The decorator resolves the activity ID at import time from the `rqtk.toml` found
 ## Pre-commit hook
 
 ```bash
-./scripts/install-hooks.sh
+rqtk install-hook
 ```
 
-The hook runs `rqtk rehash` (updates content hashes) and `rqtk lint` before every commit. Schema changes to `schema/` are also checked.
+Writes a `pre-commit` hook to `.git/hooks/` that runs `rqtk rehash` (updates content hashes) and `rqtk lint` before every commit. Pass `--force` to overwrite an existing hook.

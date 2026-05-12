@@ -6,6 +6,13 @@ type = "Functional"
 content_hash = "98fcc22eca1c4ea045d52668fac271c7b3e24c18c8fce8f215140280d3c7ef9a"
 parameters = []
 
+keywords = [
+    "lifecycle",
+    "crud",
+    "core",
+    "bootstrap",
+]
+
 [requirement.statement]
 text = "rqtk shall support the full lifecycle of individual requirements, including creation, update, validation, versioning, and deprecation."
 rationale = "A requirement that cannot be tracked from creation to deprecation loses traceability and becomes a maintenance liability; lifecycle coverage is the minimum unit of value for any requirements tool."
@@ -50,13 +57,5 @@ procedure = "Create a requirement fixture with state='Draft'; invoke rqtk to upd
 expected_result = "State field equals 'Review'; all other fields retain their initial values."
 status = "Planned"
 evidence = []
-
-[requirement.tags]
-keywords = [
-    "lifecycle",
-    "crud",
-    "core",
-]
-labels = ["bootstrap"]
 
 [requirement.custom]
