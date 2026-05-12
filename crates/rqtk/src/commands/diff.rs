@@ -1,14 +1,12 @@
 use std::{error::Error, path::Path};
 
-use rqtk_core::{BaselineName, ChangeKind, RequirementSet};
+use rqtk_core::{ChangeKind, RequirementSet};
 
 use crate::output;
 
 pub fn run(repo_root: &Path, from: String, to: String) -> Result<(), Box<dyn Error>> {
-    let from: BaselineName = from.parse()?;
-    let to: BaselineName = to.parse()?;
     let set = RequirementSet::load_from_repo_root(repo_root)?;
-    let diff = set.git.diff_baselines(&from, &to, &set.root)?;
+    let diff = set.git.diff_refs(&from, &to, &set.root)?;
 
     let total = diff.added.len() + diff.removed.len() + diff.modified.len();
     if total == 0 {
@@ -19,7 +17,9 @@ pub fn run(repo_root: &Path, from: String, to: String) -> Result<(), Box<dyn Err
     output::section(
         "Diff",
         &format!(
-            "{from} → {to}  ({} added, {} removed, {} modified)",
+            "{} → {}  ({} added, {} removed, {} modified)",
+            diff.from,
+            diff.to,
             diff.added.len(),
             diff.removed.len(),
             diff.modified.len()

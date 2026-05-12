@@ -362,9 +362,13 @@ fn trace_unknown_id_exits_nonzero() {
 
 #[verifies("VA-CLI-004-01")]
 #[test]
-fn coverage_exits_3_when_gaps_present() {
+fn coverage_exits_nonzero_when_gaps_present_and_strict() {
     let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir).arg("coverage").assert().code(3);
+    rqtk(&req_dir)
+        .arg("coverage")
+        .arg("--strict")
+        .assert()
+        .failure();
 }
 
 #[test]

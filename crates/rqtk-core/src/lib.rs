@@ -19,5 +19,5 @@ pub use model::{
     RqtkConfig, ScaffoldInput, Standard, Statement, Status, Traceability, ValidationRules,
     ValidationSpec, Verification, VerificationActivity, VerificationPolicy,
 };
-pub use repository::{Loaded, RequirementSet, TraceView, Validated};
+pub use repository::{ClosureStatus, Loaded, RequirementSet, TraceView, Validated};
 pub use validation::{LintIssue, LintSeverity};

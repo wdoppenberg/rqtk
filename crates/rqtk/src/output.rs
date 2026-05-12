@@ -93,7 +93,7 @@ pub fn lint_table(issues: &[LintIssue]) -> (usize, usize) {
         table.add_row(vec![
             Cell::new(&target).add_attribute(Attribute::Bold),
             Cell::new(sev_str).fg(sev_color),
-            Cell::new(&issue.code),
+            Cell::new(issue.code),
             Cell::new(&issue.message),
         ]);
     }

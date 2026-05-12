@@ -91,29 +91,29 @@ fn search_req(
         }
     }
 
-    if want("rationale") {
-        if let Some(rat) = &req.statement.rationale {
-            let ranges = find_matches(rat, pattern, ignore_case);
-            if !ranges.is_empty() {
-                matches.push(FieldMatch {
-                    label: "rationale",
-                    value: rat.clone(),
-                    match_ranges: ranges,
-                });
-            }
+    if want("rationale")
+        && let Some(rat) = &req.statement.rationale
+    {
+        let ranges = find_matches(rat, pattern, ignore_case);
+        if !ranges.is_empty() {
+            matches.push(FieldMatch {
+                label: "rationale",
+                value: rat.clone(),
+                match_ranges: ranges,
+            });
         }
     }
 
-    if want("notes") {
-        if let Some(notes) = &req.statement.notes {
-            let ranges = find_matches(notes, pattern, ignore_case);
-            if !ranges.is_empty() {
-                matches.push(FieldMatch {
-                    label: "notes",
-                    value: notes.clone(),
-                    match_ranges: ranges,
-                });
-            }
+    if want("notes")
+        && let Some(notes) = &req.statement.notes
+    {
+        let ranges = find_matches(notes, pattern, ignore_case);
+        if !ranges.is_empty() {
+            matches.push(FieldMatch {
+                label: "notes",
+                value: notes.clone(),
+                match_ranges: ranges,
+            });
         }
     }
 

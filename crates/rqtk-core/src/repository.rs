@@ -1,6 +1,7 @@
 use crate::error::RqtkError;
 use crate::git::GitContext;
-use crate::model::{ProjectConfig, RepositoryLayout, RqtkConfig};
+use crate::io::write_requirement_file;
+use crate::model::{Approval, ProjectConfig, RepositoryLayout, RqtkConfig};
 use crate::model::{
     RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement, Status,
     Traceability, Verification,
@@ -20,6 +21,50 @@ use std::path::{Path, PathBuf};
 
 pub struct Loaded;
 pub struct Validated;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ClosureStatus {
+    /// All activities have a terminal status (Passed or Waived).
+    Verified,
+    /// Activities defined and at least one has been started, but not all are terminal.
+    InProgress,
+    /// Activities and success criteria defined, but none have been executed yet.
+    Planned,
+    /// No activities defined, or success criteria missing.
+    Gap,
+}
+
+fn closure_status_for(ver: &crate::model::Verification) -> ClosureStatus {
+    if ver.activities.is_empty()
+        || ver
+            .success_criteria
+            .as_deref()
+            .unwrap_or("")
+            .trim()
+            .is_empty()
+    {
+        return ClosureStatus::Gap;
+    }
+
+    const TERMINAL: &[&str] = &["Passed", "Waived"];
+
+    let any_started = ver
+        .activities
+        .iter()
+        .any(|a| a.executed_at.is_some() || a.status.as_deref().is_some_and(|s| !s.is_empty()));
+    let all_terminal = ver
+        .activities
+        .iter()
+        .all(|a| a.status.as_deref().is_some_and(|s| TERMINAL.contains(&s)));
+
+    if all_terminal {
+        ClosureStatus::Verified
+    } else if any_started {
+        ClosureStatus::InProgress
+    } else {
+        ClosureStatus::Planned
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct TraceView {
@@ -143,6 +188,33 @@ impl RequirementSet<Loaded> {
             parent_required,
             _state: PhantomData,
         })
+    }
+
+    /// Write `baselined_at` and `baselined_by` into every requirement file.
+    /// Returns the paths of all files that were written.
+    pub fn stamp_baseline(
+        &mut self,
+        by: &str,
+        date: chrono::NaiveDate,
+    ) -> Result<Vec<std::path::PathBuf>, RqtkError> {
+        let mut changed = Vec::new();
+        for (id, req_file) in &mut self.requirements {
+            let approval = req_file
+                .requirement
+                .approval
+                .get_or_insert_with(|| Approval {
+                    baselined_at: None,
+                    baselined_by: None,
+                    approved_by: Vec::new(),
+                    ecr_ids: Vec::new(),
+                });
+            approval.baselined_at = Some(date);
+            approval.baselined_by = Some(by.to_owned());
+            let path = self.files_by_id[id].clone();
+            write_requirement_file(&path, req_file)?;
+            changed.push(path);
+        }
+        Ok(changed)
     }
 
     pub fn validate(self) -> (RequirementSet<Validated>, Vec<LintIssue>) {
@@ -385,6 +457,17 @@ impl RequirementSet<Validated> {
             }
         }
         gaps
+    }
+
+    pub fn verification_closure(&self) -> BTreeMap<RequirementId, ClosureStatus> {
+        self.requirements
+            .iter()
+            .map(|(id, req)| {
+                let ver = &req.requirement.verification;
+                let status = closure_status_for(ver);
+                (id.clone(), status)
+            })
+            .collect()
     }
 
     pub fn to_dot(&self) -> String {

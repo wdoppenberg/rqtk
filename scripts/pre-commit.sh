@@ -10,8 +10,8 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --exclude rqtk-py
 
 # Ensure content hashes are current, then lint the project requirements.
-cargo run -p rqtk -F cli,report -- --repo-root . rehash
-cargo run -p rqtk -F cli,report -- --repo-root . lint
+cargo run -p rqtk -- --repo-root . rehash
+cargo run -p rqtk -- --repo-root . lint
 
 cargo run -p rqtk-core --bin generate_schemas
 

@@ -104,8 +104,8 @@ pub struct ModifiedRequirement {
 
 #[derive(Debug, Clone)]
 pub struct RequirementDiff {
-    pub from_baseline: BaselineName,
-    pub to_baseline: BaselineName,
+    pub from: String,
+    pub to: String,
     pub added: Vec<RequirementId>,
     pub removed: Vec<RequirementId>,
     pub modified: Vec<ModifiedRequirement>,
@@ -132,6 +132,14 @@ impl GitContext {
             .ok_or_else(|| RqtkError::Git("bare repositories are not supported".into()))?
             .to_path_buf();
         Ok(Self { repo, workdir })
+    }
+
+    pub fn committer_name(&self) -> Result<String, RqtkError> {
+        self.repo
+            .committer()
+            .ok_or_else(|| RqtkError::Git("no committer identity configured".into()))
+            .and_then(|r| r.map_err(|e| RqtkError::Git(e.to_string())))
+            .map(|sig| sig.name.to_string())
     }
 
     /// Create an annotated tag `rqtk/<name>` at HEAD.
@@ -397,7 +405,44 @@ impl GitContext {
     ) -> Result<RequirementDiff, RqtkError> {
         let from_tree_id = self.resolve_baseline_tree_id(from)?;
         let to_tree_id = self.resolve_baseline_tree_id(to)?;
+        self.diff_tree_ids(
+            from_tree_id,
+            to_tree_id,
+            from.to_string(),
+            to.to_string(),
+            req_dir,
+        )
+    }
 
+    /// Compute the semantic diff between two arbitrary git refs (branch, SHA, HEAD, or baseline name).
+    ///
+    /// Accepts the same forms as `git rev-parse`: `HEAD`, `origin/main`, a full SHA, a branch
+    /// name, or a bare baseline version like `1.0.0` (resolved as `refs/tags/rqtk/1.0.0`).
+    pub fn diff_refs(
+        &self,
+        from: &str,
+        to: &str,
+        req_dir: &Path,
+    ) -> Result<RequirementDiff, RqtkError> {
+        let from_tree_id = self.resolve_ref_tree_id(from)?;
+        let to_tree_id = self.resolve_ref_tree_id(to)?;
+        self.diff_tree_ids(
+            from_tree_id,
+            to_tree_id,
+            from.to_string(),
+            to.to_string(),
+            req_dir,
+        )
+    }
+
+    fn diff_tree_ids(
+        &self,
+        from_tree_id: gix::ObjectId,
+        to_tree_id: gix::ObjectId,
+        from_label: String,
+        to_label: String,
+        req_dir: &Path,
+    ) -> Result<RequirementDiff, RqtkError> {
         let from_tree = self
             .repo
             .find_object(from_tree_id)
@@ -461,12 +506,69 @@ impl GitContext {
         }
 
         Ok(RequirementDiff {
-            from_baseline: from.clone(),
-            to_baseline: to.clone(),
+            from: from_label,
+            to: to_label,
             added,
             removed,
             modified,
         })
+    }
+
+    /// Resolve an arbitrary ref spec to a git tree object ID.
+    ///
+    /// Accepts (in order of precedence):
+    /// - `HEAD`
+    /// - full `refs/...` paths
+    /// - `origin/branch` style → `refs/remotes/origin/branch`
+    /// - bare names → tried as rqtk baseline tag, local branch, then tag
+    fn resolve_ref_tree_id(&self, spec: &str) -> Result<gix::ObjectId, RqtkError> {
+        if spec == "HEAD" {
+            let head_id = self
+                .repo
+                .head_id()
+                .map_err(|e| RqtkError::Git(e.to_string()))?
+                .detach();
+            return self.commit_oid_to_tree_id(head_id);
+        }
+
+        let candidates: Vec<String> = if spec.starts_with("refs/") {
+            vec![spec.to_owned()]
+        } else if spec.contains('/') {
+            vec![format!("refs/remotes/{spec}")]
+        } else {
+            vec![
+                format!("refs/tags/{BASELINE_TAG_PREFIX}{spec}"),
+                format!("refs/heads/{spec}"),
+                format!("refs/tags/{spec}"),
+            ]
+        };
+
+        for candidate in &candidates {
+            if let Ok(mut r) = self.repo.find_reference(candidate.as_str()) {
+                let commit_id = r
+                    .peel_to_id()
+                    .map_err(|e| RqtkError::Git(e.to_string()))?
+                    .detach();
+                return self.commit_oid_to_tree_id(commit_id);
+            }
+        }
+
+        Err(RqtkError::Git(format!(
+            "could not resolve '{spec}' as a git ref or rqtk baseline"
+        )))
+    }
+
+    fn commit_oid_to_tree_id(&self, oid: gix::ObjectId) -> Result<gix::ObjectId, RqtkError> {
+        let commit = self
+            .repo
+            .find_object(oid)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .try_into_commit()
+            .map_err(|e| RqtkError::Git(e.to_string()))?;
+        commit
+            .tree_id()
+            .map(|id| id.detach())
+            .map_err(|e| RqtkError::Git(e.to_string()))
     }
 
     /// Return the parsed requirement file as it existed at a given baseline.

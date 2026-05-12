@@ -2,28 +2,57 @@ use std::{error::Error, path::Path};
 
 use crate::output;
 
-const HOOK_SCRIPT: &str = r#"#!/bin/sh
-# rqtk pre-commit hook — installed by `rqtk install-hook`
-set -e
-rqtk rehash
-rqtk lint
-"#;
+const REGION_BEGIN: &str = "# BEGIN rqtk-managed";
+const REGION_END: &str = "# END rqtk-managed";
 
-pub fn run(repo_root: &Path, force: bool) -> Result<(), Box<dyn Error>> {
+const REGION_BODY: &str = "set -e\nrqtk rehash\nrqtk lint";
+
+const DEFAULT_SHEBANG: &str = "#!/bin/sh";
+
+fn managed_region() -> String {
+    format!("{REGION_BEGIN}\n{REGION_BODY}\n{REGION_END}\n")
+}
+
+/// Insert or replace the rqtk-managed region in `existing`, returning the new content.
+fn splice_region(existing: &str) -> String {
+    let region = managed_region();
+    if let (Some(begin), Some(end)) = (existing.find(REGION_BEGIN), existing.find(REGION_END)) {
+        let end_of_line = existing[end..]
+            .find('\n')
+            .map(|i| end + i + 1)
+            .unwrap_or(existing.len());
+        format!(
+            "{}{}{}",
+            &existing[..begin],
+            region,
+            &existing[end_of_line..]
+        )
+    } else {
+        // Append region, ensuring a single blank line separator.
+        let trimmed = existing.trim_end_matches('\n');
+        if trimmed.is_empty() {
+            region
+        } else {
+            format!("{trimmed}\n\n{region}")
+        }
+    }
+}
+
+pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
     let git_dir = find_git_dir(repo_root)?;
     let hooks_dir = git_dir.join("hooks");
     std::fs::create_dir_all(&hooks_dir)?;
 
     let hook_path = hooks_dir.join("pre-commit");
-    if hook_path.exists() && !force {
-        return Err(format!(
-            "pre-commit hook already exists at {}; pass --force to overwrite it",
-            hook_path.display()
-        )
-        .into());
-    }
 
-    std::fs::write(&hook_path, HOOK_SCRIPT)?;
+    let existing = if hook_path.exists() {
+        std::fs::read_to_string(&hook_path)?
+    } else {
+        format!("{DEFAULT_SHEBANG}\n")
+    };
+
+    let new_content = splice_region(&existing);
+    std::fs::write(&hook_path, &new_content)?;
 
     #[cfg(unix)]
     {
@@ -33,8 +62,13 @@ pub fn run(repo_root: &Path, force: bool) -> Result<(), Box<dyn Error>> {
         std::fs::set_permissions(&hook_path, perms)?;
     }
 
+    let action = if existing.contains(REGION_BEGIN) {
+        "updated"
+    } else {
+        "installed"
+    };
     output::success(
-        "Pre-commit hook installed",
+        &format!("Pre-commit hook region {action}"),
         &[("hook", &hook_path.display().to_string())],
     );
     Ok(())
@@ -52,4 +86,39 @@ fn find_git_dir(start: &Path) -> Result<std::path::PathBuf, Box<dyn Error>> {
         }
     }
     Err(format!("no .git directory found from {}", start.display()).into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fresh_file_gets_region_appended() {
+        let result = splice_region("#!/bin/sh\n");
+        assert!(result.contains(REGION_BEGIN));
+        assert!(result.contains(REGION_END));
+        assert!(result.contains("rqtk lint"));
+        assert!(result.starts_with("#!/bin/sh\n"));
+    }
+
+    #[test]
+    fn existing_region_is_replaced_not_duplicated() {
+        let initial = splice_region("#!/bin/sh\n");
+        let second = splice_region(&initial);
+        assert_eq!(second.matches(REGION_BEGIN).count(), 1);
+    }
+
+    #[test]
+    fn existing_hook_content_is_preserved() {
+        let existing = "#!/bin/sh\necho 'other hook'\n";
+        let result = splice_region(existing);
+        assert!(result.contains("echo 'other hook'"));
+        assert!(result.contains(REGION_BEGIN));
+    }
+
+    #[test]
+    fn empty_file_gets_just_region() {
+        let result = splice_region("");
+        assert_eq!(result, managed_region());
+    }
 }

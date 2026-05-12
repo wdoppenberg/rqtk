@@ -2108,6 +2108,7 @@ name = "rqtk"
 version = "0.1.0"
 dependencies = [
  "assert_cmd",
+ "chrono",
  "clap",
  "comfy-table",
  "console",

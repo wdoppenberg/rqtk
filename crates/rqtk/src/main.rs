@@ -41,8 +41,15 @@ enum Command {
     Lint,
     /// Trace the lifecycle of a requirement by its ID.
     Trace { id: String },
-    /// Assess verification coverage across the requirement set.
-    Coverage,
+    /// Report verification coverage status (gap / planned / in-progress / verified).
+    Coverage {
+        /// Exit with a non-zero code if any requirement is not fully verified.
+        #[arg(long)]
+        strict: bool,
+        /// Print only the one-line summary.
+        #[arg(short, long)]
+        short: bool,
+    },
     /// Generate a DOT graph of the requirement traceability graph.
     Graph {
         #[arg(long, default_value = "dot")]
@@ -75,11 +82,7 @@ enum Command {
     /// Show the git commit history for a single requirement.
     Log { id: String },
     /// Install a git pre-commit hook that runs `rqtk rehash` and `rqtk lint`.
-    InstallHook {
-        /// Overwrite an existing pre-commit hook.
-        #[arg(long)]
-        force: bool,
-    },
+    InstallHook,
     /// Recompute and write content hashes for all requirements.
     Rehash,
     /// Generate a PDF requirements report via the Typst typesetting system.
@@ -140,8 +143,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         Command::Trace { id } => {
             commands::trace::run(root, id)?;
         }
-        Command::Coverage => {
-            commands::coverage::run(root)?;
+        Command::Coverage { strict, short } => {
+            commands::coverage::run(root, strict, short)?;
         }
         Command::Graph { format } => {
             commands::graph::run(root, format)?;
@@ -175,8 +178,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         Command::Log { id } => {
             commands::log::run(root, id)?;
         }
-        Command::InstallHook { force } => {
-            commands::install_hook::run(root, force)?;
+        Command::InstallHook => {
+            commands::install_hook::run(root)?;
         }
         Command::Rehash => {
             commands::rehash::run(root)?;
