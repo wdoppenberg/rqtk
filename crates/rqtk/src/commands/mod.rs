@@ -6,6 +6,8 @@ pub mod export;
 pub mod graph;
 pub mod init;
 pub mod lint;
+pub mod log;
+pub mod rehash;
 pub mod trace;
 
 #[cfg(feature = "report")]

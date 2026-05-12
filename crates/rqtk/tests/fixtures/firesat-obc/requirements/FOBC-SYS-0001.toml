@@ -3,9 +3,6 @@ id = "FOBC-SYS-0001"
 title = "Telemetry Data Acquisition"
 category = "SYS"
 type = "Functional"
-version = "1.0.0"
-created = "2024-01-15T00:00:00+00:00"
-updated = "2024-03-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The OBC software shall acquire telemetry data from all spacecraft subsystems at a minimum rate of 1 Hz."
@@ -35,18 +32,6 @@ name = "End-to-end telemetry acquisition test"
 procedure = "Activate all subsystem simulators on the 1553 bus and record OBC telemetry frame timestamps for 10 minutes."
 expected_result = "Frame arrival rate ≥1 Hz on every channel; zero dropped frames."
 status = "Passed"
-
-[[requirement.history]]
-version = "0.9.0"
-date = "2024-01-15"
-author = "Jane Smith"
-change = "Initial draft based on FireSat mission concept."
-
-[[requirement.history]]
-version = "1.0.0"
-date = "2024-03-01"
-author = "Jane Smith"
-change = "Approved at PDR; rate confirmed as 1 Hz minimum."
 
 [requirement.tags]
 keywords = ["telemetry", "data-acquisition", "health-monitoring"]

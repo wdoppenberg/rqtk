@@ -27,13 +27,13 @@ enum Command {
     /// Add a new requirement to the requirement set.
     Add {
         #[arg(long)]
-        category: String,
+        category: Option<String>,
         #[arg(long = "type")]
-        req_type: String,
+        req_type: Option<String>,
         #[arg(long)]
-        title: String,
+        title: Option<String>,
         #[arg(long)]
-        statement: String,
+        statement: Option<String>,
         #[arg(long)]
         rationale: Option<String>,
     },
@@ -48,7 +48,7 @@ enum Command {
         #[arg(long, default_value = "dot")]
         format: String,
     },
-    /// Tag all current requirements with a baseline version.
+    /// Create a git tag baseline for the current HEAD.
     Baseline { version: String },
     /// Export requirements to a file in the given format.
     Export {
@@ -57,8 +57,12 @@ enum Command {
         #[arg(long)]
         output: Option<PathBuf>,
     },
-    /// Show requirements that changed between two baseline versions.
+    /// Show requirements that changed between two baseline tags.
     Diff { from: String, to: String },
+    /// Show the git commit history for a single requirement.
+    Log { id: String },
+    /// Recompute and write content hashes for all requirements.
+    Rehash,
     /// Generate a PDF requirements report via the Typst typesetting system.
     #[cfg(feature = "report")]
     Report {
@@ -131,6 +135,12 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
         Command::Diff { from, to } => {
             commands::diff::run(root, from, to)?;
+        }
+        Command::Log { id } => {
+            commands::log::run(root, id)?;
+        }
+        Command::Rehash => {
+            commands::rehash::run(root)?;
         }
         #[cfg(feature = "report")]
         Command::Report { output } => {

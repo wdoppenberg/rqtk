@@ -3,24 +3,30 @@ id = "RQTK-CLI-0006"
 title = "Requirement Export Serialization"
 category = "CLI"
 type = "Functional"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "672fa557c004469b555117e754b06a76a5d9b11dad180c0402baca2a1b361195"
+parameters = []
 
 [requirement.statement]
 text = "The rqtk export command shall serialize the validated requirement set to the format selected by --format, supporting JSON, CSV, and Markdown."
 rationale = "Exporting only the validated set prevents corrupted or policy-violating data from propagating into downstream tools and documents."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "High"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
 parents = ["RQTK-SYS-0005"]
-
-[requirement.allocation]
-software_modules = ["cli::export"]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,19 +41,22 @@ name = "Export format correctness test"
 procedure = "Run rqtk export --format json, --format csv, and --format markdown against the firesat-obc fixture; assert format-specific correctness for each and that record count equals the total number of requirements in the fixture."
 expected_result = "All three formats valid; each contains the correct number of requirement entries."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Split compound 'shall…and shall' statement; output destination split to RQTK-CLI-0011. Renamed title to reflect serialization scope. Removed hard-coded record count (8) from success criteria."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = ["cli::export"]
+source_files = []
 
 [requirement.tags]
-keywords = ["export", "json", "csv", "markdown", "serialization"]
+keywords = [
+    "export",
+    "json",
+    "csv",
+    "markdown",
+    "serialization",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

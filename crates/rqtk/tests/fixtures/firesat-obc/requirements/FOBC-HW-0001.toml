@@ -3,9 +3,6 @@ id = "FOBC-HW-0001"
 title = "Non-Volatile Memory Write Endurance"
 category = "HW"
 type = "Constraint"
-version = "1.0.0"
-created = "2024-01-22T00:00:00+00:00"
-updated = "2024-03-05T00:00:00+00:00"
 
 [requirement.statement]
 text = "The OBC non-volatile memory shall support a minimum of 100000 write cycles per sector without data corruption across the full operating temperature range."
@@ -47,12 +44,6 @@ name = "Independent endurance qualification test"
 procedure = "Subject three flight-representative memory modules to accelerated cycling at temperature extremes and verify data integrity after 100 000 cycles."
 expected_result = "No sector failures or data corruption events observed on any of the three units."
 status = "Planned"
-
-[[requirement.history]]
-version = "1.0.0"
-date = "2024-03-05"
-author = "Carlos Ruiz"
-change = "Derived from FOBC-SYS-0001; endurance value confirmed by mission lifetime analysis."
 
 [requirement.tags]
 keywords = ["non-volatile-memory", "flash", "endurance", "hardware"]

@@ -1,4 +1,5 @@
 use crate::error::RqtkError;
+use crate::git::GitContext;
 use crate::model::{ProjectConfig, RepositoryLayout, RqtkConfig};
 use crate::model::{
     RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement, Status, Tags,
@@ -7,12 +8,11 @@ use crate::model::{
 use crate::validation::{
     LintIssue, has_path_to_stake, is_single_shall_sentence_violation, issue_error, issue_warning,
 };
-use chrono::Utc;
+
 use petgraph::algo::is_cyclic_directed;
 use petgraph::dot::{Config, Dot};
 use petgraph::graph::{DiGraph, NodeIndex};
 use regex::Regex;
-use semver::Version;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::marker::PhantomData;
@@ -33,7 +33,8 @@ enum TraceEdge {
     Dependency,
 }
 
-#[derive(Debug, Clone)]
+/// gix::Repository is not Clone, so RequirementSet is not Clone either.
+#[derive(Debug)]
 pub struct RequirementSet<S = Loaded> {
     pub config: ProjectConfig,
     pub requirements: BTreeMap<RequirementId, RequirementFile>,
@@ -41,6 +42,7 @@ pub struct RequirementSet<S = Loaded> {
     pub root: PathBuf,
     pub repo_root: PathBuf,
     pub config_path: PathBuf,
+    pub git: GitContext,
     repository_layout: RepositoryLayout,
     id_regex: Regex,
     allowed_states: HashSet<String>,
@@ -55,6 +57,7 @@ pub struct RequirementSet<S = Loaded> {
 impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
         let repo_root = repo_root.as_ref().to_path_buf();
+        let git = GitContext::open(&repo_root)?;
         let config_path = repo_root.join("rqtk.toml");
         let config_str = read_file(&config_path)?;
         let config: RqtkConfig =
@@ -70,29 +73,7 @@ impl RequirementSet<Loaded> {
             config_path,
             config.project_config,
             config.repository,
-        )
-    }
-
-    pub fn load_from_requirements_dir(
-        requirements_dir: impl AsRef<Path>,
-    ) -> Result<Self, RqtkError> {
-        let requirements_root = requirements_dir.as_ref().to_path_buf();
-        let repo_root = requirements_root
-            .parent()
-            .map_or_else(|| requirements_root.clone(), Path::to_path_buf);
-        let config_path = repo_root.join("rqtk.toml");
-        let config_str = read_file(&config_path)?;
-        let config: RqtkConfig =
-            toml::from_str(&config_str).map_err(|source| RqtkError::TomlParse {
-                path: config_path.clone(),
-                source,
-            })?;
-        Self::load_from_parts(
-            repo_root,
-            requirements_root,
-            config_path,
-            config.project_config,
-            config.repository,
+            git,
         )
     }
 
@@ -102,6 +83,7 @@ impl RequirementSet<Loaded> {
         config_path: PathBuf,
         config: ProjectConfig,
         repository_layout: RepositoryLayout,
+        git: GitContext,
     ) -> Result<Self, RqtkError> {
         let id_regex = Regex::new(&config.identification.id_pattern).map_err(|source| {
             RqtkError::InvalidIdPattern {
@@ -150,6 +132,7 @@ impl RequirementSet<Loaded> {
             root: requirements_root,
             repo_root,
             config_path,
+            git,
             repository_layout,
             id_regex,
             allowed_states,
@@ -313,6 +296,21 @@ impl RequirementSet<Loaded> {
                     path.clone(),
                 ));
             }
+            if let Some(stored_hash) = &req.content_hash {
+                let computed = req.compute_content_hash();
+                if stored_hash != &computed {
+                    issues.push(issue_warning(
+                        "RQ021",
+                        format!(
+                            "content hash is stale (stored {}, computed {}) — run `rqtk rehash`",
+                            &stored_hash[..8.min(stored_hash.len())],
+                            &computed[..8.min(computed.len())]
+                        ),
+                        Some(req_id.clone()),
+                        path.clone(),
+                    ));
+                }
+            }
             for parent in &req.traceability.parents {
                 if !known_ids.contains(parent) {
                     issues.push(issue_error(
@@ -355,6 +353,7 @@ impl RequirementSet<Loaded> {
             root: self.root,
             repo_root: self.repo_root,
             config_path: self.config_path,
+            git: self.git,
             repository_layout: self.repository_layout,
             id_regex: self.id_regex,
             allowed_states: self.allowed_states,
@@ -473,73 +472,70 @@ impl<S> RequirementSet<S> {
 
     pub fn scaffold_requirement(&self, input: ScaffoldInput<'_>) -> RequirementFile {
         let id = self.next_requirement_id(input.category);
-        let now = Utc::now();
-        RequirementFile {
-            requirement: RequirementBody {
-                id,
-                title: input.title.to_owned(),
-                category: input.category.to_owned(),
-                req_type: input.req_type.to_owned(),
-                version: Version::new(0, 1, 0),
-                created: now,
-                updated: now,
-                statement: Statement {
-                    text: input.statement.to_owned(),
-                    rationale: input.rationale.map(ToOwned::to_owned),
-                    assumptions: Vec::new(),
-                    notes: None,
-                },
-                status: Status {
-                    state: self.config.lifecycle.default_state.clone(),
-                    priority: self
-                        .config
-                        .priority
-                        .levels
-                        .first()
-                        .cloned()
-                        .unwrap_or_else(|| "Mandatory".to_owned()),
-                    criticality: None,
-                    maturity: None,
-                    tbd: false,
-                    tbr: false,
-                },
-                approval: None,
-                parameters: Vec::new(),
-                traceability: Traceability::default(),
-                verification: Verification {
-                    method: self
-                        .config
-                        .verification
-                        .methods
-                        .first()
-                        .cloned()
-                        .unwrap_or_else(|| "Test".to_owned()),
-                    level: self
-                        .config
-                        .verification
-                        .levels
-                        .first()
-                        .cloned()
-                        .unwrap_or_else(|| "System".to_owned()),
-                    phase: self
-                        .config
-                        .verification
-                        .phases
-                        .first()
-                        .cloned()
-                        .unwrap_or_else(|| "Development".to_owned()),
-                    owner: None,
-                    success_criteria: None,
-                    activities: Vec::new(),
-                },
-                validation: None,
-                risk: None,
-                allocation: None,
-                history: Vec::new(),
-                tags: Tags::default(),
-                custom: BTreeMap::new(),
+        let mut body = RequirementBody {
+            id,
+            title: input.title.to_owned(),
+            category: input.category.to_owned(),
+            req_type: input.req_type.to_owned(),
+
+            content_hash: None,
+            statement: Statement {
+                text: input.statement.to_owned(),
+                rationale: input.rationale.map(ToOwned::to_owned),
+                assumptions: Vec::new(),
+                notes: None,
             },
-        }
+            status: Status {
+                state: self.config.lifecycle.default_state.clone(),
+                priority: self
+                    .config
+                    .priority
+                    .levels
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| "Mandatory".to_owned()),
+                criticality: None,
+                maturity: None,
+                tbd: false,
+                tbr: false,
+            },
+            approval: None,
+            parameters: Vec::new(),
+            traceability: Traceability::default(),
+            verification: Verification {
+                method: self
+                    .config
+                    .verification
+                    .methods
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| "Test".to_owned()),
+                level: self
+                    .config
+                    .verification
+                    .levels
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| "System".to_owned()),
+                phase: self
+                    .config
+                    .verification
+                    .phases
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| "Development".to_owned()),
+                owner: None,
+                success_criteria: None,
+                activities: Vec::new(),
+            },
+            validation: None,
+            risk: None,
+            allocation: None,
+            tags: Tags::default(),
+            custom: BTreeMap::new(),
+        };
+        body.content_hash = Some(body.compute_content_hash());
+        RequirementFile { requirement: body }
     }
 
     fn has_trace_cycles(&self) -> bool {

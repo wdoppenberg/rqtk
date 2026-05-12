@@ -145,7 +145,7 @@ const TEMPLATE: &str = r##"
           columns: (1fr, 1fr, 1fr, 1fr),
           column-gutter: 8pt,
           stack(dir: ttb, fl("Category"),    v(3pt), text(size: 9.5pt, req.category)),
-          stack(dir: ttb, fl("Version"),     v(3pt), text(size: 9.5pt, req.version)),
+          stack(dir: ttb, fl("Hash"),        v(3pt), text(size: 9.5pt, font: "Courier New", req.hash)),
           stack(dir: ttb, fl("Criticality"), v(3pt), text(size: 9.5pt, req.criticality)),
           stack(dir: ttb, fl("Verify"),      v(3pt), text(size: 9.5pt, req.verification-method)),
         )
@@ -591,7 +591,11 @@ fn write_requirements(out: &mut String, set: &RequirementSet<Validated>) {
         out.push_str(&format!("    title: {},\n", ts(&r.title)));
         out.push_str(&format!("    category: {},\n", ts(&r.category)));
         out.push_str(&format!("    req-type: {},\n", ts(&r.req_type)));
-        out.push_str(&format!("    version: {},\n", ts(&r.version.to_string())));
+        out.push_str(&format!(
+            "    hash: {},\n",
+            ts(&r.content_hash.as_deref().unwrap_or("")
+                [..8.min(r.content_hash.as_deref().unwrap_or("").len())])
+        ));
         out.push_str(&format!("    state: {},\n", ts(&r.status.state)));
         out.push_str(&format!("    priority: {},\n", ts(&r.status.priority)));
         out.push_str(&format!(

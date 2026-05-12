@@ -3,9 +3,6 @@ id = "FOBC-SW-0001"
 title = "Telemetry Frame Buffer Management"
 category = "SW"
 type = "Performance"
-version = "1.0.0"
-created = "2024-01-22T00:00:00+00:00"
-updated = "2024-03-05T00:00:00+00:00"
 
 [requirement.statement]
 text = "The OBC software shall maintain a circular telemetry frame buffer of at least 1000 frames to prevent data loss during communication blackout periods."
@@ -47,12 +44,6 @@ name = "Overflow protection test"
 procedure = "Attempt to write frame 1001 without consuming any prior frames; verify oldest frame is overwritten and a diagnostic flag is set."
 expected_result = "Oldest frame overwritten; overflow counter incremented; no out-of-bounds memory access."
 status = "Passed"
-
-[[requirement.history]]
-version = "1.0.0"
-date = "2024-03-05"
-author = "Bob Jones"
-change = "Derived from FOBC-SYS-0001 at PDR; buffer size confirmed by orbit blackout analysis."
 
 [requirement.tags]
 keywords = ["telemetry", "buffer", "blackout", "memory"]

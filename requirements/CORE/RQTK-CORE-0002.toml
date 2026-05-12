@@ -3,24 +3,30 @@ id = "RQTK-CORE-0002"
 title = "Graph Cycle Detection"
 category = "CORE"
 type = "Functional"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "5d688cad80885c09673780ad8e4611d602fae57178ce503976a4ef20826d150e"
+parameters = []
 
 [requirement.statement]
 text = "rqtk-core shall emit a lint issue with code RQ017 for each cycle detected in the parent–child traceability graph."
 rationale = "A cyclic dependency between requirements is logically incoherent (A derives from B which derives from A) and would cause infinite loops in any traversal that assumes a DAG; early detection prevents downstream tool failures."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "Critical"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
 parents = ["RQTK-SYS-0007"]
-
-[requirement.allocation]
-software_modules = ["rqtk_core::repository", "rqtk_core::validation"]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,19 +41,24 @@ name = "Cycle detection unit test"
 procedure = "Create two requirements A and B where A.parents=[B] and B.parents=[A]; call validate(); assert RQ017 issue present."
 expected_result = "LintIssue { code: RQ017, severity: Error } returned."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Collapsed compound 'shall detect…and shall report' into a single predicate 'shall emit'. Updated parent from RQTK-SYS-0003 to RQTK-SYS-0007 (graph defect detection)."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = [
+    "rqtk_core::repository",
+    "rqtk_core::validation",
+]
+source_files = []
 
 [requirement.tags]
-keywords = ["cycle", "graph", "dag", "lint"]
+keywords = [
+    "cycle",
+    "graph",
+    "dag",
+    "lint",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

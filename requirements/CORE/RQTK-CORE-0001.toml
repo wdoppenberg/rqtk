@@ -3,27 +3,30 @@ id = "RQTK-CORE-0001"
 title = "Validation-Gated API"
 category = "CORE"
 type = "Design"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "5aad8787a35985b16a0a5dfd22df89934dc3755cca7164274f60ba4a6edc35c5"
+parameters = []
 
 [requirement.statement]
 text = "rqtk-core shall prevent coverage queries and graph exports on requirement sets that have not successfully completed the validation pass."
 rationale = "A guard on operation order eliminates an entire class of misuse: querying coverage or exporting a graph before validation would produce results that silently ignore policy violations. Enforcing this at the API level means the misuse cannot occur without deliberate circumvention."
-assumptions = [
-  "rqtk-core is implemented in a language that supports compile-time or type-level enforcement of operation preconditions.",
-]
+assumptions = ["rqtk-core is implemented in a language that supports compile-time or type-level enforcement of operation preconditions."]
 
 [requirement.status]
 state = "Approved"
 priority = "High"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
 parents = ["RQTK-SYS-0004"]
-
-[requirement.allocation]
-software_modules = ["rqtk_core::repository"]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Analysis"
@@ -38,19 +41,20 @@ name = "API enforcement analysis"
 procedure = "Inspect the public API surface of rqtk_core::repository; confirm that coverage_gaps() and to_dot() are absent on the pre-validation type. Attempt to call coverage_gaps() on an unvalidated RequirementSet in a test and confirm the program is rejected."
 expected_result = "Methods absent on unvalidated type; program is rejected (compile-time or runtime error depending on enforcement mechanism)."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Removed implementation prescription ('type-state machine', 'compile-time error') from requirement statement; restated as behavioral constraint. Design choice (type-state) moved to rationale and architecture documentation. Added assumption about language capabilities."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = ["rqtk_core::repository"]
+source_files = []
 
 [requirement.tags]
-keywords = ["api-safety", "validation-gate", "precondition"]
+keywords = [
+    "api-safety",
+    "validation-gate",
+    "precondition",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

@@ -77,9 +77,6 @@ id = "{id}"
 title = "Test requirement"
 category = "{category}"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -99,10 +96,11 @@ phase = "Development"
     )
 }
 
-/// Write `rqtk.toml` + requirement TOML files to a temp dir and return
-/// the temp dir handle and root path.
+/// Write `rqtk.toml` + requirement TOML files to a temp dir (with a git repo)
+/// and return the temp dir handle and root path.
 fn minimal_fixture(config: &str, reqs: &[(&str, &str)]) -> (TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
+    gix::init(dir.path()).expect("git init failed");
     fs::write(dir.path().join("rqtk.toml"), config).unwrap();
     let requirements_root = dir.path().join("requirements");
     fs::create_dir_all(&requirements_root).unwrap();
@@ -138,9 +136,6 @@ id = "TEST-SYS-0001"
 title = "Round-trip req"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -218,9 +213,6 @@ id = "TEST-SYS-0001"
 title = "A"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -244,9 +236,6 @@ id = "TEST-SYS-0002"
 title = "B"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something else."
@@ -315,9 +304,6 @@ id = "TEST-SYS-0001"
 title = "Test"
 category = "UNKNOWN"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -417,9 +403,6 @@ id = "TEST-EXTRA-0001"
 title = "Test"
 category = "EXTRA"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."

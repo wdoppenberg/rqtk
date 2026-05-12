@@ -91,36 +91,6 @@
         "ref"
       ]
     },
-    "HistoryEntry": {
-      "type": "object",
-      "properties": {
-        "author": {
-          "type": "string"
-        },
-        "change": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string",
-          "format": "date"
-        },
-        "ecr": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "version": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "version",
-        "date",
-        "author",
-        "change"
-      ]
-    },
     "Parameter": {
       "type": "object",
       "properties": {
@@ -179,21 +149,18 @@
         "category": {
           "type": "string"
         },
-        "created": {
-          "type": "string",
-          "format": "date-time"
+        "content_hash": {
+          "description": "SHA-256 of the semantic fields (statement, traceability, verification method, parameters).\nMaintained by `rqtk rehash` and the pre-commit hook; checked by lint rule RQ021.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
         },
         "custom": {
           "type": "object",
           "additionalProperties": true,
           "default": {}
-        },
-        "history": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/HistoryEntry"
-          }
         },
         "id": {
           "type": "string"
@@ -238,10 +205,6 @@
         "type": {
           "type": "string"
         },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
         "validation": {
           "anyOf": [
             {
@@ -255,9 +218,6 @@
         },
         "verification": {
           "$ref": "#/$defs/Verification"
-        },
-        "version": {
-          "type": "string"
         }
       },
       "required": [
@@ -265,9 +225,6 @@
         "title",
         "category",
         "type",
-        "version",
-        "created",
-        "updated",
         "statement",
         "status",
         "traceability",

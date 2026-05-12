@@ -3,24 +3,30 @@ id = "RQTK-CLI-0007"
 title = "Baseline Version Validation"
 category = "CLI"
 type = "Functional"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "b4f2fe32ba9b3817769f42a78e6531168dbee938b250563195222b28a8a375b1"
+parameters = []
 
 [requirement.statement]
 text = "The rqtk baseline command shall exit non-zero without modifying any project files when the provided version string does not conform to the Semantic Versioning 2.0.0 specification."
 rationale = "Baselines are formal configuration-management milestones; rejecting non-semver strings prevents freeform version labels that break sorting and automated version comparisons from entering the project record."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "Medium"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
 parents = ["RQTK-SYS-0001"]
-
-[requirement.allocation]
-software_modules = ["cli::baseline"]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,19 +41,21 @@ name = "Invalid semver rejection test"
 procedure = "Copy a fixture to a temp dir; record the SHA-256 of rqtk.toml; run rqtk baseline not-a-semver; assert exit code is non-zero and SHA-256 of rqtk.toml is unchanged."
 expected_result = "Non-zero exit code; rqtk.toml SHA-256 unchanged."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Split four-predicate compound statement; successful update behavior split to RQTK-CLI-0012. Renamed title to 'Baseline Version Validation'. Replaced tautological 'validate it as a valid semver' with 'conform to the Semantic Versioning 2.0.0 specification'."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = ["cli::baseline"]
+source_files = []
 
 [requirement.tags]
-keywords = ["baseline", "semver", "validation", "configuration-management"]
+keywords = [
+    "baseline",
+    "semver",
+    "validation",
+    "configuration-management",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

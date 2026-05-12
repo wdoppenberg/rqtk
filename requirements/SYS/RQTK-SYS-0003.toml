@@ -3,20 +3,30 @@ id = "RQTK-SYS-0003"
 title = "Requirement Traceability Graph"
 category = "SYS"
 type = "Functional"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "291f3f95ba38f85ab7900970945b45ee4c8aad2793eb1bde605e19c7acfe2e3a"
+parameters = []
 
 [requirement.statement]
 text = "rqtk shall maintain a directed acyclic graph of parent–child relationships between requirements."
 rationale = "A formal graph model is the prerequisite for automated traceability traversal, coverage analysis, and graph export; without it, requirement relationships exist only as informal annotations."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "Critical"
 criticality = "Mission-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
+parents = []
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -31,19 +41,14 @@ name = "Graph round-trip test"
 procedure = "Load the rqtk self-hosted requirement set; assert that each requirement with a non-empty parents list has a corresponding directed edge in the graph returned by the repository API."
 expected_result = "Edge count equals the total number of parent references across all loaded requirements; no edges are missing or duplicated."
 status = "Planned"
-
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Split compound 'shall…and shall' statement; graph maintenance retained here. Detection and reporting of graph defects (cycles, orphans, broken references) split to RQTK-SYS-0007."
+evidence = []
 
 [requirement.tags]
-keywords = ["traceability", "graph", "dag"]
+keywords = [
+    "traceability",
+    "graph",
+    "dag",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

@@ -3,24 +3,30 @@ id = "RQTK-CORE-0004"
 title = "Config-Driven Policy Engine"
 category = "CORE"
 type = "Design"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "06404eb5db5e93e3e97ab47498acb452cf47c6078082670abcbbb26ae9acb3e3"
+parameters = []
 
 [requirement.statement]
 text = "rqtk-core shall derive all validation rules — including allowed categories, types, states, priorities, verification methods, and parent-hierarchy constraints — exclusively from the ProjectConfig provided at library initialization."
 rationale = "Config-driven policy lets any project (aerospace, automotive, software-only) enforce its own vocabulary without forking the library. The corollary is that the library ships with no domain vocabulary of its own; a project that omits a field from its config receives no default policy for that field."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "High"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
 parents = ["RQTK-SYS-0004"]
-
-[requirement.allocation]
-software_modules = ["rqtk_core::model", "rqtk_core::validation"]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,19 +41,23 @@ name = "Custom category acceptance test"
 procedure = "Create a fixture with category MECH defined in config and a requirement using it; run rqtk lint; assert exit code 0. Remove MECH from config; rerun; assert RQ002 in output."
 expected_result = "Exit 0 with config; exit 2 with RQ002 without config."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Changed 'loaded at startup' to 'provided at library initialization' to remove ambiguity. Moved negative constraint ('no hard-coded policy values') from statement to rationale; statement now reads as a positive obligation only."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = [
+    "rqtk_core::model",
+    "rqtk_core::validation",
+]
+source_files = []
 
 [requirement.tags]
-keywords = ["config", "policy", "extensibility"]
+keywords = [
+    "config",
+    "policy",
+    "extensibility",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

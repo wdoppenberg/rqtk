@@ -3,24 +3,30 @@ id = "RQTK-CLI-0010"
 title = "Coverage Command Exit Code"
 category = "CLI"
 type = "Interface"
-version = "0.1.0"
-created = "2026-05-07T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "3970d6b0a634fe22091594dde0719b2c861b835f24e5a11cb7ee2eabc9bc670f"
+parameters = []
 
 [requirement.statement]
 text = "The rqtk coverage command shall exit with code 3 when at least one coverage gap is present and with code 0 when all requirements have a non-empty success_criteria field and at least one verification activity."
 rationale = "Exit code 3 is distinct from lint's exit code 2 and the shell error code 1, allowing CI pipelines to distinguish coverage failures from lint failures and process errors independently."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "High"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
 parents = ["RQTK-SYS-0004"]
-
-[requirement.allocation]
-software_modules = ["cli::coverage"]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,13 +41,20 @@ name = "Coverage exit code test"
 procedure = "Add a requirement with an empty success_criteria to a fixture; run rqtk coverage; assert exit code 3. Remove the gap; rerun; assert exit code 0."
 expected_result = "Exit code 3 with gap present; exit code 0 without."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Split from RQTK-CLI-0004 to separate gap reporting (CLI-0004) from exit-code behavior."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = ["cli::coverage"]
+source_files = []
 
 [requirement.tags]
-keywords = ["coverage", "exit-code", "ci"]
+keywords = [
+    "coverage",
+    "exit-code",
+    "ci",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

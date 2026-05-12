@@ -3,9 +3,6 @@ id = "FOBC-SYS-0002"
 title = "Hardware Fault Detection and Response"
 category = "SYS"
 type = "Functional"
-version = "1.0.0"
-created = "2024-01-15T00:00:00+00:00"
-updated = "2024-03-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The OBC software shall detect and respond to critical hardware faults within 500 milliseconds of fault occurrence."
@@ -47,12 +44,6 @@ name = "Fault response timing analysis"
 procedure = "Perform worst-case execution time analysis of the fault interrupt handler."
 expected_result = "WCET analysis confirms handler completes within 400 ms, leaving 100 ms margin."
 status = "Passed"
-
-[[requirement.history]]
-version = "1.0.0"
-date = "2024-03-01"
-author = "Jane Smith"
-change = "Approved at PDR."
 
 [requirement.tags]
 keywords = ["fault-detection", "fdir", "safety", "response-time"]

@@ -30,4 +30,10 @@ pub enum RqtkError {
     RequirementNotFound(RequirementId),
     #[error("unsupported export format `{0}`")]
     UnsupportedExportFormat(String),
+    #[error("git error: {0}")]
+    Git(String),
+    #[error("baseline `{0}` not found — create it with `rqtk baseline {0}`")]
+    BaselineNotFound(String),
+    #[error("invalid baseline name `{0}`: must be non-empty and contain no `/` or whitespace")]
+    InvalidBaselineName(String),
 }

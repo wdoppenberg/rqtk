@@ -3,24 +3,33 @@ id = "RQTK-CLI-0004"
 title = "Coverage Gap Detection"
 category = "CLI"
 type = "Functional"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "66bcf7cf769ef4c523adf5d5a88599a8bb7868c7105f4372bce9d5fc9c6117fe"
+parameters = []
 
 [requirement.statement]
 text = "The rqtk coverage command shall identify and report all requirements that either have an empty success_criteria field or have zero verification activities defined."
 rationale = "Verification coverage is a contractual obligation on most engineering programmes; an automated gap report prevents unverified requirements from reaching design reviews undetected."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "High"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
-parents = ["RQTK-SYS-0004", "RQTK-SYS-0008"]
-
-[requirement.allocation]
-software_modules = ["cli::coverage"]
+parents = [
+    "RQTK-SYS-0004",
+    "RQTK-SYS-0008",
+]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,19 +44,20 @@ name = "Coverage gap report test"
 procedure = "Add a requirement with an empty success_criteria field to a fixture; run rqtk coverage; assert the requirement ID appears in the output. Remove the gap; rerun; assert no IDs appear in the output."
 expected_result = "Requirement ID present in output when gap exists; no IDs in output when no gaps exist."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Split compound 'shall…and shall' statement; exit-code behavior split to RQTK-CLI-0010. Defined 'gap' explicitly as empty success_criteria or zero activities. Updated parents to include RQTK-SYS-0008."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = ["cli::coverage"]
+source_files = []
 
 [requirement.tags]
-keywords = ["coverage", "verification", "gaps"]
+keywords = [
+    "coverage",
+    "verification",
+    "gaps",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

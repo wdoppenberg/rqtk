@@ -1,7 +1,8 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use schemars::JsonSchema;
 use semver::Version;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 
@@ -186,10 +187,10 @@ pub struct RequirementBody {
     pub category: String,
     #[serde(rename = "type")]
     pub req_type: String,
-    #[schemars(with = "String")]
-    pub version: Version,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
+    /// SHA-256 of the semantic fields (statement, traceability, verification method, parameters).
+    /// Maintained by `rqtk rehash` and the pre-commit hook; checked by lint rule RQ021.
+    #[serde(default)]
+    pub content_hash: Option<String>,
     pub statement: Statement,
     pub status: Status,
     #[serde(default)]
@@ -205,12 +206,46 @@ pub struct RequirementBody {
     #[serde(default)]
     pub allocation: Option<Allocation>,
     #[serde(default)]
-    pub history: Vec<HistoryEntry>,
-    #[serde(default)]
     pub tags: Tags,
     #[serde(default)]
     #[schemars(with = "std::collections::BTreeMap<String, serde_json::Value>")]
     pub custom: BTreeMap<String, toml::Value>,
+}
+
+impl RequirementBody {
+    /// Compute the SHA-256 fingerprint of the semantically load-bearing fields.
+    /// Excludes `content_hash`, `created`, `title`, `tags`, `allocation`, `risk`,
+    /// `approval`, and `custom` — these are administrative and do not affect what
+    /// the requirement demands or how it is verified.
+    pub fn compute_content_hash(&self) -> String {
+        let mut h = Sha256::new();
+        h.update(self.id.0.as_bytes());
+        h.update(self.statement.text.as_bytes());
+        for p in &self.traceability.parents {
+            h.update(p.0.as_bytes());
+        }
+        for d in &self.traceability.depends_on {
+            h.update(d.0.as_bytes());
+        }
+        for d in &self.traceability.derived_from {
+            h.update(d.0.as_bytes());
+        }
+        for r in &self.traceability.refines {
+            h.update(r.0.as_bytes());
+        }
+        h.update(self.verification.method.as_bytes());
+        h.update(self.verification.level.as_bytes());
+        h.update(self.verification.phase.as_bytes());
+        for param in &self.parameters {
+            h.update(param.name.as_bytes());
+            h.update(param.operator.as_bytes());
+            h.update(param.value.to_string().as_bytes());
+            if let Some(unit) = &param.unit {
+                h.update(unit.as_bytes());
+            }
+        }
+        format!("{:x}", h.finalize())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -336,16 +371,6 @@ pub struct Allocation {
     pub software_modules: Vec<String>,
     #[serde(default)]
     pub source_files: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct HistoryEntry {
-    #[schemars(with = "String")]
-    pub version: Version,
-    pub date: NaiveDate,
-    pub author: String,
-    pub change: String,
-    pub ecr: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]

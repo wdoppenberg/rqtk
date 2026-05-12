@@ -23,8 +23,94 @@ fn rqtk(requirements_dir: &Path) -> Command {
     cmd
 }
 
+fn git_init(dir: &Path) {
+    gix::init(dir).expect("git init failed");
+}
+
+/// Write a minimal git identity to `.git/config` so annotated tag creation succeeds.
+fn git_set_identity(repo_root: &Path) {
+    let config_path = repo_root.join(".git/config");
+    let existing = fs::read_to_string(&config_path).unwrap_or_default();
+    fs::write(
+        &config_path,
+        format!("{existing}\n[user]\n\tname = Test\n\temail = test@example.com\n"),
+    )
+    .unwrap();
+}
+
+/// Stage all working-directory files and create a commit via gix.
+fn git_commit_all(repo_root: &Path, message: &str) {
+    let repo = gix::open(repo_root).expect("open repo");
+    let tree_id = build_tree_from_dir(&repo, repo_root);
+    let parents: Vec<gix::ObjectId> = repo
+        .head_id()
+        .map(|id| vec![id.detach()])
+        .unwrap_or_default();
+    repo.commit("HEAD", message, tree_id, parents)
+        .expect("commit failed");
+}
+
+/// Recursively build a git tree object from the given directory.
+fn build_tree_from_dir(repo: &gix::Repository, dir: &Path) -> gix::ObjectId {
+    use gix::objs::tree::{Entry, EntryKind, EntryMode};
+
+    let mut entries: Vec<Entry> = Vec::new();
+    for item in fs::read_dir(dir).unwrap() {
+        let item = item.unwrap();
+        let path = item.path();
+        let raw_name = item.file_name();
+        let name = raw_name.to_string_lossy();
+        if name == ".git" {
+            continue;
+        }
+        if path.is_dir() {
+            let subtree_id = build_tree_from_dir(repo, &path);
+            entries.push(Entry {
+                mode: EntryMode::from(EntryKind::Tree),
+                filename: name.as_bytes().into(),
+                oid: subtree_id,
+            });
+        } else {
+            let data = fs::read(&path).unwrap();
+            let blob_id = repo.write_blob(data).unwrap().detach();
+            entries.push(Entry {
+                mode: EntryMode::from(EntryKind::Blob),
+                filename: name.as_bytes().into(),
+                oid: blob_id,
+            });
+        }
+    }
+    // Git requires entries sorted by name (dirs with trailing slash for ordering purposes).
+    entries.sort_by(|a, b| {
+        let a_name = if a.mode.is_tree() {
+            format!("{}/", String::from_utf8_lossy(&a.filename))
+        } else {
+            String::from_utf8_lossy(&a.filename).into_owned()
+        };
+        let b_name = if b.mode.is_tree() {
+            format!("{}/", String::from_utf8_lossy(&b.filename))
+        } else {
+            String::from_utf8_lossy(&b.filename).into_owned()
+        };
+        a_name.cmp(&b_name)
+    });
+    repo.write_object(gix::objs::Tree { entries })
+        .unwrap()
+        .detach()
+}
+
+/// Return true if the given tag name exists in the repository.
+fn git_tag_exists(repo_root: &Path, tag_name: &str) -> bool {
+    let repo = gix::open(repo_root).expect("open repo");
+    let full_ref = format!("refs/tags/{tag_name}");
+    repo.try_find_reference(full_ref.as_str())
+        .map(|opt| opt.is_some())
+        .unwrap_or(false)
+}
+
 fn copy_fixture_to_temp(fixture: &str) -> (tempfile::TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
+    git_init(dir.path());
     let src = fixture_root(fixture);
     for entry in std::fs::read_dir(&src).unwrap() {
         let entry = entry.unwrap();
@@ -56,10 +142,11 @@ fn copy_dir_recursive(src: &Path, dst: &Path) {
 
 // ── helpers for ad-hoc fixtures ──────────────────────────────────────────────
 
-/// Write an `rqtk.toml` + requirement files to a tempdir and return the
-/// dir handle and path.
+/// Write an `rqtk.toml` + requirement files to a tempdir (with a git repo)
+/// and return the dir handle and requirements path.
 fn write_fixture(config: &str, reqs: &[(&str, &str)]) -> (tempfile::TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
+    git_init(dir.path());
     fs::write(dir.path().join("rqtk.toml"), config).unwrap();
     let requirements_root = dir.path().join("requirements");
     fs::create_dir_all(&requirements_root).unwrap();
@@ -174,9 +261,6 @@ id = "TEST-SYS-0001"
 title = "No rationale"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -471,30 +555,72 @@ fn export_unsupported_format_exits_nonzero() {
 // ── diff ──────────────────────────────────────────────────────────────────────
 
 #[test]
-fn diff_reports_no_deltas_for_unknown_versions() {
-    let req_dir = fixture_requirements("firesat-obc");
+fn diff_fails_when_baseline_tag_does_not_exist() {
+    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
     rqtk(&req_dir)
         .arg("diff")
         .arg("0.0.0")
         .arg("9.9.9")
         .assert()
-        .success()
-        .stdout(predicate::str::contains("No deltas between"));
+        .failure();
 }
 
 #[verifies("VA-CLI-008-01")]
 #[test]
-fn diff_detects_requirements_present_in_one_version_only() {
-    // FOBC-SW-0003 has history entries for 0.1.0 and 0.2.0 but not for 1.0.0;
-    // comparing 0.1.0 vs 1.0.0 should surface it.
-    let req_dir = fixture_requirements("firesat-obc");
+fn diff_detects_added_requirement_between_baselines() {
+    let (dir, req_dir) = copy_fixture_to_temp("firesat-obc");
+    let repo_root = req_dir.parent().unwrap();
+
+    git_set_identity(repo_root);
+
+    // Commit current state and tag as v0.1.0.
+    git_commit_all(repo_root, "initial");
+    rqtk(&req_dir)
+        .arg("baseline")
+        .arg("0.1.0")
+        .assert()
+        .success();
+
+    // Add a new requirement, commit, and tag as v0.2.0.
+    let new_req = r#"[requirement]
+id = "FOBC-SW-0004"
+title = "New requirement"
+category = "SW"
+type = "Functional"
+
+[requirement.statement]
+text = "The OBC software shall do something new."
+rationale = "Because we need it."
+
+[requirement.status]
+state = "Draft"
+priority = "High"
+
+[requirement.traceability]
+parents = ["FOBC-SYS-0001"]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Development"
+"#;
+    std::fs::write(req_dir.join("FOBC-SW-0004.toml"), new_req).unwrap();
+    git_commit_all(repo_root, "add FOBC-SW-0004");
+    rqtk(&req_dir)
+        .arg("baseline")
+        .arg("0.2.0")
+        .assert()
+        .success();
+
     rqtk(&req_dir)
         .arg("diff")
         .arg("0.1.0")
-        .arg("1.0.0")
+        .arg("0.2.0")
         .assert()
         .success()
-        .stdout(predicate::str::contains("FOBC-SW-0003"));
+        .stdout(predicate::str::contains("FOBC-SW-0004"));
+
+    drop(dir);
 }
 
 // ── new ───────────────────────────────────────────────────────────────────────
@@ -547,20 +673,27 @@ fn new_created_file_passes_lint() {
 
 #[verifies("VA-CLI-007-01")]
 #[test]
-fn baseline_updates_project_version() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
+fn baseline_creates_git_tag() {
+    let (dir, req_dir) = copy_fixture_to_temp("firesat-obc");
+    let repo_root = req_dir.parent().unwrap();
+
+    git_set_identity(repo_root);
+    git_commit_all(repo_root, "init");
+
     rqtk(&req_dir)
         .arg("baseline")
         .arg("2.0.0")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Baseline updated"))
+        .stdout(predicate::str::contains("Baseline created"))
         .stdout(predicate::str::contains("2.0.0"));
-    let config = std::fs::read_to_string(req_dir.parent().unwrap().join("rqtk.toml")).unwrap();
+
     assert!(
-        config.contains("2.0.0"),
-        "rqtk.toml was not updated with the new version"
+        git_tag_exists(repo_root, "rqtk/2.0.0"),
+        "git tag rqtk/2.0.0 was not created"
     );
+
+    drop(dir);
 }
 
 #[test]
@@ -584,9 +717,6 @@ id = "TEST-SYS-0001"
 title = "A"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -610,9 +740,6 @@ id = "TEST-SYS-0002"
 title = "B"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something else."
@@ -656,9 +783,6 @@ id = "TEST-SYS-0001"
 title = "Broken parent"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -711,9 +835,6 @@ id = "TEST-WRONG-001"
 title = "Bad ID"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -745,9 +866,6 @@ id = "TEST-SYS-0001"
 title = "Bad category"
 category = "UNKNOWN"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -779,9 +897,6 @@ id = "TEST-SYS-0001"
 title = "Bad type"
 category = "SYS"
 type = "Unknown"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -813,9 +928,6 @@ id = "TEST-SYS-0001"
 title = "Bad state"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -847,9 +959,6 @@ id = "TEST-SYS-0001"
 title = "Bad priority"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -881,9 +990,6 @@ id = "TEST-SYS-0001"
 title = "Bad criticality"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -916,9 +1022,6 @@ id = "TEST-SYS-0001"
 title = "No rationale"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -949,9 +1052,6 @@ id = "TEST-SYS-0001"
 title = "Empty method"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -983,9 +1083,6 @@ id = "TEST-SYS-0001"
 title = "Bad method"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1017,9 +1114,6 @@ id = "TEST-SYS-0001"
 title = "No shall"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system does something."
@@ -1109,9 +1203,6 @@ id = "TEST-SYS-0001"
 title = "Forbidden keyword"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall not use should anywhere."
@@ -1201,9 +1292,6 @@ id = "TEST-SUB-0001"
 title = "No parent"
 category = "SUB"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1236,9 +1324,6 @@ id = "TEST-SYS-0001"
 title = "TBD req"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1271,9 +1356,6 @@ id = "TEST-SYS-0001"
 title = "TBR req"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1306,9 +1388,6 @@ id = "TEST-SYS-0001"
 title = "Bad parent"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1341,9 +1420,6 @@ id = "TEST-SYS-0001"
 title = "Bad depends_on"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1376,9 +1452,6 @@ id = "TEST-SYS-0001"
 title = "A"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."
@@ -1402,9 +1475,6 @@ id = "TEST-SYS-0002"
 title = "B"
 category = "SYS"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something else."
@@ -1500,9 +1570,6 @@ id = "TEST-SUB-0001"
 title = "Orphan"
 category = "SUB"
 type = "Functional"
-version = "0.1.0"
-created = "2026-01-01T00:00:00+00:00"
-updated = "2026-01-01T00:00:00+00:00"
 
 [requirement.statement]
 text = "The system shall do something."

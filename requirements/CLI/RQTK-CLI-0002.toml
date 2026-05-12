@@ -3,24 +3,33 @@ id = "RQTK-CLI-0002"
 title = "Lint Command Output"
 category = "CLI"
 type = "Functional"
-version = "0.1.1"
-created = "2026-05-06T00:00:00+00:00"
-updated = "2026-05-07T00:00:00+00:00"
+content_hash = "68645d1b9152ad2ac860be90967f3280226e066161210c6cdacc0e23e3f36f59"
+parameters = []
 
 [requirement.statement]
 text = "The rqtk lint command shall evaluate all requirements in the configured requirements directory against the policy rules defined in rqtk.toml and print each violation as a single line containing the rule code, severity, requirement ID, and file path."
 rationale = "Structured, one-violation-per-line output allows CI pipelines and downstream tools to parse results without fragile string matching; using the configured requirements directory keeps behavior reproducible across environments."
+assumptions = []
 
 [requirement.status]
 state = "Approved"
 priority = "Critical"
 criticality = "Non-Critical"
+tbd = false
+tbr = false
 
 [requirement.traceability]
-parents = ["RQTK-SYS-0004", "RQTK-SYS-0008"]
-
-[requirement.allocation]
-software_modules = ["cli::lint"]
+parents = [
+    "RQTK-SYS-0004",
+    "RQTK-SYS-0008",
+]
+derived_from = []
+satisfies = []
+refines = []
+conflicts_with = []
+depends_on = []
+related = []
+external = []
 
 [requirement.verification]
 method = "Test"
@@ -35,19 +44,20 @@ name = "Violation output format test"
 procedure = "Inject a missing-rationale violation into a fixture; run rqtk lint; assert each output line for the violation contains rule code RQ007, severity, and the requirement ID. Run against the clean firesat-obc fixture; assert no violation lines are printed."
 expected_result = "Violation line contains RQ007, severity, and requirement ID; clean fixture produces no output."
 status = "Planned"
+evidence = []
 
-[[requirement.history]]
-version = "0.1.0"
-date = "2026-05-06"
-author = "Wouter Doppenberg"
-change = "Initial draft."
-
-[[requirement.history]]
-version = "0.1.1"
-date = "2026-05-07"
-author = "Wouter Doppenberg"
-change = "Split three-predicate compound statement; exit-code behavior split to RQTK-CLI-0009. Replaced 'human-readable format' with specific field list. Replaced 'project directory' with 'configured requirements directory'. Updated parents to include RQTK-SYS-0008."
+[requirement.allocation]
+subsystems = []
+components = []
+software_modules = ["cli::lint"]
+source_files = []
 
 [requirement.tags]
-keywords = ["lint", "validation", "output-format"]
+keywords = [
+    "lint",
+    "validation",
+    "output-format",
+]
 labels = ["bootstrap"]
+
+[requirement.custom]

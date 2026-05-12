@@ -3,9 +3,6 @@ id = "FOBC-ICD-0001"
 title = "Payload Subsystem MIL-STD-1553B Interface"
 category = "ICD"
 type = "Interface"
-version = "0.3.0"
-created = "2024-02-05T00:00:00+00:00"
-updated = "2024-04-15T00:00:00+00:00"
 
 [requirement.statement]
 text = "The OBC software shall communicate with the payload subsystem via MIL-STD-1553B data bus operating at 1 Mbps."
@@ -46,24 +43,6 @@ name = "MIL-STD-1553B loopback connectivity test"
 procedure = "Configure OBC as Bus Controller and payload simulator as Remote Terminal; transmit 1000 command/response message pairs and verify round-trip integrity."
 expected_result = "All 1000 message pairs complete without error; measured bus utilisation below 50%."
 status = "Planned"
-
-[[requirement.history]]
-version = "0.1.0"
-date = "2024-02-05"
-author = "Alice Chen"
-change = "Initial interface requirement drafted from payload ICD Rev A."
-
-[[requirement.history]]
-version = "0.2.0"
-date = "2024-03-20"
-author = "Alice Chen"
-change = "Updated to reference ICD Rev B; bus speed confirmed at 1 Mbps."
-
-[[requirement.history]]
-version = "0.3.0"
-date = "2024-04-15"
-author = "Bob Jones"
-change = "Acceptance criteria deferred pending payload team sign-off."
 
 [requirement.tags]
 keywords = ["interface", "1553", "payload", "bus"]

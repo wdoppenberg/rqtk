@@ -1,38 +1,54 @@
 use std::{error::Error, path::Path};
 
-use rqtk_core::RequirementSet;
+use rqtk_core::{BaselineName, ChangeKind, RequirementSet};
 
 use crate::output;
 
 pub fn run(repo_root: &Path, from: String, to: String) -> Result<(), Box<dyn Error>> {
+    let from: BaselineName = from.parse()?;
+    let to: BaselineName = to.parse()?;
     let set = RequirementSet::load_from_repo_root(repo_root)?;
-    let mut changed = Vec::new();
-    for (id, req) in &set.requirements {
-        let has_from = req
-            .requirement
-            .history
-            .iter()
-            .any(|h| h.version.to_string() == from);
-        let has_to = req
-            .requirement
-            .history
-            .iter()
-            .any(|h| h.version.to_string() == to);
-        if has_from ^ has_to {
-            changed.push(id.clone());
-        }
+    let diff = set.git.diff_baselines(&from, &to, &set.root)?;
+
+    let total = diff.added.len() + diff.removed.len() + diff.modified.len();
+    if total == 0 {
+        output::success(&format!("No changes between {from} and {to}"), &[]);
+        return Ok(());
     }
-    if changed.is_empty() {
-        output::success(&format!("No deltas between {from} and {to}"), &[]);
-    } else {
-        output::section(
-            "Delta",
-            &format!("{from} → {to}  ({} changed)", changed.len()),
-        );
-        for id in &changed {
+
+    output::section(
+        "Diff",
+        &format!(
+            "{from} → {to}  ({} added, {} removed, {} modified)",
+            diff.added.len(),
+            diff.removed.len(),
+            diff.modified.len()
+        ),
+    );
+
+    if !diff.added.is_empty() {
+        output::subsection("+", "Added");
+        for id in &diff.added {
             output::item(&id.to_string());
         }
-        println!();
     }
+    if !diff.removed.is_empty() {
+        output::subsection("-", "Removed");
+        for id in &diff.removed {
+            output::item(&id.to_string());
+        }
+    }
+    if !diff.modified.is_empty() {
+        output::subsection("~", "Modified");
+        for m in &diff.modified {
+            let tag = match m.change_kind {
+                ChangeKind::Semantic => "[semantic]",
+                ChangeKind::Cosmetic => "[admin]",
+                _ => "[unknown]",
+            };
+            output::item(&format!("{}  {}", m.id, tag));
+        }
+    }
+    println!();
     Ok(())
 }

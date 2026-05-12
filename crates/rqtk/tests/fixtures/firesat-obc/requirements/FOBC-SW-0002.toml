@@ -3,9 +3,6 @@ id = "FOBC-SW-0002"
 title = "Hardware Watchdog Timer Servicing"
 category = "SW"
 type = "Functional"
-version = "1.0.0"
-created = "2024-01-22T00:00:00+00:00"
-updated = "2024-03-05T00:00:00+00:00"
 
 [requirement.statement]
 text = "The OBC software shall service the hardware watchdog timer at a minimum interval of 250 milliseconds during normal operation."
@@ -45,12 +42,6 @@ name = "Watchdog service timing test"
 procedure = "Instrument the watchdog service call and record inter-service intervals over a 1-hour run on the flight hardware."
 expected_result = "All recorded intervals are ≤250 ms; no watchdog timeout event occurs."
 status = "Passed"
-
-[[requirement.history]]
-version = "1.0.0"
-date = "2024-03-05"
-author = "Bob Jones"
-change = "Derived from FOBC-SYS-0002; interval set at 1/4 of hardware watchdog timeout."
 
 [requirement.tags]
 keywords = ["watchdog", "fault-detection", "timing", "safety"]

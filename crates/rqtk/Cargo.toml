@@ -15,6 +15,7 @@ clap = { version = "4.5.53", features = ["derive"], optional = true }
 semver = "1.0.27"
 console = "0.16"
 comfy-table = "7.2"
+dialoguer = "0.12"
 
 [features]
 macros = ["dep:rqtk-macros"]
@@ -29,6 +30,7 @@ required-features = ["cli", "report"]
 
 [dev-dependencies]
 assert_cmd = "2.0"
+gix = "0.83.0"
 predicates = "3.0"
 tempfile = "3.0"
 rqtk-macros = { path = "../rqtk-macros" }

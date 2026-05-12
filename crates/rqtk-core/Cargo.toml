@@ -8,16 +8,19 @@ verification-lookup = []
 
 [dependencies]
 chrono = { version = "0.4.42", features = ["serde"] }
+gix = "0.83.0"
 petgraph = "0.8.3"
 regex = "1.12.2"
 schemars = { version = "1.0.4", features = ["chrono04"] }
 semver = { version = "1.0.27", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
+sha2 = "0.10"
 thiserror = "2.0.17"
 toml = { workspace = true }
 
 [dev-dependencies]
+gix = "0.83.0"
 tempfile = "3"
 trybuild = "1"
 rqtk-macros = { path = "../rqtk-macros" }
