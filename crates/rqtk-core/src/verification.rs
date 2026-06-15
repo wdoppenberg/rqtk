@@ -35,7 +35,7 @@ pub fn find_activity_from_manifest_dir(activity_id: &str) -> Result<Option<Activ
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
         .map_err(|_| "CARGO_MANIFEST_DIR is not set".to_owned())?;
     let requirements_dir = find_requirements_dir_from(PathBuf::from(manifest_dir))?.ok_or_else(
-        || "no `rqtk.toml` (or legacy `requirements/` directory) found by walking up from CARGO_MANIFEST_DIR".to_owned(),
+        || "no `.rqtk/config.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned(),
     )?;
     scan_dir_for_activity(&requirements_dir, activity_id)
 }
@@ -44,7 +44,7 @@ pub fn find_activity_from_current_dir(activity_id: &str) -> Result<Option<Activi
     let start =
         std::env::current_dir().map_err(|e| format!("cannot read current directory: {e}"))?;
     let requirements_dir = find_requirements_dir_from(start)?.ok_or_else(
-        || "no `rqtk.toml` (or legacy `requirements/` directory) found by walking up from current working directory".to_owned(),
+        || "no `.rqtk/config.toml` found by walking up from current working directory".to_owned(),
     )?;
     scan_dir_for_activity(&requirements_dir, activity_id)
 }
@@ -53,7 +53,7 @@ pub fn build_requirements_doc_from_manifest_dir() -> Result<String, String> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
         .map_err(|_| "CARGO_MANIFEST_DIR is not set".to_owned())?;
     let repo_root = find_repo_root_from(PathBuf::from(manifest_dir))?
-        .ok_or_else(|| "no `rqtk.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned())?;
+        .ok_or_else(|| "no `.rqtk/config.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned())?;
     build_requirements_doc_from_repo_root(&repo_root)
 }
 
@@ -87,17 +87,13 @@ pub fn build_requirements_doc_from_repo_root(repo_root: &Path) -> Result<String,
 
 fn find_requirements_dir_from(mut dir: PathBuf) -> Result<Option<PathBuf>, String> {
     loop {
-        let config_path = dir.join("rqtk.toml");
+        let config_path = dir.join(".rqtk/config.toml");
         if config_path.is_file() {
             let text = std::fs::read_to_string(&config_path)
                 .map_err(|e| format!("cannot read `{}`: {}", config_path.display(), e))?;
             let config: RqtkConfig = toml::from_str(&text)
                 .map_err(|e| format!("cannot parse `{}`: {}", config_path.display(), e))?;
             return Ok(Some(dir.join(config.repository.requirements_dir.clone())));
-        }
-        let candidate = dir.join("requirements");
-        if candidate.is_dir() {
-            return Ok(Some(candidate));
         }
         if !dir.pop() {
             return Ok(None);
@@ -107,7 +103,7 @@ fn find_requirements_dir_from(mut dir: PathBuf) -> Result<Option<PathBuf>, Strin
 
 fn find_repo_root_from(mut dir: PathBuf) -> Result<Option<PathBuf>, String> {
     loop {
-        let config_path = dir.join("rqtk.toml");
+        let config_path = dir.join(".rqtk/config.toml");
         if config_path.is_file() {
             return Ok(Some(dir));
         }

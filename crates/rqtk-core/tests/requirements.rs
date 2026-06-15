@@ -6,10 +6,10 @@ use tempfile::TempDir;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-/// The minimal `rqtk.toml` that works for all "TEST-" tests.
+/// The minimal config that works for all "TEST-" tests.
 const BASE_CONFIG: &str = r#"
 [repository]
-requirements_dir = "requirements"
+requirements_dir = ".rqtk/requirements"
 required_files = []
 required_dirs = []
 
@@ -96,13 +96,15 @@ phase = "Development"
     )
 }
 
-/// Write `rqtk.toml` + requirement TOML files to a temp dir (with a git repo)
+/// Write `.rqtk/config.toml` + requirement TOML files to a temp dir (with a git repo)
 /// and return the temp dir handle and root path.
 fn minimal_fixture(config: &str, reqs: &[(&str, &str)]) -> (TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
     gix::init(dir.path()).expect("git init failed");
-    fs::write(dir.path().join("rqtk.toml"), config).unwrap();
-    let requirements_root = dir.path().join("requirements");
+    let rqtk_dir = dir.path().join(".rqtk");
+    fs::create_dir_all(&rqtk_dir).unwrap();
+    fs::write(rqtk_dir.join("config.toml"), config).unwrap();
+    let requirements_root = rqtk_dir.join("requirements");
     fs::create_dir_all(&requirements_root).unwrap();
     for (filename, content) in reqs {
         let path = requirements_root.join(filename);

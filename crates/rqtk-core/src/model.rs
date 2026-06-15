@@ -48,6 +48,10 @@ pub struct RqtkConfig {
 pub struct RepositoryLayout {
     #[serde(default = "default_requirements_dir")]
     pub requirements_dir: String,
+    #[serde(default = "default_stakeholders_dir")]
+    pub stakeholders_dir: String,
+    #[serde(default = "default_needs_dir")]
+    pub needs_dir: String,
     #[serde(default)]
     pub required_files: Vec<String>,
     #[serde(default)]
@@ -58,6 +62,8 @@ impl Default for RepositoryLayout {
     fn default() -> Self {
         Self {
             requirements_dir: default_requirements_dir(),
+            stakeholders_dir: default_stakeholders_dir(),
+            needs_dir: default_needs_dir(),
             required_files: Vec::new(),
             required_dirs: Vec::new(),
         }
@@ -296,7 +302,7 @@ pub struct Traceability {
     #[serde(default)]
     pub derived_from: Vec<RequirementId>,
     #[serde(default)]
-    pub satisfies: Vec<String>,
+    pub satisfies: Vec<NeedId>,
     #[serde(default)]
     pub refines: Vec<RequirementId>,
     #[serde(default)]
@@ -382,6 +388,95 @@ pub struct ScaffoldInput<'a> {
     pub rationale: Option<&'a str>,
 }
 
+// ── Stakeholder ───────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct StakeholderFile {
+    pub stakeholder: StakeholderBody,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct StakeholderBody {
+    pub id: String,
+    pub name: String,
+    pub role: Option<String>,
+    pub organization: Option<String>,
+    #[serde(default)]
+    pub concerns: StakeholderConcerns,
+    #[serde(default)]
+    pub authority: StakeholderAuthority,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct StakeholderConcerns {
+    #[serde(default)]
+    pub primary: Vec<String>,
+    #[serde(default)]
+    pub secondary: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct StakeholderAuthority {
+    pub approval_scope: Option<String>,
+    #[serde(default)]
+    pub sign_off_required: bool,
+}
+
+// ── Stakeholder Need ──────────────────────────────────────────────────────────
+
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(transparent)]
+pub struct NeedId(pub String);
+
+impl Display for NeedId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NeedFile {
+    pub need: NeedBody,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NeedBody {
+    pub id: NeedId,
+    pub title: String,
+    #[serde(default)]
+    pub stakeholders: Vec<String>,
+    pub priority: Option<String>,
+    pub content_hash: Option<String>,
+    pub statement: NeedStatement,
+    pub status: NeedStatus,
+    #[serde(default)]
+    pub acceptance: Option<Acceptance>,
+    #[serde(default)]
+    pub keywords: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NeedStatement {
+    pub text: String,
+    pub rationale: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NeedStatus {
+    pub state: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct Acceptance {
+    pub criteria: Option<String>,
+    pub validated_by: Option<String>,
+    pub validated_at: Option<NaiveDate>,
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
 fn default_separator() -> String {
     "-".to_owned()
 }
@@ -395,5 +490,13 @@ fn default_padding() -> usize {
 }
 
 fn default_requirements_dir() -> String {
-    "requirements".to_owned()
+    ".rqtk/requirements".to_owned()
+}
+
+fn default_stakeholders_dir() -> String {
+    ".rqtk/stakeholders".to_owned()
+}
+
+fn default_needs_dir() -> String {
+    ".rqtk/needs".to_owned()
 }

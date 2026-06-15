@@ -50,7 +50,7 @@ enum Command {
         #[arg(short, long)]
         short: bool,
     },
-    /// Generate a DOT graph of the requirement traceability graph.
+    /// Export the requirement traceability graph (formats: dot, graphml).
     Graph {
         #[arg(long, default_value = "dot")]
         format: String,

@@ -3,15 +3,14 @@ use crate::git::GitContext;
 use crate::io::write_requirement_file;
 use crate::model::{Approval, ProjectConfig, RepositoryLayout, RqtkConfig};
 use crate::model::{
-    RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement, Status,
-    Traceability, Verification,
+    NeedFile, NeedId, RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement,
+    Status, StakeholderFile, Traceability, Verification,
 };
 use crate::validation::{
     LintIssue, has_path_to_stake, is_single_shall_sentence_violation, issue_error, issue_warning,
 };
 
 use petgraph::algo::is_cyclic_directed;
-use petgraph::dot::{Config, Dot};
 use petgraph::graph::{DiGraph, NodeIndex};
 use regex::Regex;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -72,10 +71,21 @@ pub struct TraceView {
     pub downward: Vec<RequirementId>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SatisfactionStatus {
+    /// At least one requirement's `satisfies` list names this need.
+    Satisfied,
+    /// No requirement points to this need yet.
+    Unsatisfied,
+}
+
 #[derive(Debug, Clone, Copy)]
 enum TraceEdge {
     Parent,
     Dependency,
+    DerivedFrom,
+    Refines,
+    ConflictsWith,
 }
 
 /// gix::Repository is not Clone, so RequirementSet is not Clone either.
@@ -83,8 +93,14 @@ enum TraceEdge {
 pub struct RequirementSet<S = Loaded> {
     pub config: ProjectConfig,
     pub requirements: BTreeMap<RequirementId, RequirementFile>,
+    pub needs: BTreeMap<NeedId, NeedFile>,
+    pub stakeholders: BTreeMap<String, StakeholderFile>,
     pub files_by_id: BTreeMap<RequirementId, PathBuf>,
+    pub needs_by_id: BTreeMap<NeedId, PathBuf>,
+    pub stakeholders_by_id: BTreeMap<String, PathBuf>,
     pub root: PathBuf,
+    pub needs_root: PathBuf,
+    pub stakeholders_root: PathBuf,
     pub repo_root: PathBuf,
     pub config_path: PathBuf,
     pub git: GitContext,
@@ -103,7 +119,7 @@ impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
         let repo_root = repo_root.as_ref().to_path_buf();
         let git = GitContext::open(&repo_root)?;
-        let config_path = repo_root.join("rqtk.toml");
+        let config_path = repo_root.join(".rqtk/config.toml");
         let config_str = read_file(&config_path)?;
         let config: RqtkConfig =
             toml::from_str(&config_str).map_err(|source| RqtkError::TomlParse {
@@ -112,9 +128,13 @@ impl RequirementSet<Loaded> {
             })?;
 
         let requirements_root = repo_root.join(&config.repository.requirements_dir);
+        let needs_root = repo_root.join(&config.repository.needs_dir);
+        let stakeholders_root = repo_root.join(&config.repository.stakeholders_dir);
         Self::load_from_parts(
             repo_root,
             requirements_root,
+            needs_root,
+            stakeholders_root,
             config_path,
             config.project_config,
             config.repository,
@@ -125,6 +145,8 @@ impl RequirementSet<Loaded> {
     fn load_from_parts(
         repo_root: PathBuf,
         requirements_root: PathBuf,
+        needs_root: PathBuf,
+        stakeholders_root: PathBuf,
         config_path: PathBuf,
         config: ProjectConfig,
         repository_layout: RepositoryLayout,
@@ -170,11 +192,49 @@ impl RequirementSet<Loaded> {
             requirements.insert(req_id, req_file);
         }
 
+        let mut needs = BTreeMap::new();
+        let mut needs_by_id = BTreeMap::new();
+        if needs_root.is_dir() {
+            for path in collect_toml_files(&needs_root)? {
+                let text = read_file(&path)?;
+                let need_file: NeedFile =
+                    toml::from_str(&text).map_err(|source| RqtkError::TomlParse {
+                        path: path.clone(),
+                        source,
+                    })?;
+                let need_id = need_file.need.id.clone();
+                needs_by_id.insert(need_id.clone(), path);
+                needs.insert(need_id, need_file);
+            }
+        }
+
+        let mut stakeholders = BTreeMap::new();
+        let mut stakeholders_by_id = BTreeMap::new();
+        if stakeholders_root.is_dir() {
+            for path in collect_toml_files(&stakeholders_root)? {
+                let text = read_file(&path)?;
+                let stk_file: StakeholderFile =
+                    toml::from_str(&text).map_err(|source| RqtkError::TomlParse {
+                        path: path.clone(),
+                        source,
+                    })?;
+                let stk_id = stk_file.stakeholder.id.clone();
+                stakeholders_by_id.insert(stk_id.clone(), path);
+                stakeholders.insert(stk_id, stk_file);
+            }
+        }
+
         Ok(Self {
             config,
             requirements,
+            needs,
+            stakeholders,
             files_by_id,
+            needs_by_id,
+            stakeholders_by_id,
             root: requirements_root,
+            needs_root,
+            stakeholders_root,
             repo_root,
             config_path,
             git,
@@ -403,6 +463,17 @@ impl RequirementSet<Loaded> {
                     ));
                 }
             }
+            let known_need_ids: HashSet<_> = self.needs.keys().cloned().collect();
+            for need_id in &req.traceability.satisfies {
+                if !known_need_ids.contains(need_id) {
+                    issues.push(issue_error(
+                        "RQ022",
+                        format!("satisfies references unknown need `{need_id}`"),
+                        Some(req_id.clone()),
+                        path.clone(),
+                    ));
+                }
+            }
         }
 
         if self.config.validation.forbid_orphans {
@@ -421,8 +492,14 @@ impl RequirementSet<Loaded> {
         let validated = RequirementSet {
             config: self.config,
             requirements: self.requirements,
+            needs: self.needs,
+            stakeholders: self.stakeholders,
             files_by_id: self.files_by_id,
+            needs_by_id: self.needs_by_id,
+            stakeholders_by_id: self.stakeholders_by_id,
             root: self.root,
+            needs_root: self.needs_root,
+            stakeholders_root: self.stakeholders_root,
             repo_root: self.repo_root,
             config_path: self.config_path,
             git: self.git,
@@ -470,10 +547,187 @@ impl RequirementSet<Validated> {
             .collect()
     }
 
-    pub fn to_dot(&self) -> String {
-        let graph = self.build_trace_graph();
-        format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]))
+    pub fn satisfaction_closure(&self) -> BTreeMap<NeedId, SatisfactionStatus> {
+        let mut result: BTreeMap<NeedId, SatisfactionStatus> = self
+            .needs
+            .keys()
+            .map(|id| (id.clone(), SatisfactionStatus::Unsatisfied))
+            .collect();
+        for req_file in self.requirements.values() {
+            for need_id in &req_file.requirement.traceability.satisfies {
+                result.insert(need_id.clone(), SatisfactionStatus::Satisfied);
+            }
+        }
+        result
     }
+
+    pub fn to_dot(&self) -> String {
+        const PALETTE: &[&str] = &[
+            "#AED6F1", "#A9DFBF", "#FAD7A0", "#F1948A",
+            "#D7BDE2", "#A3E4D7", "#F9E79F", "#FADBD8",
+        ];
+
+        let mut cats: Vec<&str> = self
+            .requirements
+            .values()
+            .map(|r| r.requirement.category.as_str())
+            .collect::<std::collections::HashSet<_>>()
+            .into_iter()
+            .collect();
+        cats.sort_unstable();
+
+        let color_map: HashMap<&str, &str> = cats
+            .iter()
+            .enumerate()
+            .map(|(i, &c)| (c, PALETTE[i % PALETTE.len()]))
+            .collect();
+
+        let mut out = String::from("digraph {\n");
+        out.push_str("    node [style=filled fontname=\"Helvetica\"];\n");
+        out.push_str("    edge [fontname=\"Helvetica\" fontsize=10];\n");
+
+        for (id, req_file) in &self.requirements {
+            let req = &req_file.requirement;
+            let color = color_map.get(req.category.as_str()).copied().unwrap_or("#FFFFFF");
+            let is_root = self
+                .config
+                .categories
+                .get(&req.category)
+                .is_some_and(|c| c.is_root);
+            let shape = if is_root { "box" } else { "ellipse" };
+            let tooltip = dot_escape(&format!(
+                "{}\\n{}  |  {}  |  {}",
+                req.title, req.category, req.status.state, req.status.priority
+            ));
+            out.push_str(&format!(
+                "    \"{}\" [ label=\"{}\" shape={} fillcolor=\"{}\" tooltip=\"{}\" ];\n",
+                id.0, id.0, shape, color, tooltip
+            ));
+        }
+
+        for (id, req_file) in &self.requirements {
+            let t = &req_file.requirement.traceability;
+            for parent in &t.parents {
+                out.push_str(&format!(
+                    "    \"{}\" -> \"{}\";\n",
+                    id.0, parent.0
+                ));
+            }
+            for dep in &t.depends_on {
+                out.push_str(&format!(
+                    "    \"{}\" -> \"{}\" [ style=dashed color=blue label=depends ];\n",
+                    id.0, dep.0
+                ));
+            }
+            for src in &t.derived_from {
+                out.push_str(&format!(
+                    "    \"{}\" -> \"{}\" [ style=dotted color=gray label=derived ];\n",
+                    id.0, src.0
+                ));
+            }
+            for tgt in &t.refines {
+                out.push_str(&format!(
+                    "    \"{}\" -> \"{}\" [ style=dashed color=purple label=refines ];\n",
+                    id.0, tgt.0
+                ));
+            }
+            for tgt in &t.conflicts_with {
+                out.push_str(&format!(
+                    "    \"{}\" -> \"{}\" [ style=dashed color=red label=conflicts ];\n",
+                    id.0, tgt.0
+                ));
+            }
+        }
+
+        out.push_str("}\n");
+        out
+    }
+
+    pub fn to_graphml(&self) -> String {
+        let mut out = String::new();
+        out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        out.push_str("<graphml xmlns=\"http://graphml.graphdrawing.org/graphml\"\n");
+        out.push_str("         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
+        out.push_str("         xsi:schemaLocation=\"http://graphml.graphdrawing.org/graphml http://graphml.graphdrawing.org/graphml/graphml-attributes.xsd\">\n");
+
+        let node_keys = [
+            ("d_title",    "title",                "string"),
+            ("d_cat",      "category",             "string"),
+            ("d_type",     "req_type",             "string"),
+            ("d_state",    "state",                "string"),
+            ("d_priority", "priority",             "string"),
+            ("d_crit",     "criticality",          "string"),
+            ("d_vmethod",  "verification_method",  "string"),
+            ("d_vlevel",   "verification_level",   "string"),
+            ("d_tbd",      "tbd",                  "boolean"),
+            ("d_tbr",      "tbr",                  "boolean"),
+            ("d_stmt",     "statement",            "string"),
+        ];
+        for (key_id, name, typ) in &node_keys {
+            out.push_str(&format!(
+                "  <key id=\"{}\" for=\"node\" attr.name=\"{}\" attr.type=\"{}\"/>\n",
+                key_id, name, typ
+            ));
+        }
+        out.push_str("  <key id=\"d_etype\" for=\"edge\" attr.name=\"type\" attr.type=\"string\"/>\n");
+
+        out.push_str("  <graph id=\"G\" edgedefault=\"directed\">\n");
+
+        for (id, req_file) in &self.requirements {
+            let req = &req_file.requirement;
+            out.push_str(&format!("    <node id=\"{}\">\n", xml_escape(&id.0)));
+            out.push_str(&gml_data("d_title",    &xml_escape(&req.title)));
+            out.push_str(&gml_data("d_cat",      &xml_escape(&req.category)));
+            out.push_str(&gml_data("d_type",     &xml_escape(&req.req_type)));
+            out.push_str(&gml_data("d_state",    &xml_escape(&req.status.state)));
+            out.push_str(&gml_data("d_priority", &xml_escape(&req.status.priority)));
+            out.push_str(&gml_data("d_crit",     &xml_escape(req.status.criticality.as_deref().unwrap_or(""))));
+            out.push_str(&gml_data("d_vmethod",  &xml_escape(&req.verification.method)));
+            out.push_str(&gml_data("d_vlevel",   &xml_escape(&req.verification.level)));
+            out.push_str(&gml_data("d_tbd",      if req.status.tbd { "true" } else { "false" }));
+            out.push_str(&gml_data("d_tbr",      if req.status.tbr { "true" } else { "false" }));
+            out.push_str(&gml_data("d_stmt",     &xml_escape(&req.statement.text)));
+            out.push_str("    </node>\n");
+        }
+
+        let mut edge_id = 0usize;
+        for (id, req_file) in &self.requirements {
+            let t = &req_file.requirement.traceability;
+            let emit = |out: &mut String, eid: &mut usize, src: &str, tgt: &str, etype: &str| {
+                out.push_str(&format!(
+                    "    <edge id=\"e{}\" source=\"{}\" target=\"{}\">\n",
+                    eid, xml_escape(src), xml_escape(tgt)
+                ));
+                out.push_str(&gml_data("d_etype", etype));
+                out.push_str("    </edge>\n");
+                *eid += 1;
+            };
+            for p in &t.parents         { emit(&mut out, &mut edge_id, &id.0, &p.0, "parent"); }
+            for d in &t.depends_on      { emit(&mut out, &mut edge_id, &id.0, &d.0, "depends_on"); }
+            for d in &t.derived_from    { emit(&mut out, &mut edge_id, &id.0, &d.0, "derived_from"); }
+            for r in &t.refines         { emit(&mut out, &mut edge_id, &id.0, &r.0, "refines"); }
+            for c in &t.conflicts_with  { emit(&mut out, &mut edge_id, &id.0, &c.0, "conflicts_with"); }
+        }
+
+        out.push_str("  </graph>\n");
+        out.push_str("</graphml>\n");
+        out
+    }
+}
+
+fn dot_escape(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+fn gml_data(key: &str, value: &str) -> String {
+    format!("      <data key=\"{}\">{}</data>\n", key, value)
 }
 
 impl<S> RequirementSet<S> {
@@ -635,16 +889,22 @@ impl<S> RequirementSet<S> {
         }
 
         for (id, req) in &self.requirements {
-            if let Some(from) = nodes.get(id) {
-                for parent in &req.requirement.traceability.parents {
-                    if let Some(to) = nodes.get(parent) {
-                        graph.add_edge(*from, *to, TraceEdge::Parent);
-                    }
+            if let Some(&from) = nodes.get(id) {
+                let t = &req.requirement.traceability;
+                for p in &t.parents {
+                    if let Some(&to) = nodes.get(p) { graph.add_edge(from, to, TraceEdge::Parent); }
                 }
-                for dep in &req.requirement.traceability.depends_on {
-                    if let Some(to) = nodes.get(dep) {
-                        graph.add_edge(*from, *to, TraceEdge::Dependency);
-                    }
+                for d in &t.depends_on {
+                    if let Some(&to) = nodes.get(d) { graph.add_edge(from, to, TraceEdge::Dependency); }
+                }
+                for d in &t.derived_from {
+                    if let Some(&to) = nodes.get(d) { graph.add_edge(from, to, TraceEdge::DerivedFrom); }
+                }
+                for r in &t.refines {
+                    if let Some(&to) = nodes.get(r) { graph.add_edge(from, to, TraceEdge::Refines); }
+                }
+                for c in &t.conflicts_with {
+                    if let Some(&to) = nodes.get(c) { graph.add_edge(from, to, TraceEdge::ConflictsWith); }
                 }
             }
         }

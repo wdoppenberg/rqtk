@@ -7,15 +7,17 @@ pub fn run(
     requirements_dir: Option<&str>,
     force: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let req_dir = requirements_dir.unwrap_or("requirements");
+    let req_dir = requirements_dir.unwrap_or(".rqtk/requirements");
     scaffold_repository(repo_root, req_dir, force)?;
-    let config_path = repo_root.join("rqtk.toml");
+    let config_path = repo_root.join(".rqtk/config.toml");
     let req_path = repo_root.join(req_dir);
     output::success(
         "Repository initialized",
         &[
             ("config", &config_path.display().to_string()),
             ("requirements", &req_path.display().to_string()),
+            ("stakeholders", &repo_root.join(".rqtk/stakeholders").display().to_string()),
+            ("needs", &repo_root.join(".rqtk/needs").display().to_string()),
         ],
     );
     Ok(())
@@ -28,7 +30,10 @@ fn scaffold_repository(
 ) -> Result<(), Box<dyn Error>> {
     std::fs::create_dir_all(repo_root)?;
 
-    let config_path = repo_root.join("rqtk.toml");
+    let rqtk_dir = repo_root.join(".rqtk");
+    std::fs::create_dir_all(&rqtk_dir)?;
+
+    let config_path = rqtk_dir.join("config.toml");
     if config_path.exists() && !force {
         return Err(format!(
             "refusing to overwrite {}; pass --force to replace it",
@@ -37,15 +42,19 @@ fn scaffold_repository(
         .into());
     }
 
-    std::fs::write(&config_path, default_rqtk_toml(requirements_dir))?;
+    std::fs::write(&config_path, default_config_toml(requirements_dir))?;
     std::fs::create_dir_all(repo_root.join(requirements_dir).join("SYS"))?;
+    std::fs::create_dir_all(rqtk_dir.join("stakeholders"))?;
+    std::fs::create_dir_all(rqtk_dir.join("needs"))?;
     Ok(())
 }
 
-fn default_rqtk_toml(requirements_dir: &str) -> String {
+fn default_config_toml(requirements_dir: &str) -> String {
     format!(
         r#"[repository]
 requirements_dir = "{requirements_dir}"
+stakeholders_dir = ".rqtk/stakeholders"
+needs_dir = ".rqtk/needs"
 required_files = []
 required_dirs = []
 

@@ -13,11 +13,13 @@ pub use git::{
     RequirementDiff,
 };
 pub use model::{
-    Allocation, Approval, Category, ChangeControl, CriticalityPolicy, ExportConfig, ExternalTrace,
-    IdentificationScheme, Parameter, PriorityPolicy, ProjectConfig, ProjectMeta,
-    ProjectOrganization, RepositoryLayout, RequirementBody, RequirementFile, RequirementId, Risk,
-    RqtkConfig, ScaffoldInput, Standard, Statement, Status, Traceability, ValidationRules,
-    ValidationSpec, Verification, VerificationActivity, VerificationPolicy,
+    Acceptance, Allocation, Approval, Category, ChangeControl, CriticalityPolicy, ExportConfig,
+    ExternalTrace, IdentificationScheme, NeedBody, NeedFile, NeedId, NeedStatement, NeedStatus,
+    Parameter, PriorityPolicy, ProjectConfig, ProjectMeta, ProjectOrganization, RepositoryLayout,
+    RequirementBody, RequirementFile, RequirementId, Risk, RqtkConfig, ScaffoldInput, Standard,
+    Statement, Status, StakeholderAuthority, StakeholderBody, StakeholderConcerns, StakeholderFile,
+    Traceability, ValidationRules, ValidationSpec, Verification, VerificationActivity,
+    VerificationPolicy,
 };
-pub use repository::{ClosureStatus, Loaded, RequirementSet, TraceView, Validated};
+pub use repository::{ClosureStatus, Loaded, RequirementSet, SatisfactionStatus, TraceView, Validated};
 pub use validation::{LintIssue, LintSeverity};

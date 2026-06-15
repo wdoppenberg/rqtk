@@ -10,15 +10,8 @@ fn fixture_root(fixture: &str) -> PathBuf {
         .join(fixture)
 }
 
-fn fixture_requirements(fixture: &str) -> PathBuf {
-    fixture_root(fixture).join("requirements")
-}
-
-fn rqtk(requirements_dir: &Path) -> Command {
+fn rqtk(repo_root: &Path) -> Command {
     let mut cmd = Command::cargo_bin("rqtk").unwrap();
-    let repo_root = requirements_dir
-        .parent()
-        .map_or_else(|| requirements_dir.to_path_buf(), Path::to_path_buf);
     cmd.arg("--repo-root").arg(repo_root);
     cmd
 }
@@ -122,8 +115,8 @@ fn copy_fixture_to_temp(fixture: &str) -> (tempfile::TempDir, PathBuf) {
             std::fs::copy(src_path, dst_path).unwrap();
         }
     }
-    let req_path = dir.path().join("requirements");
-    (dir, req_path)
+    let repo_root = dir.path().to_path_buf();
+    (dir, repo_root)
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) {
@@ -142,13 +135,15 @@ fn copy_dir_recursive(src: &Path, dst: &Path) {
 
 // ── helpers for ad-hoc fixtures ──────────────────────────────────────────────
 
-/// Write an `rqtk.toml` + requirement files to a tempdir (with a git repo)
-/// and return the dir handle and requirements path.
+/// Write `.rqtk/config.toml` + requirement files to a tempdir (with a git repo)
+/// and return the dir handle and repo root.
 fn write_fixture(config: &str, reqs: &[(&str, &str)]) -> (tempfile::TempDir, PathBuf) {
     let dir = tempfile::tempdir().unwrap();
     git_init(dir.path());
-    fs::write(dir.path().join("rqtk.toml"), config).unwrap();
-    let requirements_root = dir.path().join("requirements");
+    let rqtk_dir = dir.path().join(".rqtk");
+    fs::create_dir_all(&rqtk_dir).unwrap();
+    fs::write(rqtk_dir.join("config.toml"), config).unwrap();
+    let requirements_root = rqtk_dir.join("requirements");
     fs::create_dir_all(&requirements_root).unwrap();
     for (filename, content) in reqs {
         let path = requirements_root.join(filename);
@@ -157,13 +152,14 @@ fn write_fixture(config: &str, reqs: &[(&str, &str)]) -> (tempfile::TempDir, Pat
         }
         fs::write(path, content).unwrap();
     }
-    (dir, requirements_root)
+    let repo_root = dir.path().to_path_buf();
+    (dir, repo_root)
 }
 
 /// Minimal project config that accepts TEST-(SYS|SUB)-NNNN IDs.
 const BASE_CONFIG: &str = r#"
 [repository]
-requirements_dir = "requirements"
+requirements_dir = ".rqtk/requirements"
 required_files = []
 required_dirs = []
 
@@ -228,14 +224,14 @@ formats = []
 #[verifies("VA-CLI-002-01")]
 #[test]
 fn lint_exits_zero_on_valid_project() {
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir).arg("lint").assert().code(0);
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root).arg("lint").assert().code(0);
 }
 
 #[test]
 fn lint_prints_summary_with_zero_errors() {
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("lint")
         .assert()
         .stdout(predicate::str::contains("All requirements passed lint"));
@@ -245,8 +241,8 @@ fn lint_prints_summary_with_zero_errors() {
 fn lint_prints_all_requirement_ids_in_issues_when_present() {
     // The fixture has no errors so the output should not contain error lines,
     // but the success line must always be present.
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("lint")
         .assert()
         .stdout(predicate::str::contains("All requirements passed lint"));
@@ -277,8 +273,8 @@ level = "System"
 phase = "Development"
 "#;
 
-    let (_dir, req_dir) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", req_toml)]);
-    rqtk(&req_dir)
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", req_toml)]);
+    rqtk(&repo_root)
         .arg("lint")
         .assert()
         .code(2)
@@ -291,8 +287,8 @@ phase = "Development"
 #[test]
 fn trace_upward_path_reaches_system_root() {
     // FOBC-SW-0001 → FOBC-SYS-0001
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("trace")
         .arg("FOBC-SW-0001")
         .assert()
@@ -304,8 +300,8 @@ fn trace_upward_path_reaches_system_root() {
 #[test]
 fn trace_downward_path_from_root_includes_children() {
     // FOBC-SYS-0001 has children FOBC-SW-0001 and FOBC-HW-0001
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("trace")
         .arg("FOBC-SYS-0001")
         .assert()
@@ -318,8 +314,8 @@ fn trace_downward_path_from_root_includes_children() {
 #[test]
 fn trace_deep_chain_upward_crosses_multiple_levels() {
     // FOBC-ICD-0001 → FOBC-SW-0001 → FOBC-SYS-0001
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("trace")
         .arg("FOBC-ICD-0001")
         .assert()
@@ -331,8 +327,8 @@ fn trace_deep_chain_upward_crosses_multiple_levels() {
 #[test]
 fn trace_leaf_has_empty_downward_section() {
     // FOBC-ICD-0001 has no children
-    let req_dir = fixture_requirements("firesat-obc");
-    let output = rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    let output = rqtk(&repo_root)
         .arg("trace")
         .arg("FOBC-ICD-0001")
         .assert()
@@ -350,8 +346,8 @@ fn trace_leaf_has_empty_downward_section() {
 
 #[test]
 fn trace_unknown_id_exits_nonzero() {
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("trace")
         .arg("FOBC-SYS-9999")
         .assert()
@@ -363,8 +359,8 @@ fn trace_unknown_id_exits_nonzero() {
 #[verifies("VA-CLI-004-01")]
 #[test]
 fn coverage_exits_nonzero_when_gaps_present_and_strict() {
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("coverage")
         .arg("--strict")
         .assert()
@@ -374,8 +370,8 @@ fn coverage_exits_nonzero_when_gaps_present_and_strict() {
 #[test]
 fn coverage_lists_requirement_missing_activities() {
     // FOBC-SW-0003 has no verification activities
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("coverage")
         .assert()
         .stdout(predicate::str::contains("FOBC-SW-0003"));
@@ -384,8 +380,8 @@ fn coverage_lists_requirement_missing_activities() {
 #[test]
 fn coverage_lists_requirement_missing_success_criteria() {
     // FOBC-ICD-0001 has activities but no success_criteria
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("coverage")
         .assert()
         .stdout(predicate::str::contains("FOBC-ICD-0001"));
@@ -393,8 +389,8 @@ fn coverage_lists_requirement_missing_success_criteria() {
 
 #[test]
 fn coverage_does_not_flag_fully_covered_requirements() {
-    let req_dir = fixture_requirements("firesat-obc");
-    let output = rqtk(&req_dir).arg("coverage").output().unwrap();
+    let repo_root = fixture_root("firesat-obc");
+    let output = rqtk(&repo_root).arg("coverage").output().unwrap();
     let text = String::from_utf8(output.stdout).unwrap();
     assert!(
         !text.contains("FOBC-SYS-0001"),
@@ -423,8 +419,8 @@ fn coverage_does_not_flag_fully_covered_requirements() {
 #[verifies("VA-CLI-005-01")]
 #[test]
 fn graph_dot_output_is_valid_digraph() {
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("graph")
         .assert()
         .success()
@@ -433,8 +429,8 @@ fn graph_dot_output_is_valid_digraph() {
 
 #[test]
 fn graph_dot_output_contains_all_requirement_ids() {
-    let req_dir = fixture_requirements("firesat-obc");
-    let output = rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    let output = rqtk(&repo_root)
         .arg("graph")
         .assert()
         .success()
@@ -457,8 +453,8 @@ fn graph_dot_output_contains_all_requirement_ids() {
 
 #[test]
 fn graph_unsupported_format_exits_nonzero() {
-    let req_dir = fixture_requirements("firesat-obc");
-    rqtk(&req_dir)
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
         .arg("graph")
         .arg("--format")
         .arg("svg")
@@ -472,9 +468,9 @@ fn graph_unsupported_format_exits_nonzero() {
 #[verifies("VA-SYS-005-01")]
 #[test]
 fn export_json_creates_file_with_all_ids() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    let out = req_dir.join("export.json");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    let out = repo_root.join("export.json");
+    rqtk(&repo_root)
         .arg("export")
         .arg("--format")
         .arg("json")
@@ -496,9 +492,9 @@ fn export_json_creates_file_with_all_ids() {
 
 #[test]
 fn export_csv_has_correct_header_and_rows() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    let out = req_dir.join("export.csv");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    let out = repo_root.join("export.csv");
+    rqtk(&repo_root)
         .arg("export")
         .arg("--format")
         .arg("csv")
@@ -520,9 +516,9 @@ fn export_csv_has_correct_header_and_rows() {
 
 #[test]
 fn export_markdown_has_heading_and_sections() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    let out = req_dir.join("export.md");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    let out = repo_root.join("export.md");
+    rqtk(&repo_root)
         .arg("export")
         .arg("--format")
         .arg("markdown")
@@ -547,8 +543,8 @@ fn export_markdown_has_heading_and_sections() {
 
 #[test]
 fn export_unsupported_format_exits_nonzero() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    rqtk(&repo_root)
         .arg("export")
         .arg("--format")
         .arg("xml")
@@ -560,8 +556,8 @@ fn export_unsupported_format_exits_nonzero() {
 
 #[test]
 fn diff_fails_when_baseline_tag_does_not_exist() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    rqtk(&repo_root)
         .arg("diff")
         .arg("0.0.0")
         .arg("9.9.9")
@@ -572,14 +568,13 @@ fn diff_fails_when_baseline_tag_does_not_exist() {
 #[verifies("VA-CLI-008-01")]
 #[test]
 fn diff_detects_added_requirement_between_baselines() {
-    let (dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    let repo_root = req_dir.parent().unwrap();
+    let (dir, repo_root) = copy_fixture_to_temp("firesat-obc");
 
-    git_set_identity(repo_root);
+    git_set_identity(&repo_root);
 
     // Commit current state and tag as v0.1.0.
-    git_commit_all(repo_root, "initial");
-    rqtk(&req_dir)
+    git_commit_all(&repo_root, "initial");
+    rqtk(&repo_root)
         .arg("baseline")
         .arg("0.1.0")
         .assert()
@@ -608,15 +603,15 @@ method = "Test"
 level = "System"
 phase = "Development"
 "#;
-    std::fs::write(req_dir.join("FOBC-SW-0004.toml"), new_req).unwrap();
-    git_commit_all(repo_root, "add FOBC-SW-0004");
-    rqtk(&req_dir)
+    std::fs::write(repo_root.join(".rqtk/requirements/FOBC-SW-0004.toml"), new_req).unwrap();
+    git_commit_all(&repo_root, "add FOBC-SW-0004");
+    rqtk(&repo_root)
         .arg("baseline")
         .arg("0.2.0")
         .assert()
         .success();
 
-    rqtk(&req_dir)
+    rqtk(&repo_root)
         .arg("diff")
         .arg("0.1.0")
         .arg("0.2.0")
@@ -632,9 +627,9 @@ phase = "Development"
 #[verifies("VA-CLI-001-01")]
 #[test]
 fn new_creates_requirement_file_with_correct_id() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
     // Existing SW requirements are 0001–0003, so the next ID is 0004.
-    rqtk(&req_dir)
+    rqtk(&repo_root)
         .arg("add")
         .arg("--category").arg("SW")
         .arg("--type").arg("Functional")
@@ -647,15 +642,15 @@ fn new_creates_requirement_file_with_correct_id() {
         .success()
         .stdout(predicate::str::contains("FOBC-SW-0004"));
     assert!(
-        req_dir.join("SW").join("FOBC-SW-0004.toml").exists(),
+        repo_root.join(".rqtk/requirements/SW/FOBC-SW-0004.toml").exists(),
         "Expected SW/FOBC-SW-0004.toml to be created"
     );
 }
 
 #[test]
 fn new_created_file_passes_lint() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    rqtk(&repo_root)
         .arg("add")
         .arg("--category").arg("HW")
         .arg("--type").arg("Constraint")
@@ -670,7 +665,7 @@ fn new_created_file_passes_lint() {
     // (The new requirement will have no parent, triggering RQ012 and possibly RQ018,
     //  but those are errors only if the require_parent_for_levels rule applies and
     //  forbid_orphans is active — so we just check the process itself succeeds.)
-    rqtk(&req_dir).arg("lint").output().unwrap(); // any exit code is acceptable; we just verify it doesn't panic
+    rqtk(&repo_root).arg("lint").output().unwrap(); // any exit code is acceptable; we just verify it doesn't panic
 }
 
 // ── baseline ──────────────────────────────────────────────────────────────────
@@ -678,13 +673,12 @@ fn new_created_file_passes_lint() {
 #[verifies("VA-CLI-007-01")]
 #[test]
 fn baseline_creates_git_tag() {
-    let (dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    let repo_root = req_dir.parent().unwrap();
+    let (dir, repo_root) = copy_fixture_to_temp("firesat-obc");
 
-    git_set_identity(repo_root);
-    git_commit_all(repo_root, "init");
+    git_set_identity(&repo_root);
+    git_commit_all(&repo_root, "init");
 
-    rqtk(&req_dir)
+    rqtk(&repo_root)
         .arg("baseline")
         .arg("2.0.0")
         .assert()
@@ -693,7 +687,7 @@ fn baseline_creates_git_tag() {
         .stdout(predicate::str::contains("2.0.0"));
 
     assert!(
-        git_tag_exists(repo_root, "rqtk/2.0.0"),
+        git_tag_exists(&repo_root, "rqtk/2.0.0"),
         "git tag rqtk/2.0.0 was not created"
     );
 
@@ -702,8 +696,8 @@ fn baseline_creates_git_tag() {
 
 #[test]
 fn baseline_rejects_invalid_semver() {
-    let (_dir, req_dir) = copy_fixture_to_temp("firesat-obc");
-    rqtk(&req_dir)
+    let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
+    rqtk(&repo_root)
         .arg("baseline")
         .arg("not-a-version")
         .assert()
@@ -762,7 +756,7 @@ level = "System"
 phase = "Development"
 "#;
 
-    let (_dir, req_dir) = write_fixture(
+    let (_dir, repo_root) = write_fixture(
         BASE_CONFIG,
         &[
             ("SYS/TEST-SYS-0001.toml", req_a),
@@ -770,7 +764,7 @@ phase = "Development"
         ],
     );
 
-    rqtk(&req_dir)
+    rqtk(&repo_root)
         .arg("lint")
         .assert()
         .code(2)
@@ -805,9 +799,9 @@ level = "System"
 phase = "Development"
 "#;
 
-    let (_dir, req_dir) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", req_toml)]);
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", req_toml)]);
 
-    rqtk(&req_dir)
+    rqtk(&repo_root)
         .arg("lint")
         .assert()
         .code(2)
@@ -819,14 +813,14 @@ phase = "Development"
 /// Helper: write a fixture with the given config and single requirement file,
 /// run lint, and return stdout as a String.
 fn lint_stdout(config: &str, req_content: &str) -> String {
-    let (_dir, req_dir) = write_fixture(config, &[("SYS/TEST-SYS-0001.toml", req_content)]);
-    let output = rqtk(&req_dir).arg("lint").output().unwrap();
+    let (_dir, repo_root) = write_fixture(config, &[("SYS/TEST-SYS-0001.toml", req_content)]);
+    let output = rqtk(&repo_root).arg("lint").output().unwrap();
     String::from_utf8(output.stdout).unwrap()
 }
 
 fn lint_stdout_with_files(config: &str, files: &[(&str, &str)]) -> String {
-    let (_dir, req_dir) = write_fixture(config, files);
-    let output = rqtk(&req_dir).arg("lint").output().unwrap();
+    let (_dir, repo_root) = write_fixture(config, files);
+    let output = rqtk(&repo_root).arg("lint").output().unwrap();
     String::from_utf8(output.stdout).unwrap()
 }
 
@@ -1612,7 +1606,7 @@ fn init_scaffolds_root_config_and_custom_requirements_dir() {
         .assert()
         .success();
 
-    assert!(repo_root.join("rqtk.toml").exists());
+    assert!(repo_root.join(".rqtk/config.toml").exists());
     assert!(repo_root.join("reqs").is_dir());
     assert!(repo_root.join("reqs").join("SYS").is_dir());
 }
@@ -1621,7 +1615,7 @@ fn init_scaffolds_root_config_and_custom_requirements_dir() {
 fn lint_reports_missing_required_repository_paths() {
     let config = r#"
 [repository]
-requirements_dir = "requirements"
+requirements_dir = ".rqtk/requirements"
 required_files = ["README.md"]
 required_dirs = ["docs"]
 
@@ -1677,8 +1671,8 @@ forbidden_keywords = []
 formats = []
 "#;
 
-    let (_dir, req_dir) = write_fixture(config, &[]);
-    rqtk(&req_dir)
+    let (_dir, repo_root) = write_fixture(config, &[]);
+    rqtk(&repo_root)
         .arg("lint")
         .assert()
         .code(2)
