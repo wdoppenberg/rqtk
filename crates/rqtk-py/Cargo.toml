@@ -1,7 +1,8 @@
 [package]
 name = "rqtk-py"
-version = "0.1.0"
-description = "Python bindings for rqtk: the verifies decorator."
+# Released to PyPI as `rqtk`, in step with the rqtk command line.
+version = "1.1.0"
+description = "The rqtk Python package: the rqtk command line and the @verifies decorator."
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
@@ -12,9 +13,13 @@ categories = ["development-tools::testing"]
 publish = false
 
 [dependencies]
-pyo3 = { version = "0.28.3", features = ["extension-module"] }
+# abi3: one wheel per platform for every Python from 3.9 on.
+pyo3 = { version = "0.28.3", features = ["extension-module", "abi3-py39"] }
+rqtk = { path = "../rqtk", default-features = false, features = ["cli"] }
 rqtk-core = { workspace = true, features = ["verification-lookup"] }
 
 [lib]
-name = "rqtk"
+# Not `rqtk`: that name would collide with the rqtk binary's outputs (rqtk.exe, rqtk.pdb) on
+# Windows. Python imports it as `rqtk._rqtk` (see pyproject.toml).
+name = "_rqtk"
 crate-type = ["cdylib"]

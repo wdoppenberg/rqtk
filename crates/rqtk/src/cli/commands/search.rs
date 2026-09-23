@@ -4,7 +4,7 @@ use rqtk_core::{EntityRef, RequirementSet};
 use serde::Serialize;
 use std::{error::Error, path::Path, path::PathBuf};
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 pub struct SearchArgs {
     pub pattern: String,

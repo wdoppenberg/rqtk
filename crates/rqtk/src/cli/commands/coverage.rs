@@ -6,7 +6,7 @@ use rqtk_core::{
 };
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
 struct NeedStatus {

@@ -5,7 +5,7 @@ use rqtk_core::{BaselineName, EntityRef, RequirementSet};
 use semver::Version;
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage};
 
 #[derive(Serialize)]
 struct Report {

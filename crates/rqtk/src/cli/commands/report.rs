@@ -2,7 +2,7 @@ use std::{error::Error, path::PathBuf};
 
 use rqtk_core::RequirementSet;
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 pub fn run(ctx: &Ctx, out: Option<PathBuf>) -> Result<Exit, Box<dyn Error>> {
     ctx.require_text("report")?;

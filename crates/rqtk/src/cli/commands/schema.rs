@@ -3,7 +3,7 @@ use std::error::Error;
 use console::style;
 use rqtk_core::schema::{KINDS, json_schema};
 
-use crate::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// Print the JSON Schema for a file kind. Without a kind, list the kinds.
 /// The schema is JSON either way; `--json` only changes the listing.

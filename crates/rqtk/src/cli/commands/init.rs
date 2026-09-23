@@ -2,7 +2,7 @@ use std::{error::Error, path::PathBuf};
 
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage};
 
 #[derive(Serialize)]
 pub struct Report {

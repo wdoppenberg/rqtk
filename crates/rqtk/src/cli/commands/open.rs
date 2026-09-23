@@ -2,7 +2,7 @@ use std::error::Error;
 
 use rqtk_core::{EntityRef, RequirementId, RequirementSet, RqtkError};
 
-use crate::output::{Ctx, Exit};
+use crate::cli::output::{Ctx, Exit};
 
 pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
     ctx.require_text("open")?;

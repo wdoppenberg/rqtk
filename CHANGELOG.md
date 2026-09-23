@@ -4,6 +4,18 @@ All notable changes to the `rqtk` command line. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows
 [semantic versioning](https://semver.org) as described under *Stability* in the README.
 
+## [1.1.0] — 2026-09-23
+
+### Added
+- `pip install rqtk` (or `uv tool install rqtk`): the Python package on PyPI now contains the
+  full `rqtk` command line as well as the `@rqtk.verifies` decorator. One abi3 wheel per
+  platform (Linux glibc and musl, macOS, Windows) covers Python 3.9 and later.
+
+### Fixed
+- Building the whole workspace on Windows no longer fails: the Python extension's library is
+  now `_rqtk` (imported as `rqtk._rqtk`) instead of `rqtk`, which collided with the `rqtk`
+  binary's `rqtk.exe`/`rqtk.pdb`.
+
 ## [1.0.0] — 2026-09-23
 
 First stable release: from here on the command line, file format, `--json` output, exit codes

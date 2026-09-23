@@ -2,7 +2,7 @@ use std::error::Error;
 
 use rqtk_core::RequirementSet;
 
-use crate::output::{Ctx, Exit};
+use crate::cli::output::{Ctx, Exit};
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum GraphFormat {

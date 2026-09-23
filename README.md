@@ -64,6 +64,7 @@ This fits the workflow developers already use. It also makes requirements audita
 
 ```bash
 curl -LsSf https://rqtk.dev/install.sh | sh     # macOS and Linux
+pip install rqtk                                # or: uv tool install rqtk
 cargo install rqtk --locked                     # or from source
 ```
 
@@ -434,7 +435,7 @@ The macro resolves the activity ID at compile time by walking up from `CARGO_MAN
 
 ### Python
 
-Install the Python extension (`pip install rqtk`) and use the `verifies` decorator:
+Install the Python package (`pip install rqtk`, which also provides the `rqtk` command) and use the `verifies` decorator:
 
 ```python
 from rqtk import verifies

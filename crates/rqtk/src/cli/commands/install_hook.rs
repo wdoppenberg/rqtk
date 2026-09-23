@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 const REGION_BEGIN: &str = "# BEGIN rqtk-managed";
 const REGION_END: &str = "# END rqtk-managed";

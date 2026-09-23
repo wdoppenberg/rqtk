@@ -3,7 +3,7 @@ use pyo3::intern;
 use pyo3::prelude::*;
 use rqtk_core::verification::{build_verification_doc, find_activity_from_current_dir};
 
-#[pyclass(name = "verifies")]
+#[pyclass(name = "verifies", module = "rqtk")]
 pub struct VerificationDecorator {
     activity_id: String,
     doc: String,
