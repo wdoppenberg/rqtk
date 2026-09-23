@@ -5,7 +5,7 @@ use serde::Serialize;
 use crate::output::{self, Ctx, Exit, Usage};
 
 #[derive(Serialize)]
-struct Report {
+pub struct Report {
     created: Vec<PathBuf>,
     dry_run: bool,
 }
@@ -16,6 +16,21 @@ pub fn run(
     force: bool,
     dry_run: bool,
 ) -> Result<Exit, Box<dyn Error>> {
+    let report = execute(ctx, requirements_dir, force, dry_run)?;
+    if ctx.json() {
+        output::json(&report)?;
+    } else {
+        print(&report);
+    }
+    Ok(Exit::Ok)
+}
+
+pub fn execute(
+    ctx: &Ctx,
+    requirements_dir: Option<&str>,
+    force: bool,
+    dry_run: bool,
+) -> Result<Report, Box<dyn Error>> {
     let root = &ctx.root;
     let req_dir = requirements_dir.unwrap_or(".rqtk/requirements");
     let config_path = root.join(".rqtk/config.toml");
@@ -51,25 +66,28 @@ pub fn run(
         }
     }
 
-    let created: Vec<PathBuf> = files
+    let created = files
         .iter()
         .map(|(p, _)| p)
         .chain(&dirs)
         .map(|p| output::relative(p, root))
         .collect();
-    if ctx.json() {
-        output::json(&Report { created, dry_run })?;
+    Ok(Report { created, dry_run })
+}
+
+pub fn print(report: &Report) {
+    let label = if report.dry_run {
+        "Would initialize repository"
     } else {
-        let label = if dry_run {
-            "Would initialize repository"
-        } else {
-            "Repository initialized"
-        };
-        let shown: Vec<String> = created.iter().map(|p| p.display().to_string()).collect();
-        let pairs: Vec<(&str, &str)> = shown.iter().map(|p| ("create", p.as_str())).collect();
-        output::success(label, &pairs);
-    }
-    Ok(Exit::Ok)
+        "Repository initialized"
+    };
+    let shown: Vec<String> = report
+        .created
+        .iter()
+        .map(|p| p.display().to_string())
+        .collect();
+    let pairs: Vec<(&str, &str)> = shown.iter().map(|p| ("create", p.as_str())).collect();
+    output::success(label, &pairs);
 }
 
 const EXAMPLE_STAKEHOLDER_TOML: &str = r#"id = "STK-001"

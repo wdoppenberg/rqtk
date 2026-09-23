@@ -2,6 +2,7 @@ mod commands;
 mod output;
 
 use clap::{Parser, Subcommand};
+use commands::skills::AgentTarget;
 use output::{Ctx, Exit, Format, Usage};
 use rqtk_export::ExportFormat;
 use std::error::Error;
@@ -37,6 +38,9 @@ enum Command {
         /// Overwrite an existing `.rqtk/config.toml`.
         #[arg(long)]
         force: bool,
+        /// Also install the agent skills (see `rqtk skills install`).
+        #[arg(long)]
+        agents: bool,
         /// Report the files that would be created without writing them.
         #[arg(long)]
         dry_run: bool,
@@ -187,6 +191,48 @@ enum Command {
     },
     /// Explain a lint rule and how to fix it, or list all rules.
     Explain { code: Option<String> },
+    /// Agent skills for working with rqtk in coding agents (Claude Code, Codex, …).
+    #[command(subcommand)]
+    Skills(SkillsCommand),
+}
+
+#[derive(Debug, Subcommand)]
+enum SkillsCommand {
+    /// List the bundled skills and who can invoke them.
+    List,
+    /// Write the skills into the repo and point AGENTS.md / CLAUDE.md at them.
+    ///
+    /// By default the skills go into `.agents/skills` (read by Codex, Cursor, GitHub Copilot,
+    /// Gemini CLI, OpenCode, Amp and most other agents), and `.claude/skills` links to them
+    /// for Claude Code. Skills you have edited are kept unless --force is given. The rqtk
+    /// block goes into AGENTS.md and/or CLAUDE.md where they exist; no file is created
+    /// unless named with --instructions.
+    Install {
+        /// Agents to install for.
+        #[arg(
+            long = "for",
+            value_enum,
+            value_delimiter = ',',
+            default_values_t = [AgentTarget::Universal, AgentTarget::Claude]
+        )]
+        targets: Vec<AgentTarget>,
+        /// Install a single copy into this directory instead (overrides --for).
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        /// Copy the skills into .claude/skills instead of linking to .agents/skills.
+        #[arg(long)]
+        copy: bool,
+        /// Instructions file (AGENTS.md or CLAUDE.md) to add the rqtk block to; created if
+        /// missing. Repeat for several.
+        #[arg(long)]
+        instructions: Vec<PathBuf>,
+        /// Replace skills that were edited locally.
+        #[arg(long)]
+        force: bool,
+        /// Report what would be written without writing.
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 fn main() -> ExitCode {
@@ -211,7 +257,29 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Init {
             requirements_dir,
             force,
+            agents,
             dry_run,
+        } if agents => {
+            let init = commands::init::execute(ctx, requirements_dir.as_deref(), force, dry_run)?;
+            let args = commands::skills::InstallArgs {
+                dry_run,
+                ..Default::default()
+            };
+            let skills = commands::skills::execute(ctx, &args)?;
+            if ctx.json() {
+                output::json(&serde_json::json!({ "init": init, "skills": skills }))?;
+            } else {
+                commands::init::print(&init);
+                println!();
+                commands::skills::print(&skills);
+            }
+            Ok(Exit::Ok)
+        }
+        Command::Init {
+            requirements_dir,
+            force,
+            dry_run,
+            ..
         } => commands::init::run(ctx, requirements_dir.as_deref(), force, dry_run),
         Command::Add {
             category,
@@ -304,5 +372,24 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Report { output } => commands::report::run(ctx, output),
         Command::Schema { kind } => commands::schema::run(ctx, kind.as_deref()),
         Command::Explain { code } => commands::explain::run(ctx, code.as_deref()),
+        Command::Skills(SkillsCommand::List) => commands::skills::list(ctx),
+        Command::Skills(SkillsCommand::Install {
+            targets,
+            dir,
+            copy,
+            instructions,
+            force,
+            dry_run,
+        }) => commands::skills::install(
+            ctx,
+            &commands::skills::InstallArgs {
+                targets,
+                dir,
+                copy,
+                instructions,
+                force,
+                dry_run,
+            },
+        ),
     }
 }

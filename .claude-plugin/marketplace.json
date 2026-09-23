@@ -1,0 +1,16 @@
+{
+  "name": "rqtk",
+  "owner": {
+    "name": "Wouter Doppenberg"
+  },
+  "description": "Skills for working with rqtk requirements in Claude Code.",
+  "plugins": [
+    {
+      "name": "rqtk-skills",
+      "source": "./",
+      "description": "Read and write requirements, prove them with tests, turn specs into requirements, and review diffs against them.",
+      "category": "engineering",
+      "keywords": ["requirements", "traceability", "verification"]
+    }
+  ]
+}

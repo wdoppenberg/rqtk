@@ -96,6 +96,7 @@ rqtk rehash                        # recompute and write content hashes (keeps c
 rqtk report [-o report.md]         # Markdown requirements report (stdout by default)
 rqtk schema requirement            # JSON Schema of a file kind (config, need, evidence, …)
 rqtk explain RQ010                 # what a lint rule checks and how to fix it
+rqtk skills install                # install the agent skills for all agents (see Agent skills)
 ```
 
 Every command accepts `--json`. Every command that writes files (`init`, `add*`, `rehash`, `baseline`, `verify`) accepts `--dry-run`.
@@ -136,6 +137,50 @@ cargo nextest run --profile ci
 rqtk verify --results target/nextest/ci/junit.xml
 rqtk lint && rqtk coverage --strict        # exit 0 means done
 ```
+
+## Agent skills
+
+rqtk ships four small [agent skills](https://agentskills.io) that bring requirements into an agentic coding flow, for Claude Code, Codex, Cursor, Copilot, Gemini CLI and any other agent that reads skills. They don't replace your process. They slot into it, and they are designed to sit beside [mattpocock/skills](https://github.com/mattpocock/skills): grill → spec → tickets → implement (TDD) → review.
+
+| Skill | Invoked by | What it does |
+|---|---|---|
+| `rqtk-requirements` | agent or you | Reading and writing `.rqtk/`: find the governing requirement, read its briefing (`rqtk context`), author needs and requirements that lint clean. |
+| `rqtk-verification` | agent or you | The proof loop: link a test with `verifies`, run it, `rqtk verify`, finish when `rqtk lint` and `rqtk coverage --strict` exit 0. Uses a `tdd` skill for red → green when one is installed. |
+| `/to-requirements` | you | After `/to-spec` (or any discussion): turns the spec into needs and requirements with verification activities, quizzes you on the draft, writes them, lints. |
+| `/requirements-review` | you | The requirements axis of a review, next to `/code-review`: `rqtk impact` facts, then a per-requirement verdict (implemented / partial / wrong / untested) and untraced changes. |
+
+The two agent-invoked skills carry reusable discipline and fire when a task touches requirements. The two user-invoked skills orchestrate and cost no context until you type them. None of them restate `--help`. They point at `rqtk context`, `rqtk schema` and `rqtk explain`, and record only what the CLI can't tell an agent: the conventions, the reasons, and the completion criterion.
+
+Where they fit:
+
+```
+/grill-with-docs → /to-spec → /to-requirements → /to-tickets → /implement → /code-review + /requirements-review
+                                   │                 │             │
+                            needs + requirements   tickets cite   tests cite activity IDs,
+                            with activity IDs      requirement    rqtk verify records evidence,
+                                                   and activity   done = lint + coverage --strict
+                                                   IDs
+```
+
+### Install
+
+```bash
+rqtk skills install          # .agents/skills for most agents, linked into .claude/skills for Claude Code
+rqtk init --agents           # new repo: scaffold .rqtk/ and install the skills in one go
+```
+
+The skills work with any agent that reads [Agent Skills](https://agentskills.io):
+
+| Agents | Reads skills from | What rqtk installs |
+|---|---|---|
+| Codex, Cursor, GitHub Copilot, Gemini CLI, OpenCode, Amp, Cline, Zed, Warp, … | `.agents/skills/` | the skill files |
+| Claude Code | `.claude/skills/` | a symlink per skill into `.agents/skills/`, so every agent reads the same files |
+
+- **Choosing agents:** `--for universal` or `--for claude` installs for one family only. `--copy` puts real copies in `.claude/skills` instead of links (Windows always gets copies). `--dir <path>` installs a single copy anywhere else.
+- **Updates:** the skills are compiled into the binary, so an install always matches the commands and flags of your rqtk. After upgrading rqtk, run `rqtk skills install` again. rqtk records what it wrote in `.rqtk-skills.json`, so skill files you haven't touched are updated and ones you have edited are kept (`--force` replaces them). Each skill also carries `agents/openai.yaml` for Codex, and a `compatibility` note saying it needs the rqtk CLI.
+- **Instructions file:** a short rqtk block goes into `AGENTS.md` if it exists, the cross-agent instructions file. It also goes into `CLAUDE.md` if that exists and doesn't already import `@AGENTS.md`. rqtk creates neither file unless you name it with `--instructions`, which you can repeat.
+
+Claude Code users can instead install the skills as a plugin from this repository (`/plugin marketplace add wdoppenberg/rqtk`, then `/plugin install rqtk-skills@rqtk`). That route tracks the repository, not your installed binary, and covers Claude Code only. Pick one route: installing both leaves every skill twice.
 
 ## Data model
 

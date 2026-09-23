@@ -2490,3 +2490,398 @@ fn impact_reports_changes_downstream_and_reverification() {
         .success()
         .stdout(predicate::str::contains("Re-verify"));
 }
+
+// ── 0.5: agent skills ────────────────────────────────────────────────────────
+
+fn skills_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("skills")
+}
+
+#[test]
+fn skills_list_names_model_and_user_invoked_skills() {
+    let repo_root = fixture_root("firesat-obc");
+    let (code, skills) = json_stdout(&repo_root, &["skills", "list"]);
+    assert_eq!(code, 0);
+    let skills = skills.as_array().unwrap();
+    let user: Vec<&str> = skills
+        .iter()
+        .filter(|s| s["user_invoked"] == true)
+        .map(|s| s["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(skills.len(), 4);
+    assert_eq!(user, ["to-requirements", "requirements-review"]);
+}
+
+fn actions(report: &serde_json::Value) -> Vec<(String, String)> {
+    report["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| {
+            (
+                f["path"].as_str().unwrap().to_owned(),
+                f["action"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn skills_install_defaults_to_shared_dir_with_claude_links() {
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
+    let (code, report) = json_stdout(&repo_root, &["skills", "install"]);
+    assert_eq!(code, 0);
+    assert_eq!(
+        report["dirs"],
+        serde_json::json!([".agents/skills", ".claude/skills"])
+    );
+
+    let shared = repo_root.join(".agents/skills/rqtk-verification/SKILL.md");
+    assert!(shared.is_file() && !shared.is_symlink());
+    let link = repo_root.join(".claude/skills/rqtk-verification");
+    if cfg!(unix) {
+        assert_eq!(
+            fs::read_link(&link).unwrap(),
+            PathBuf::from("../../.agents/skills/rqtk-verification")
+        );
+    }
+    // Claude Code reads the very same file through the link.
+    assert_eq!(
+        fs::read_to_string(link.join("SKILL.md")).unwrap(),
+        fs::read_to_string(&shared).unwrap()
+    );
+
+    let (_, again) = json_stdout(&repo_root, &["skills", "install"]);
+    assert!(
+        actions(&again).iter().all(|(_, a)| a == "unchanged"),
+        "{again}"
+    );
+}
+
+#[test]
+fn skills_install_for_one_agent_family_or_as_copies() {
+    let (_dir, claude_only) = write_fixture(BASE_CONFIG, &[]);
+    json_stdout(&claude_only, &["skills", "install", "--for", "claude"]);
+    assert!(
+        claude_only
+            .join(".claude/skills/to-requirements/SKILL.md")
+            .is_file()
+    );
+    assert!(
+        !claude_only
+            .join(".claude/skills/to-requirements")
+            .is_symlink()
+    );
+    assert!(!claude_only.join(".agents").exists());
+
+    let (_dir, universal_only) = write_fixture(BASE_CONFIG, &[]);
+    json_stdout(
+        &universal_only,
+        &["skills", "install", "--for", "universal"],
+    );
+    assert!(
+        universal_only
+            .join(".agents/skills/to-requirements/SKILL.md")
+            .is_file()
+    );
+    assert!(!universal_only.join(".claude").exists());
+
+    let (_dir, copies) = write_fixture(BASE_CONFIG, &[]);
+    json_stdout(&copies, &["skills", "install", "--copy"]);
+    assert!(!copies.join(".claude/skills/to-requirements").is_symlink());
+    assert!(
+        copies
+            .join(".claude/skills/to-requirements/SKILL.md")
+            .is_file()
+    );
+    assert!(
+        copies
+            .join(".agents/skills/to-requirements/SKILL.md")
+            .is_file()
+    );
+}
+
+#[test]
+fn skills_install_keeps_local_edits_and_earlier_copies() {
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
+    // An earlier copy-style install in .claude/skills stays a copy.
+    json_stdout(&repo_root, &["skills", "install", "--for", "claude"]);
+    let (_, report) = json_stdout(&repo_root, &["skills", "install"]);
+    assert!(
+        !repo_root
+            .join(".claude/skills/rqtk-requirements")
+            .is_symlink()
+    );
+    assert!(
+        actions(&report)
+            .iter()
+            .filter(|(p, _)| p.starts_with(".claude/"))
+            .all(|(_, a)| a == "unchanged"),
+        "{report}"
+    );
+
+    let shared = repo_root.join(".agents/skills/rqtk-verification/SKILL.md");
+    fs::write(&shared, "my own version\n").unwrap();
+    let (_, kept) = json_stdout(&repo_root, &["skills", "install"]);
+    assert!(
+        actions(&kept).contains(&(
+            ".agents/skills/rqtk-verification/SKILL.md".into(),
+            "skipped_modified".into()
+        )),
+        "{kept}"
+    );
+    assert_eq!(fs::read_to_string(&shared).unwrap(), "my own version\n");
+    rqtk(&repo_root)
+        .args(["skills", "install", "--force"])
+        .assert()
+        .success();
+    assert_ne!(fs::read_to_string(&shared).unwrap(), "my own version\n");
+}
+
+#[test]
+fn skills_install_updates_existing_instruction_files_only() {
+    // Neither file: nothing created.
+    let (_dir, none) = write_fixture(BASE_CONFIG, &[]);
+    let (_, report) = json_stdout(&none, &["skills", "install"]);
+    assert_eq!(report["instructions"], serde_json::json!([]));
+    assert!(!none.join("AGENTS.md").exists() && !none.join("CLAUDE.md").exists());
+
+    // Both, and CLAUDE.md imports AGENTS.md: only AGENTS.md gets the block.
+    let (_dir, both) = write_fixture(BASE_CONFIG, &[]);
+    fs::write(both.join("AGENTS.md"), "# Agents\n").unwrap();
+    fs::write(both.join("CLAUDE.md"), "@AGENTS.md\n").unwrap();
+    let (_, report) = json_stdout(&both, &["skills", "install"]);
+    assert_eq!(report["instructions"].as_array().unwrap().len(), 1);
+    assert_eq!(report["instructions"][0]["path"], "AGENTS.md");
+    assert_eq!(
+        fs::read_to_string(both.join("CLAUDE.md")).unwrap(),
+        "@AGENTS.md\n"
+    );
+
+    // Both, independent: both get it. Existing text is kept; reruns change nothing.
+    let (_dir, separate) = write_fixture(BASE_CONFIG, &[]);
+    fs::write(separate.join("AGENTS.md"), "# Agents\n").unwrap();
+    fs::write(separate.join("CLAUDE.md"), "# Project\n\nOur rules.\n").unwrap();
+    let (_, report) = json_stdout(&separate, &["skills", "install"]);
+    assert_eq!(report["instructions"].as_array().unwrap().len(), 2);
+    let claude = fs::read_to_string(separate.join("CLAUDE.md")).unwrap();
+    assert!(
+        claude.starts_with("# Project\n\nOur rules.\n\n<!-- BEGIN rqtk"),
+        "{claude}"
+    );
+    assert!(claude.contains("rqtk coverage --strict"));
+    let (_, again) = json_stdout(&separate, &["skills", "install"]);
+    assert!(
+        again["instructions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|i| i["action"] == "unchanged")
+    );
+
+    // Named files are created; anything but AGENTS.md / CLAUDE.md is a usage error.
+    rqtk(&none)
+        .args(["skills", "install", "--instructions", "NOTES.md"])
+        .assert()
+        .code(2);
+    assert!(!none.join("NOTES.md").exists());
+    let (_, named) = json_stdout(&none, &["skills", "install", "--instructions", "AGENTS.md"]);
+    assert_eq!(named["instructions"][0]["action"], "created");
+    assert!(
+        fs::read_to_string(none.join("AGENTS.md"))
+            .unwrap()
+            .contains("## Requirements (rqtk)")
+    );
+}
+
+#[test]
+fn skills_install_into_a_custom_dir() {
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
+    let (_, report) = json_stdout(&repo_root, &["skills", "install", "--dir", "tools/skills"]);
+    assert_eq!(report["dirs"], serde_json::json!(["tools/skills"]));
+    assert!(
+        repo_root
+            .join("tools/skills/requirements-review/SKILL.md")
+            .is_file()
+    );
+    assert!(!repo_root.join(".agents").exists() && !repo_root.join(".claude").exists());
+}
+
+#[test]
+fn skills_install_dry_run_and_init_agents() {
+    let fresh = tempfile::tempdir().unwrap();
+    git_init(fresh.path());
+    fs::write(fresh.path().join("AGENTS.md"), "# Agents\n").unwrap();
+    let (_, dry) = json_stdout(fresh.path(), &["init", "--agents", "--dry-run"]);
+    assert!(dry["init"]["created"].is_array());
+    assert_eq!(dry["skills"]["dry_run"], true);
+    assert!(!fresh.path().join(".claude").exists() && !fresh.path().join(".agents").exists());
+    assert_eq!(
+        fs::read_to_string(fresh.path().join("AGENTS.md")).unwrap(),
+        "# Agents\n"
+    );
+
+    let (code, done) = json_stdout(fresh.path(), &["init", "--agents"]);
+    assert_eq!(code, 0);
+    assert_eq!(done["skills"]["instructions"][0]["path"], "AGENTS.md");
+    assert!(
+        fresh
+            .path()
+            .join(".agents/skills/rqtk-requirements/SKILL.md")
+            .is_file()
+    );
+    assert!(
+        fresh
+            .path()
+            .join(".claude/skills/rqtk-requirements/SKILL.md")
+            .is_file()
+    );
+    rqtk(fresh.path()).arg("lint").assert().success();
+}
+
+/// Every `rqtk <command> --flag` a skill, the README or the instructions block tells an agent
+/// to run must exist in the CLI, so the docs cannot drift from the binary.
+#[test]
+fn documented_commands_and_flags_exist() {
+    let mut docs: Vec<(String, String)> = Vec::new();
+    for entry in fs::read_dir(skills_dir()).unwrap() {
+        let path = entry.unwrap().path().join("SKILL.md");
+        docs.push((
+            path.display().to_string(),
+            fs::read_to_string(&path).unwrap(),
+        ));
+    }
+    let readme = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../README.md");
+    docs.push(("README.md".into(), fs::read_to_string(readme).unwrap()));
+
+    // Inline code spans in prose, and command lines inside fenced blocks
+    // (trailing `# comment` dropped).
+    let inline = regex::Regex::new(r"`rqtk ([a-z][a-z-]*)((?: [^`]*)?)`").unwrap();
+    let fenced = regex::Regex::new(r"^\s*rqtk ([a-z][a-z-]*)([^#]*)").unwrap();
+    let flag = regex::Regex::new(r"--[a-z][a-z-]*").unwrap();
+    let mut help_cache = std::collections::HashMap::new();
+    let mut checked = 0;
+    for (source, text) in &docs {
+        let mut invocations: Vec<(String, String)> = Vec::new();
+        let mut in_fence = false;
+        for line in text.lines() {
+            if line.trim_start().starts_with("```") {
+                in_fence = !in_fence;
+                continue;
+            }
+            let segments: Vec<&str> = if in_fence {
+                line.split(['&', '|', ';']).collect()
+            } else {
+                vec![line]
+            };
+            let re = if in_fence { &fenced } else { &inline };
+            for segment in segments {
+                for caps in re.captures_iter(segment) {
+                    invocations.push((caps[1].to_owned(), caps[2].to_owned()));
+                }
+            }
+        }
+        for (command, rest) in invocations {
+            let help = help_cache.entry(command.clone()).or_insert_with(|| {
+                let out = rqtk(Path::new("."))
+                    .args([&command, "--help"])
+                    .output()
+                    .unwrap();
+                assert!(
+                    out.status.success(),
+                    "{source}: `rqtk {command}` is not a command"
+                );
+                String::from_utf8(out.stdout).unwrap()
+            });
+            for f in flag.find_iter(&rest) {
+                let f = f.as_str();
+                let global = ["--json", "--repo-root", "--help"].contains(&f);
+                // Whole-flag match: `--result` must not pass because `--results` exists.
+                let listed = help.match_indices(f).any(|(i, _)| {
+                    !help[i + f.len()..]
+                        .starts_with(|c: char| c.is_ascii_alphanumeric() || c == '-')
+                });
+                assert!(
+                    global || listed,
+                    "{source}: `rqtk {command}` has no flag {f}"
+                );
+            }
+            checked += 1;
+        }
+    }
+    assert!(checked > 40, "only {checked} invocations found");
+}
+
+#[test]
+fn plugin_manifest_lists_every_bundled_skill() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let plugin: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(root.join(".claude-plugin/plugin.json")).unwrap())
+            .unwrap();
+    let listed: Vec<String> = plugin["skills"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s.as_str().unwrap().trim_start_matches("./").to_owned())
+        .collect();
+    let mut bundled: Vec<String> = fs::read_dir(skills_dir())
+        .unwrap()
+        .map(|e| {
+            format!(
+                "crates/rqtk/skills/{}",
+                e.unwrap().file_name().to_string_lossy()
+            )
+        })
+        .collect();
+    bundled.sort();
+    let mut listed_sorted = listed.clone();
+    listed_sorted.sort();
+    assert_eq!(listed_sorted, bundled);
+    let _: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(root.join(".claude-plugin/marketplace.json")).unwrap(),
+    )
+    .unwrap();
+}
+
+#[test]
+fn skills_install_upgrades_untouched_files_but_keeps_edits() {
+    use sha2::{Digest, Sha256};
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
+    json_stdout(&repo_root, &["skills", "install", "--for", "universal"]);
+    let dir = repo_root.join(".agents/skills");
+    let manifest_path = dir.join(".rqtk-skills.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&manifest_path).unwrap()).unwrap();
+
+    // Simulate a file an older rqtk wrote (manifest agrees) next to one the user edited.
+    let old = "---\nname: rqtk-requirements\ndescription: old\n---\nold body\n";
+    fs::write(dir.join("rqtk-requirements/SKILL.md"), old).unwrap();
+    manifest["rqtk-requirements/SKILL.md"] = format!("{:x}", Sha256::digest(old)).into();
+    fs::write(&manifest_path, manifest.to_string()).unwrap();
+    fs::write(dir.join("to-requirements/SKILL.md"), "my own version\n").unwrap();
+
+    let (_, report) = json_stdout(&repo_root, &["skills", "install", "--for", "universal"]);
+    let acts = actions(&report);
+    assert!(
+        acts.contains(&(
+            ".agents/skills/rqtk-requirements/SKILL.md".into(),
+            "updated".into()
+        )),
+        "{report}"
+    );
+    assert!(
+        acts.contains(&(
+            ".agents/skills/to-requirements/SKILL.md".into(),
+            "skipped_modified".into()
+        )),
+        "{report}"
+    );
+    assert_ne!(
+        fs::read_to_string(dir.join("rqtk-requirements/SKILL.md")).unwrap(),
+        old
+    );
+    assert_eq!(
+        fs::read_to_string(dir.join("to-requirements/SKILL.md")).unwrap(),
+        "my own version\n"
+    );
+}

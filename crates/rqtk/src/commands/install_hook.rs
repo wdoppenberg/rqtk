@@ -9,33 +9,14 @@ const REGION_BODY: &str = "set -e\nrqtk rehash\nrqtk lint";
 
 const DEFAULT_SHEBANG: &str = "#!/bin/sh";
 
+#[cfg(test)]
 fn managed_region() -> String {
     format!("{REGION_BEGIN}\n{REGION_BODY}\n{REGION_END}\n")
 }
 
 /// Insert or replace the rqtk-managed region in `existing`, returning the new content.
 fn splice_region(existing: &str) -> String {
-    let region = managed_region();
-    if let (Some(begin), Some(end)) = (existing.find(REGION_BEGIN), existing.find(REGION_END)) {
-        let end_of_line = existing[end..]
-            .find('\n')
-            .map(|i| end + i + 1)
-            .unwrap_or(existing.len());
-        format!(
-            "{}{}{}",
-            &existing[..begin],
-            region,
-            &existing[end_of_line..]
-        )
-    } else {
-        // Append region, ensuring a single blank line separator.
-        let trimmed = existing.trim_end_matches('\n');
-        if trimmed.is_empty() {
-            region
-        } else {
-            format!("{trimmed}\n\n{region}")
-        }
-    }
+    super::splice_managed(existing, REGION_BEGIN, REGION_END, REGION_BODY)
 }
 
 pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
