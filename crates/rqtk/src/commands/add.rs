@@ -1,7 +1,7 @@
 use std::{error::Error, path::Path};
 
-use rqtk_core::io::write_requirement_file;
-use rqtk_core::{RequirementSet, RqtkError, ScaffoldInput};
+use rqtk_core::io::create_toml_file;
+use rqtk_core::{RequirementSet, ScaffoldInput};
 
 use crate::output;
 
@@ -34,25 +34,21 @@ pub fn run(repo_root: &Path, args: AddArgs) -> Result<(), Box<dyn Error>> {
         .into());
     }
 
-    let file = set.scaffold_requirement(ScaffoldInput {
+    let req = set.scaffold_requirement(ScaffoldInput {
         category: &args.category,
         req_type: &args.req_type,
         title: &args.title,
         statement: &args.statement,
         rationale: args.rationale.as_deref(),
     });
-    let id = file.requirement.id.clone();
-    let category_dir = set.category_dir(&args.category);
-    std::fs::create_dir_all(&category_dir).map_err(|e| RqtkError::Io {
-        path: category_dir.clone(),
-        source: e,
-    })?;
-    let path = category_dir.join(format!("{id}.toml"));
-    write_requirement_file(&path, &file)?;
+    let path = set
+        .category_dir(&args.category)
+        .join(format!("{}.toml", req.id));
+    create_toml_file(&path, &req)?;
     output::success(
         "Requirement created",
         &[
-            ("id", &id.to_string()),
+            ("id", req.id.as_ref()),
             ("file", &path.display().to_string()),
         ],
     );

@@ -16,11 +16,11 @@ pub fn run(repo_root: &Path, id: String) -> Result<(), Box<dyn Error>> {
     let commits = set.git.requirement_history(&path)?;
 
     if commits.is_empty() {
-        output::success("No committed history found", &[("id", &req_id.to_string())]);
+        output::success("No committed history found", &[("id", req_id.as_ref())]);
         return Ok(());
     }
 
-    output::section(&req_id.to_string(), &format!("{} commits", commits.len()));
+    output::section(req_id.as_ref(), &format!("{} commits", commits.len()));
     for c in &commits {
         let date = c.timestamp.map_or_else(
             || "unknown".to_string(),

@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use rqtk_core::{RequirementSet, RqtkError, io::write_stakeholder_file};
+use rqtk_core::{RequirementSet, StakeholderId, io::create_toml_file};
 
 use crate::output;
 
@@ -13,20 +13,18 @@ pub struct AddStakeholderArgs {
 
 pub fn run(repo_root: &Path, args: AddStakeholderArgs) -> Result<(), Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(repo_root)?;
-    let id = args.id.unwrap_or_else(|| set.next_stakeholder_id());
-    let mut file = set.scaffold_stakeholder(&id, &args.name);
-    file.stakeholder.role = args.role;
-    file.stakeholder.organization = args.organization;
+    let id = args
+        .id
+        .map_or_else(|| set.next_stakeholder_id(), StakeholderId);
+    let mut stakeholder = set.scaffold_stakeholder(id.clone(), &args.name);
+    stakeholder.role = args.role;
+    stakeholder.organization = args.organization;
 
-    std::fs::create_dir_all(&set.stakeholders_root).map_err(|e| RqtkError::Io {
-        path: set.stakeholders_root.clone(),
-        source: e,
-    })?;
     let path = set.stakeholders_root.join(format!("{id}.toml"));
-    write_stakeholder_file(&path, &file)?;
+    create_toml_file(&path, &stakeholder)?;
     output::success(
         "Stakeholder created",
-        &[("id", &id), ("file", &path.display().to_string())],
+        &[("id", id.as_ref()), ("file", &path.display().to_string())],
     );
     Ok(())
 }

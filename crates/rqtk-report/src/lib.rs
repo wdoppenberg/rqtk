@@ -2,8 +2,7 @@
 
 use chrono::NaiveDate;
 use rqtk_core::{
-    ClosureStatus, RequirementBody as Requirement, RequirementId, RequirementSet,
-    SatisfactionStatus, Validated,
+    ClosureStatus, Requirement, RequirementId, RequirementSet, SatisfactionStatus, Validated,
 };
 use std::collections::BTreeMap;
 use std::fmt::Write;
@@ -66,9 +65,7 @@ fn write_summary(
     // Lifecycle states in configured order, then any unconfigured ones.
     let mut by_state: BTreeMap<&str, usize> = BTreeMap::new();
     for req in set.requirements.values() {
-        *by_state
-            .entry(req.requirement.status.state.as_str())
-            .or_default() += 1;
+        *by_state.entry(req.state.as_str()).or_default() += 1;
     }
     out.push_str("### Lifecycle state\n\n| State | Count |\n|---|---:|\n");
     for state in &set.config.lifecycle.states {
@@ -111,7 +108,7 @@ fn write_summary(
         let ids: Vec<&RequirementId> = set
             .requirements
             .iter()
-            .filter(|(_, r)| &r.requirement.category == key)
+            .filter(|(_, r)| &r.category == key)
             .map(|(id, _)| id)
             .collect();
         let with = |status: ClosureStatus| {
@@ -145,7 +142,6 @@ fn write_categories(
         let reqs: Vec<&Requirement> = set
             .requirements
             .values()
-            .map(|r| &r.requirement)
             .filter(|r| &r.category == key)
             .collect();
         if reqs.is_empty() {
@@ -162,46 +158,42 @@ fn write_requirement(out: &mut String, req: &Requirement, closure: Option<&Closu
 
     let mut facts = vec![
         format!("**Type** {}", inline(&req.req_type)),
-        format!("**State** {}", inline(&req.status.state)),
-        format!("**Priority** {}", inline(&req.status.priority)),
+        format!("**State** {}", inline(&req.state)),
+        format!("**Priority** {}", inline(&req.priority)),
     ];
-    if let Some(c) = &req.status.criticality {
+    if let Some(c) = &req.criticality {
         facts.push(format!("**Criticality** {}", inline(c)));
     }
     if let Some(status) = closure {
         facts.push(format!("**Verification** {}", closure_label(status)));
     }
-    if req.status.tbd {
+    if req.tbd {
         facts.push("**TBD**".to_owned());
     }
-    if req.status.tbr {
+    if req.tbr {
         facts.push("**TBR**".to_owned());
     }
     let _ = writeln!(out, "{}\n", facts.join(" · "));
 
-    push_quote(out, &req.statement.text);
-    if let Some(rationale) = &req.statement.rationale {
+    push_quote(out, &req.statement);
+    if let Some(rationale) = &req.rationale {
         let _ = writeln!(out, "**Rationale.** {}\n", inline(rationale));
     }
-    if let Some(notes) = &req.statement.notes {
+    if let Some(notes) = &req.notes {
         let _ = writeln!(out, "**Notes.** {}\n", inline(notes));
     }
-    if !req.statement.assumptions.is_empty() {
+    if !req.assumptions.is_empty() {
         out.push_str("**Assumptions**\n\n");
-        for a in &req.statement.assumptions {
+        for a in &req.assumptions {
             let _ = writeln!(out, "- {}", inline(a));
         }
         out.push('\n');
     }
-    if !req.traceability.parents.is_empty() {
-        let _ = writeln!(out, "**Parents** {}\n", id_list(&req.traceability.parents));
+    if !req.trace.parents.is_empty() {
+        let _ = writeln!(out, "**Parents** {}\n", id_list(&req.trace.parents));
     }
-    if !req.traceability.satisfies.is_empty() {
-        let _ = writeln!(
-            out,
-            "**Satisfies** {}\n",
-            id_list(&req.traceability.satisfies)
-        );
+    if !req.trace.satisfies.is_empty() {
+        let _ = writeln!(out, "**Satisfies** {}\n", id_list(&req.trace.satisfies));
     }
 
     if !req.parameters.is_empty() {
@@ -254,20 +246,19 @@ fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
     }
     let mut satisfied_by: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     for (id, req) in &set.requirements {
-        for need in &req.requirement.traceability.satisfies {
+        for need in &req.trace.satisfies {
             satisfied_by.entry(&need.0).or_default().push(&id.0);
         }
     }
     out.push_str("## Stakeholder needs\n\n| Need | Title | State | Stakeholders | Satisfied by |\n|---|---|---|---|---|\n");
     for (id, need) in &set.needs {
-        let need = &need.need;
-        let stakeholders: Vec<&str> = need.stakeholders.iter().map(String::as_str).collect();
+        let stakeholders: Vec<&str> = need.stakeholders.iter().map(|s| s.0.as_str()).collect();
         let by = satisfied_by.get(id.0.as_str()).map(|v| v.join(", "));
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} |",
             cell(&need.title),
-            cell(&need.status.state),
+            cell(&need.state),
             cell(&stakeholders.join(", ")),
             by.as_deref().map_or("**unsatisfied**".to_owned(), cell)
         );
@@ -278,14 +269,13 @@ fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
 fn write_trace_matrix(out: &mut String, set: &RequirementSet<Validated>) {
     out.push_str("## Traceability matrix\n\n| ID | Title | Category | Parents | Satisfies |\n|---|---|---|---|---|\n");
     for (id, req) in &set.requirements {
-        let req = &req.requirement;
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} |",
             cell(&req.title),
             cell(&req.category),
-            dash_if_empty(id_list(&req.traceability.parents)),
-            dash_if_empty(id_list(&req.traceability.satisfies))
+            dash_if_empty(id_list(&req.trace.parents)),
+            dash_if_empty(id_list(&req.trace.satisfies))
         );
     }
     out.push('\n');
@@ -298,7 +288,6 @@ fn write_verification_summary(
 ) {
     out.push_str("## Verification summary\n\n| ID | Title | Method | Level | Activities | Status |\n|---|---|---|---|---:|---|\n");
     for (id, req) in &set.requirements {
-        let req = &req.requirement;
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} | {} |",

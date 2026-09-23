@@ -38,13 +38,14 @@ pub fn run(repo_root: &Path, strict: bool, short: bool) -> Result<(), Box<dyn Er
                 let stks = set
                     .needs
                     .get(id)
-                    .map(|n| n.need.stakeholders.clone())
+                    .map(|n| {
+                        n.stakeholders
+                            .iter()
+                            .map(|s| s.0.clone())
+                            .collect::<Vec<_>>()
+                    })
                     .unwrap_or_default();
-                let title = set
-                    .needs
-                    .get(id)
-                    .map(|n| n.need.title.as_str())
-                    .unwrap_or("");
+                let title = set.needs.get(id).map(|n| n.title.as_str()).unwrap_or("");
                 let entry = format!("{id}  {title}");
                 if stks.is_empty() {
                     by_stakeholder
@@ -100,19 +101,19 @@ pub fn run(repo_root: &Path, strict: bool, short: bool) -> Result<(), Box<dyn Er
         if !gap.is_empty() {
             output::section("Gap", "(no activities or success criteria defined)");
             for id in &gap {
-                output::item(&id.to_string());
+                output::item(id.as_ref());
             }
         }
         if !planned.is_empty() {
             output::section("Planned", "(activities defined, none executed)");
             for id in &planned {
-                output::item(&id.to_string());
+                output::item(id.as_ref());
             }
         }
         if !in_progress.is_empty() {
             output::section("In Progress", "(partially executed, not all terminal)");
             for id in &in_progress {
-                output::item(&id.to_string());
+                output::item(id.as_ref());
             }
         }
     }

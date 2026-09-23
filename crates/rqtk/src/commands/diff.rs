@@ -29,13 +29,13 @@ pub fn run(repo_root: &Path, from: String, to: String) -> Result<(), Box<dyn Err
     if !diff.added.is_empty() {
         output::subsection("+", "Added");
         for id in &diff.added {
-            output::item(&id.to_string());
+            output::item(id.as_ref());
         }
     }
     if !diff.removed.is_empty() {
         output::subsection("-", "Removed");
         for id in &diff.removed {
-            output::item(&id.to_string());
+            output::item(id.as_ref());
         }
     }
     if !diff.modified.is_empty() {

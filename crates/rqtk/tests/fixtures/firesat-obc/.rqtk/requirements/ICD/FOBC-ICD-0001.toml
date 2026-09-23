@@ -1,26 +1,21 @@
-[requirement]
 id = "FOBC-ICD-0001"
 title = "Uplink Packet Format"
 category = "ICD"
 type = "Interface"
-
-[requirement.statement]
-text = "The OBC shall accept command uplink packets formatted as CCSDS TC Transfer Frames with a maximum length of 1024 octets."
-rationale = "Standardised CCSDS framing ensures interoperability with the ground station uplink chain."
-
-[requirement.status]
 state = "Draft"
 priority = "High"
+statement = "The OBC shall accept command uplink packets formatted as CCSDS TC Transfer Frames with a maximum length of 1024 octets."
+rationale = "Standardised CCSDS framing ensures interoperability with the ground station uplink chain."
 
-[requirement.traceability]
+[trace]
 parents = ["FOBC-SW-0001"]
 
-[requirement.verification]
+[verification]
 method = "Inspection"
 level = "System"
 phase = "Development"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "FOBC-VA-ICD-001-01"
 name = "ICD review"
 status = "Passed"

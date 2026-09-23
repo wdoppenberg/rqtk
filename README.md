@@ -5,46 +5,44 @@ Requirements engineering that lives in your repository.
 Requirements are TOML files, checked in alongside code. Baselines are git tags. History is `git log`. There is no separate tool, database, or export step standing between your requirements and your version control.
 
 ```
-rqtk.toml          ← project config and validation rules
-requirements/
-  FOBC-SYS-0001.toml
-  FOBC-SW-0001.toml
-  ...
+.rqtk/
+  config.toml            ← project config and validation rules
+  requirements/
+    SYS/FOBC-SYS-0001.toml
+    SW/FOBC-SW-0001.toml
+  needs/NEED-0001.toml
+  stakeholders/STK-001.toml
 ```
 
 Each requirement is a single file:
 
 ```toml
-[requirement]
 id = "FOBC-SYS-0001"
 title = "Telemetry Data Acquisition"
 category = "SYS"
 type = "Functional"
+state = "Approved"
+priority = "Critical"
+criticality = "Mission-Critical"
 keywords = ["telemetry", "health-monitoring"]
-
-[requirement.statement]
-text = "The OBC software shall acquire telemetry data from all spacecraft subsystems at a minimum rate of 1 Hz."
+statement = "The OBC software shall acquire telemetry data from all spacecraft subsystems at a minimum rate of 1 Hz."
 rationale = "Continuous 1 Hz telemetry ensures ground operators have timely visibility into spacecraft health."
 assumptions = ["All subsystems expose a standardised telemetry interface as defined in the ICD."]
 notes = "Applies to nominal mode only."
 
-[requirement.status]
-state = "Approved"
-priority = "Critical"
-criticality = "Mission-Critical"
-
-[requirement.traceability]
-# parents, derived_from, satisfies, refines, conflicts_with, depends_on, related — all just IDs
+[trace]
+satisfies = ["NEED-0001"]
+# parents, derived_from, refines, conflicts_with, depends_on, related — all just IDs
 # external = [{type = "JIRA", ref = "OBC-42"}]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Pre-launch"
 owner = "Systems Verification Lead"
 success_criteria = "All channels deliver frames at ≥1 Hz with no frame loss over 10 minutes."
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-SYS-001-01"
 name = "End-to-end telemetry acquisition test"
 procedure = "Activate all subsystem simulators and record frame timestamps for 10 minutes."
@@ -69,14 +67,16 @@ cargo install rqtk
 ## Commands
 
 ```bash
-rqtk init                          # scaffold rqtk.toml and requirements/
+rqtk init                          # scaffold .rqtk/ with config, requirements, needs, stakeholders
 rqtk add --category SYS \
           --type Functional \
           --title "..." \
           --statement "..."        # create next requirement in sequence
+rqtk add-need --title "..." --statement "..." --stakeholders STK-001
+rqtk add-stakeholder --name "..." [--role "..."]
 rqtk lint                          # validate all requirements against config
 rqtk trace FOBC-SYS-0001          # show full traceability chain up and down
-rqtk coverage                      # report verification status (gap/planned/in-progress/verified)
+rqtk coverage                      # report need satisfaction and verification status
 rqtk coverage --strict             # same, but fail unless every requirement is verified
 rqtk baseline 1.0.0               # tag HEAD as rqtk/1.0.0
 rqtk diff 0.9.0 1.0.0             # semantic diff between two baselines
@@ -88,35 +88,41 @@ rqtk search "telemetry" -i \
           --field title,statement  # case-insensitive search in specific fields
 rqtk graph                         # traceability graph as Graphviz DOT
 rqtk export --format json|csv|markdown
-rqtk rehash                        # recompute and write content hashes
+rqtk rehash                        # recompute and write content hashes (keeps comments)
 rqtk report [-o report.md]         # Markdown requirements report (stdout by default)
 ```
 
 ## Data model
 
-A requirement file has these top-level sections:
+The file format is versioned: `.rqtk/config.toml` declares `schema_version = 1`, and rqtk refuses to load any other version. JSON Schemas for every file kind live in [`schema/`](schema/) and are regenerated with `cargo run -p rqtk-core --bin generate_schemas`.
 
-| Section | Purpose |
+Unknown keys are errors, so a typo such as `ratoinale` is reported rather than silently dropped. Each file must be named after the ID it contains, and IDs are unique across requirements, needs and stakeholders.
+
+A requirement file has scalar fields at the top level and these tables:
+
+| Key / table | Purpose |
 |---|---|
-| `[requirement]` | Identity: `id`, `title`, `category`, `type`, `keywords`, `content_hash` |
-| `[requirement.statement]` | `text` (shall statement), `rationale`, `assumptions`, `notes` |
-| `[requirement.status]` | `state`, `priority`, `criticality`, `maturity`, `tbd`, `tbr` |
-| `[requirement.approval]` | `baselined_at`, `baselined_by`, `approved_by`, `ecr_ids` |
-| `[requirement.parameters]` | Quantitative constraints: `name`, `operator`, `value`, `unit`, `tolerance` |
-| `[requirement.traceability]` | Link fields below |
-| `[requirement.verification]` | `method`, `level`, `phase`, `owner`, `success_criteria`, activities |
-| `[requirement.validation]` | Stakeholder acceptance: `method`, `stakeholder`, `acceptance_criteria`, `status` |
-| `[requirement.risk]` | `hazards`, `mitigations`, `fmea_ref`, `safety_critical`, `security_sensitive` |
-| `[requirement.allocation]` | `subsystems`, `components`, `software_modules`, `source_files` |
-| `[requirement.custom]` | Arbitrary project-specific key/value pairs |
+| top level | `id`, `title`, `category`, `type`, `state`, `priority`, `criticality`, `maturity`, `tbd`, `tbr`, `keywords`, `statement` (shall statement), `rationale`, `assumptions`, `notes`, `content_hash` |
+| `[trace]` | Link fields below |
+| `[verification]` | `method`, `level`, `phase`, `owner`, `success_criteria`, `[[verification.activities]]` |
+| `[approval]` | `baselined_at`, `baselined_by`, `approved_by`, `ecr_ids` |
+| `[[parameters]]` | Quantitative constraints: `name`, `operator`, `value`, `unit`, `tolerance` |
+| `[validation]` | Stakeholder acceptance: `method`, `stakeholder`, `acceptance_criteria`, `status` |
+| `[risk]` | `hazards`, `mitigations`, `fmea_ref`, `safety_critical`, `security_sensitive` |
+| `[allocation]` | `subsystems`, `components`, `software_modules`, `source_files` |
+| `[custom]` | Arbitrary project-specific key/value pairs |
+
+Needs (`.rqtk/needs/`) have `id`, `title`, `state`, `priority`, `stakeholders`, `keywords`, `statement`, `rationale`, `content_hash` and an optional `[acceptance]` table. Stakeholders (`.rqtk/stakeholders/`) have `id`, `name`, `role`, `organization` and optional `[concerns]` and `[authority]` tables.
+
+Dates may be written as native TOML dates (`executed_at = 2024-11-15`) or as strings.
 
 ### Traceability links
 
 ```toml
-[requirement.traceability]
+[trace]
 parents        = ["FOBC-SYS-0001"]          # decomposed from
 derived_from   = ["FOBC-SYS-0001"]          # derived from another requirement
-satisfies      = ["STAKE-001"]              # satisfies a stakeholder need (string)
+satisfies      = ["NEED-0001"]              # satisfies a stakeholder need
 refines        = ["FOBC-SYS-0001"]          # refines a higher-level requirement
 conflicts_with = ["FOBC-SW-0003"]           # known conflict
 depends_on     = ["FOBC-HW-0001"]           # runtime dependency
@@ -127,7 +133,7 @@ external       = [{type = "JIRA", ref = "OBC-42"}]
 ### Verification activities
 
 ```toml
-[[requirement.verification.activities]]
+[[verification.activities]]
 id             = "VA-SYS-001-01"
 name           = "End-to-end telemetry acquisition test"
 procedure      = "..."
@@ -141,7 +147,7 @@ evidence       = ["test-report-v1.pdf"]
 
 Baselines are annotated git tags under `refs/tags/rqtk/<version>`. They require no files, no databases, and no out-of-band state.
 
-`rqtk baseline` automatically writes `baselined_at` and `baselined_by` into every requirement file, commits those changes, then creates the tag. No manual editing required.
+`rqtk baseline` automatically writes `baselined_at` and `baselined_by` into every requirement file (leaving the rest of each file, including comments, untouched), commits those changes, then creates the tag. No manual editing required.
 
 ```bash
 rqtk baseline 1.0.0
@@ -162,7 +168,7 @@ rqtk diff 0.9.0 1.0.0
 #     ·  FOBC-HW-0001   [admin]
 ```
 
-Modifications are classified as **semantic** (statement, traceability, or verification method changed) or **admin** (title, tags, priority, etc.). A semantic change signals that downstream implementations may need re-verification.
+Modifications are classified as **semantic** (statement, structural links, parameters, or verification method/level/phase changed) or **admin** (title, keywords, priority, etc.). A semantic change signals that downstream implementations may need re-verification.
 
 ## Verification flow
 
@@ -208,41 +214,44 @@ rqtk coverage --strict   # exits 1 if any Gap is present
 
 Requirement changes that slip through without review are harder to detect than code changes, because there is no compiler to catch a modified `shall` statement. Two platform features close this gap without any additional tooling.
 
-**CODEOWNERS** maps requirement directories to the engineers responsible for approving changes to them. A PR touching `requirements/SYS/` cannot merge until the cognizant systems engineer has reviewed it.
+**CODEOWNERS** maps requirement directories to the engineers responsible for approving changes to them. A PR touching `.rqtk/requirements/SYS/` cannot merge until the cognizant systems engineer has reviewed it.
 
 ```
 # CODEOWNERS
-requirements/SYS/    @systems-lead
-requirements/SW/     @software-lead
-requirements/HW/     @hardware-lead
+.rqtk/requirements/SYS/    @systems-lead
+.rqtk/requirements/SW/     @software-lead
+.rqtk/requirements/HW/     @hardware-lead
 ```
 
 **Signed commits** (enforced via branch protection) bind a committer's cryptographic identity to every change. Combined with CODEOWNERS, every semantic change to a requirement is both reviewed by the right person and signed by a verified identity — the git log becomes an auditable change record.
 
-On the rqtk side, the `content_hash` field (maintained by `rqtk rehash` and checked by lint rule RQ021) detects whether any semantic field was modified outside the normal commit flow. The `[requirement.approval]` section records the formal outcome in the file itself:
+On the rqtk side, the `content_hash` field (maintained by `rqtk rehash` and checked by lint rule RQ021) detects whether any semantic field was modified outside the normal commit flow. The `[approval]` section records the formal outcome in the file itself:
 
 ```toml
-[requirement.approval]
+[approval]
 baselined_at  = 2024-11-01
 baselined_by  = "systems-lead"
 approved_by   = ["systems-lead", "chief-engineer"]
 ecr_ids       = ["ECR-0042"]
 ```
 
-The authoritative change record is the git log: who signed the commit, who approved the PR. The `[requirement.approval]` fields are a human-readable summary inside the file for anyone reading the TOML directly — useful, but secondary to the platform record.
+The authoritative change record is the git log: who signed the commit, who approved the PR. The `[approval]` fields are a human-readable summary inside the file for anyone reading the TOML directly — useful, but secondary to the platform record.
 
 ## Validation
 
-Rules are defined in `rqtk.toml` — allowed categories, lifecycle states, verification methods, traceability constraints, forbidden keywords, and more. `rqtk lint` enforces them on every run and is designed to sit in a pre-commit hook.
+Rules are defined in `.rqtk/config.toml` — allowed categories, lifecycle states, verification methods, traceability constraints, forbidden keywords, and more. `rqtk lint` enforces them on every run and is designed to sit in a pre-commit hook.
 
 ```bash
 rqtk lint
-#   ID            Severity  Code   Message
-#   FOBC-SW-0002  error     RQ007  missing rationale
-#   FOBC-HW-0001  warning   RQ021  content hash is stale — run `rqtk rehash`
+#   Location                                    ID            Severity  Code   Message
+#   .rqtk/requirements/SW/FOBC-SW-0001.toml:8   -             error     RQ100  unknown field `ratoinale`, expected one of …
+#   .rqtk/requirements/SW/FOBC-SW-0003.toml:11  FOBC-SW-0003  error     RQ015  unknown parents reference `FOBC-SYS-9999`
+#   .rqtk/requirements/HW/FOBC-HW-0001.toml:9   FOBC-HW-0001  warning   RQ021  content hash is stale …
 #
-#   1 error  ·  1 warning  (12 checked)
+#   2 errors  ·  1 warning  (12 checked)
 ```
+
+Every broken file is reported in one run, with its line number. The full list of rule codes is in [`crates/rqtk-core/src/rules.rs`](crates/rqtk-core/src/rules.rs); codes are stable and never reused.
 
 ## Linking tests to verification activities
 
@@ -262,7 +271,7 @@ fn telemetry_acquisition_rate() {
 }
 ```
 
-The macro resolves the activity ID at compile time by walking up from `CARGO_MANIFEST_DIR` to find `rqtk.toml`. If the activity does not exist in any requirement file, the build fails with an error pointing to the annotation. When it does exist, the macro injects the requirement context as rustdoc on the function — visible in IDE hover and `cargo doc`.
+The macro resolves the activity ID at compile time by walking up from `CARGO_MANIFEST_DIR` to find `.rqtk/config.toml`. If the activity does not exist in any requirement file, the build fails with an error pointing to the annotation. When it does exist, the macro injects the requirement context as rustdoc on the function — visible in IDE hover and `cargo doc`.
 
 ### Python
 
@@ -276,7 +285,7 @@ def test_telemetry_acquisition_rate():
     ...
 ```
 
-The decorator resolves the activity ID at import time from the `rqtk.toml` found by walking up from the current working directory. An unknown ID raises `ValueError` immediately, failing the test collection step before any test runs. Known IDs attach the requirement context to `__doc__` on the function.
+The decorator resolves the activity ID at import time from the `.rqtk/config.toml` found by walking up from the current working directory. An unknown ID raises `ValueError` immediately, failing the test collection step before any test runs. Known IDs attach the requirement context to `__doc__` on the function.
 
 ## Pre-commit hook
 

@@ -1,27 +1,22 @@
-[requirement]
 id = "FOBC-SW-0001"
 title = "Command Parsing"
 category = "SW"
 type = "Functional"
-
-[requirement.statement]
-text = "The OBC software shall parse all uplinked command packets according to the CCSDS TC Space Data Link Protocol."
-rationale = "Correct parsing ensures reliable command execution and prevents erroneous spacecraft operations."
-
-[requirement.status]
 state = "Implemented"
 priority = "Critical"
+statement = "The OBC software shall parse all uplinked command packets according to the CCSDS TC Space Data Link Protocol."
+rationale = "Correct parsing ensures reliable command execution and prevents erroneous spacecraft operations."
 
-[requirement.traceability]
+[trace]
 parents = ["FOBC-SYS-0001"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 success_criteria = "100% of test command packets parsed correctly with no errors."
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "FOBC-VA-SW-001-01"
 name = "Command packet parsing test"
 status = "Passed"

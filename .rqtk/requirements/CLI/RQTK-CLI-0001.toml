@@ -1,68 +1,62 @@
-[requirement]
 id = "RQTK-CLI-0001"
 title = "CLI Command Interface"
 category = "CLI"
 type = "Functional"
-
-[requirement.statement]
-text = "The rqtk CLI shall provide a consistent command interface for all requirement management operations."
-rationale = "A single coherent CLI reduces the learning curve and enables scripting and CI integration."
-
-[requirement.status]
 state = "Approved"
 priority = "Critical"
+statement = "The rqtk CLI shall provide a consistent command interface for all requirement management operations."
+rationale = "A single coherent CLI reduces the learning curve and enables scripting and CI integration."
+content_hash = "v1:bc36dd875d43829c32f229ffb434b785ca7f8ccf83c2f64df9d0c994475d3990"
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 success_criteria = "All CLI commands complete without error on valid inputs and report meaningful errors on invalid inputs."
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-001-01"
 name = "add command creates file with correct ID"
 status = "Passed"
 expected_result = "New requirement file created with auto-incremented ID"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-002-01"
 name = "lint command exits zero on valid project"
 status = "Passed"
 expected_result = "lint exits 0 with zero errors on valid fixture"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-003-01"
 name = "trace upward path reaches system root"
 status = "Passed"
 expected_result = "trace output includes all ancestor IDs"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-004-01"
 name = "coverage exits non-zero when gaps present and strict"
 status = "Passed"
 expected_result = "coverage --strict exits 1 when any Gap exists"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-005-01"
 name = "graph dot output is valid digraph"
 status = "Passed"
 expected_result = "graph --format dot emits a digraph block"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-006-01"
 name = "export JSON creates file with all IDs"
 status = "Passed"
 expected_result = "Exported JSON file contains all requirement IDs"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-007-01"
 name = "baseline creates git tag"
 status = "Passed"
 expected_result = "rqtk/VERSION tag exists after baseline command"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CLI-008-01"
 name = "diff detects added requirement between baselines"
 status = "Passed"

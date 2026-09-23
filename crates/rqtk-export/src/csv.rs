@@ -7,18 +7,20 @@ pub struct CsvExporter;
 impl Exporter for CsvExporter {
     fn export(&self, set: &RequirementSet<Validated>, out: &Path) -> Result<(), ExportError> {
         let mut csv = String::from("id,title,category,type,state,priority,verification_method\n");
-        for (id, req) in &set.requirements {
-            let r = &req.requirement;
-            csv.push_str(&format!(
-                "{},{},{},{},{},{},{}\n",
-                id.0,
-                escape_csv(&r.title),
-                r.category,
-                r.req_type,
-                r.status.state,
-                r.status.priority,
-                r.verification.method
-            ));
+        for (id, r) in &set.requirements {
+            let row = [
+                id.0.as_str(),
+                &r.title,
+                &r.category,
+                &r.req_type,
+                &r.state,
+                &r.priority,
+                &r.verification.method,
+            ]
+            .map(escape_csv)
+            .join(",");
+            csv.push_str(&row);
+            csv.push('\n');
         }
         std::fs::write(out, csv)?;
         Ok(())

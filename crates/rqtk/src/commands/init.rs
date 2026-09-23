@@ -54,41 +54,40 @@ fn scaffold_repository(
     let needs_dir = rqtk_dir.join("needs");
     std::fs::create_dir_all(&stakeholders_dir)?;
     std::fs::create_dir_all(&needs_dir)?;
-    std::fs::write(stakeholders_dir.join("STK-001.toml"), EXAMPLE_STAKEHOLDER_TOML)?;
+    std::fs::write(
+        stakeholders_dir.join("STK-001.toml"),
+        EXAMPLE_STAKEHOLDER_TOML,
+    )?;
     std::fs::write(needs_dir.join("NEED-0001.toml"), EXAMPLE_NEED_TOML)?;
     Ok(())
 }
 
-const EXAMPLE_STAKEHOLDER_TOML: &str = r#"[stakeholder]
-id = "STK-001"
+const EXAMPLE_STAKEHOLDER_TOML: &str = r#"id = "STK-001"
 name = "Example Stakeholder"
 role = "System Engineer"
 organization = "Example Org"
 
-[stakeholder.concerns]
+[concerns]
 primary = ["Functionality", "Reliability"]
 secondary = []
 
-[stakeholder.authority]
-approval_required = false
+[authority]
+sign_off_required = false
 "#;
 
-const EXAMPLE_NEED_TOML: &str = r#"[need]
-id = "NEED-0001"
+const EXAMPLE_NEED_TOML: &str = r#"id = "NEED-0001"
 title = "Example Stakeholder Need"
-stakeholders = ["STK-001"]
-
-[need.statement]
-text = "The system shall fulfil this example stakeholder need."
-rationale = "Example rationale."
-
-[need.status]
 state = "Draft"
+stakeholders = ["STK-001"]
+statement = "The system shall fulfil this example stakeholder need."
+rationale = "Example rationale."
 "#;
 
 fn default_config_toml(requirements_dir: &str) -> String {
     format!(
-        r#"[repository]
+        r#"schema_version = 1
+
+[repository]
 requirements_dir = "{requirements_dir}"
 stakeholders_dir = ".rqtk/stakeholders"
 needs_dir = ".rqtk/needs"
@@ -128,11 +127,6 @@ levels = ["Critical", "High", "Medium", "Low"]
 [criticality]
 levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
 
-[change_control]
-ccb_required_after = "Approved"
-require_signoff = false
-approvers = []
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -143,10 +137,6 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = ["json", "csv", "markdown"]
-default_output_dir = "exports"
 "#
     )
 }

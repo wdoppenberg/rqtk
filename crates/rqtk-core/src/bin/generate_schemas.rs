@@ -1,4 +1,4 @@
-use rqtk_core::model::{NeedFile, RequirementFile, RqtkConfig, StakeholderFile};
+use rqtk_core::model::{Config, Need, Requirement, Stakeholder};
 use schemars::schema_for;
 use serde::Serialize;
 use std::fs;
@@ -9,22 +9,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let schema_dir = repo_root.join("schema");
     fs::create_dir_all(&schema_dir)?;
 
+    write_schema(&schema_dir.join("config.schema.json"), &schema_for!(Config))?;
     write_schema(
-        &schema_dir.join("rqtk.schema.json"),
-        &schema_for!(RqtkConfig),
+        &schema_dir.join("requirement.schema.json"),
+        &schema_for!(Requirement),
     )?;
     write_schema(
-        &schema_dir.join("requirements.schema.json"),
-        &schema_for!(RequirementFile),
+        &schema_dir.join("stakeholder.schema.json"),
+        &schema_for!(Stakeholder),
     )?;
-    write_schema(
-        &schema_dir.join("stakeholders.schema.json"),
-        &schema_for!(StakeholderFile),
-    )?;
-    write_schema(
-        &schema_dir.join("needs.schema.json"),
-        &schema_for!(NeedFile),
-    )?;
+    write_schema(&schema_dir.join("need.schema.json"), &schema_for!(Need))?;
 
     Ok(())
 }

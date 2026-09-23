@@ -1,26 +1,19 @@
-[requirement]
 id = "FOBC-SYS-0001"
 title = "On-Board Computer Command Execution"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The OBC shall execute all ground-uplinked commands within 500 ms of receipt."
-rationale = "Timely command execution is essential for mission operations and safe spacecraft control."
-
-[requirement.status]
 state = "Approved"
 priority = "Critical"
+statement = "The OBC shall execute all ground-uplinked commands within 500 ms of receipt."
+rationale = "Timely command execution is essential for mission operations and safe spacecraft control."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 success_criteria = "All uplinked commands execute within 500 ms in 100% of test cases."
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "FOBC-VA-SYS-001-01"
 name = "Command latency test"
 status = "Passed"

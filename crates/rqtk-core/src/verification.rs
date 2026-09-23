@@ -1,6 +1,4 @@
-use crate::model::RqtkConfig;
-use crate::repository::{RequirementSet, Validated};
-use crate::validation::LintSeverity;
+use crate::repository::{RequirementSet, Validated, load_config};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -69,7 +67,7 @@ pub fn build_requirements_doc_from_repo_root(repo_root: &Path) -> Result<String,
     let (set, issues) = set.validate();
     let errors: Vec<_> = issues
         .into_iter()
-        .filter(|issue| issue.severity == LintSeverity::Error)
+        .filter(|issue| issue.is_error())
         .collect();
     if !errors.is_empty() {
         let mut msg = format!(
@@ -91,11 +89,8 @@ fn find_requirements_dir_from(mut dir: PathBuf) -> Result<Option<PathBuf>, Strin
     loop {
         let config_path = dir.join(".rqtk/config.toml");
         if config_path.is_file() {
-            let text = std::fs::read_to_string(&config_path)
-                .map_err(|e| format!("cannot read `{}`: {}", config_path.display(), e))?;
-            let config: RqtkConfig = toml::from_str(&text)
-                .map_err(|e| format!("cannot parse `{}`: {}", config_path.display(), e))?;
-            return Ok(Some(dir.join(config.repository.requirements_dir.clone())));
+            let config = load_config(&config_path).map_err(|e| e.to_string())?;
+            return Ok(Some(dir.join(config.repository.requirements_dir)));
         }
         if !dir.pop() {
             return Ok(None);
@@ -142,7 +137,7 @@ fn render_requirements_doc(set: &RequirementSet<Validated>) -> String {
         let reqs: Vec<_> = set
             .requirements
             .iter()
-            .filter(|(_, req_file)| req_file.requirement.category == *category_id)
+            .filter(|(_, req)| req.category == *category_id)
             .collect();
         doc.push_str(&format!(
             "## {} — {}\n\nRequirements: **{}**\n\n",
@@ -159,22 +154,21 @@ fn render_requirements_doc(set: &RequirementSet<Validated>) -> String {
             continue;
         }
 
-        for (id, req_file) in reqs {
-            let req = &req_file.requirement;
+        for (id, req) in reqs {
             doc.push_str(&format!("### `{}` — {}\n\n", id.0, req.title));
             doc.push_str(&format!(
                 "- Type: `{}`\n- State: `{}`\n- Priority: `{}`\n- Verification Method: `{}`\n\n",
-                req.req_type, req.status.state, req.status.priority, req.verification.method
+                req.req_type, req.state, req.priority, req.verification.method
             ));
             doc.push_str("**Statement**\n\n");
-            push_blockquote(&mut doc, &req.statement.text);
-            if let Some(rationale) = &req.statement.rationale {
+            push_blockquote(&mut doc, &req.statement);
+            if let Some(rationale) = &req.rationale {
                 doc.push_str("\n**Rationale**\n\n");
                 push_blockquote(&mut doc, rationale);
             }
-            if !req.traceability.parents.is_empty() {
+            if !req.trace.parents.is_empty() {
                 doc.push_str("\n**Parents**\n\n");
-                for parent in &req.traceability.parents {
+                for parent in &req.trace.parents {
                     doc.push_str(&format!("- `{}`\n", parent.0));
                 }
             }
@@ -236,10 +230,7 @@ fn extract_activity_info(path: &Path, activity_id: &str) -> Result<Option<Activi
     let value: toml::Value = toml::from_str(&content)
         .map_err(|e| format!("cannot parse `{}`: {}", path.display(), e))?;
 
-    let req = match value.get("requirement") {
-        Some(r) => r,
-        None => return Ok(None),
-    };
+    let req = &value;
 
     let activities = match req
         .get("verification")
@@ -268,7 +259,6 @@ fn extract_activity_info(path: &Path, activity_id: &str) -> Result<Option<Activi
             .to_owned();
         let req_statement = req
             .get("statement")
-            .and_then(|s| s.get("text"))
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_owned();

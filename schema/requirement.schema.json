@@ -1,14 +1,147 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "RequirementFile",
+  "title": "Requirement",
+  "description": "One requirement file. Scalars sit at the top level; related groups are tables.",
   "type": "object",
   "properties": {
-    "requirement": {
-      "$ref": "#/$defs/RequirementBody"
+    "allocation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Allocation"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "approval": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Approval"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "category": {
+      "type": "string"
+    },
+    "content_hash": {
+      "description": "Fingerprint of the semantic fields, see [`Requirement::compute_content_hash`].\nMaintained by `rqtk rehash`; checked by lint rule RQ021.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "criticality": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "custom": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "id": {
+      "$ref": "#/$defs/RequirementId"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maturity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Parameter"
+      }
+    },
+    "priority": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "risk": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Risk"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "state": {
+      "type": "string"
+    },
+    "statement": {
+      "description": "The normative statement, e.g. \"The system shall …\".",
+      "type": "string"
+    },
+    "tbd": {
+      "type": "boolean"
+    },
+    "tbr": {
+      "type": "boolean"
+    },
+    "title": {
+      "type": "string"
+    },
+    "trace": {
+      "$ref": "#/$defs/Traceability"
+    },
+    "type": {
+      "type": "string"
+    },
+    "validation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ValidationSpec"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "verification": {
+      "$ref": "#/$defs/Verification"
     }
   },
+  "additionalProperties": false,
   "required": [
-    "requirement"
+    "id",
+    "title",
+    "category",
+    "type",
+    "state",
+    "priority",
+    "statement",
+    "verification"
   ],
   "$defs": {
     "Allocation": {
@@ -16,40 +149,36 @@
       "properties": {
         "components": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         },
         "software_modules": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         },
         "source_files": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         },
         "subsystems": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Approval": {
       "type": "object",
       "properties": {
         "approved_by": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
@@ -58,8 +187,7 @@
           "type": [
             "string",
             "null"
-          ],
-          "format": "date"
+          ]
         },
         "baselined_by": {
           "type": [
@@ -69,12 +197,12 @@
         },
         "ecr_ids": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "ExternalTrace": {
       "type": "object",
@@ -86,10 +214,15 @@
           "type": "string"
         }
       },
+      "additionalProperties": false,
       "required": [
         "type",
         "ref"
       ]
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
     },
     "Parameter": {
       "type": "object",
@@ -115,121 +248,16 @@
         },
         "value": true
       },
+      "additionalProperties": false,
       "required": [
         "name",
         "operator",
         "value"
       ]
     },
-    "RequirementBody": {
-      "type": "object",
-      "properties": {
-        "allocation": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Allocation"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "approval": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Approval"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "category": {
-          "type": "string"
-        },
-        "content_hash": {
-          "description": "SHA-256 of the semantic fields (statement, traceability, verification method, parameters).\nMaintained by `rqtk rehash` and the pre-commit hook; checked by lint rule RQ021.",
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null
-        },
-        "custom": {
-          "type": "object",
-          "additionalProperties": true,
-          "default": {}
-        },
-        "id": {
-          "type": "string"
-        },
-        "keywords": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        },
-        "parameters": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Parameter"
-          }
-        },
-        "risk": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Risk"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "statement": {
-          "$ref": "#/$defs/Statement"
-        },
-        "status": {
-          "$ref": "#/$defs/Status"
-        },
-        "title": {
-          "type": "string"
-        },
-        "traceability": {
-          "$ref": "#/$defs/Traceability"
-        },
-        "type": {
-          "type": "string"
-        },
-        "validation": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ValidationSpec"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "verification": {
-          "$ref": "#/$defs/Verification"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "category",
-        "type",
-        "statement",
-        "status",
-        "traceability",
-        "verification"
-      ]
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
     },
     "Risk": {
       "type": "object",
@@ -242,153 +270,82 @@
         },
         "hazards": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         },
         "mitigations": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
         },
         "safety_critical": {
-          "type": "boolean",
-          "default": false
+          "type": "boolean"
         },
         "security_sensitive": {
-          "type": "boolean",
-          "default": false
-        }
-      }
-    },
-    "Statement": {
-      "type": "object",
-      "properties": {
-        "assumptions": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        },
-        "notes": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "rationale": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "text": {
-          "type": "string"
+          "type": "boolean"
         }
       },
-      "required": [
-        "text"
-      ]
+      "additionalProperties": false
     },
-    "Status": {
-      "type": "object",
-      "properties": {
-        "criticality": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "maturity": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "priority": {
-          "type": "string"
-        },
-        "state": {
-          "type": "string"
-        },
-        "tbd": {
-          "type": "boolean",
-          "default": false
-        },
-        "tbr": {
-          "type": "boolean",
-          "default": false
-        }
-      },
-      "required": [
-        "state",
-        "priority"
-      ]
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
     },
     "Traceability": {
       "type": "object",
       "properties": {
         "conflicts_with": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/RequirementId"
           }
         },
         "depends_on": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/RequirementId"
           }
         },
         "derived_from": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/RequirementId"
           }
         },
         "external": {
           "type": "array",
-          "default": [],
           "items": {
             "$ref": "#/$defs/ExternalTrace"
           }
         },
         "parents": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/RequirementId"
           }
         },
         "refines": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/RequirementId"
           }
         },
         "related": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/RequirementId"
           }
         },
         "satisfies": {
           "type": "array",
-          "default": [],
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/NeedId"
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "ValidationSpec": {
       "type": "object",
@@ -406,9 +363,13 @@
           ]
         },
         "stakeholder": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "status": {
@@ -417,14 +378,14 @@
             "null"
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Verification": {
       "type": "object",
       "properties": {
         "activities": {
           "type": "array",
-          "default": [],
           "items": {
             "$ref": "#/$defs/VerificationActivity"
           }
@@ -451,6 +412,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "required": [
         "method",
         "level",
@@ -462,7 +424,6 @@
       "properties": {
         "evidence": {
           "type": "array",
-          "default": [],
           "items": {
             "type": "string"
           }
@@ -471,8 +432,7 @@
           "type": [
             "string",
             "null"
-          ],
-          "format": "date"
+          ]
         },
         "expected_result": {
           "type": [
@@ -499,6 +459,7 @@
           ]
         }
       },
+      "additionalProperties": false,
       "required": [
         "id",
         "name"

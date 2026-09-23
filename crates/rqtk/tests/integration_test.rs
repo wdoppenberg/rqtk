@@ -157,7 +157,8 @@ fn write_fixture(config: &str, reqs: &[(&str, &str)]) -> (tempfile::TempDir, Pat
 }
 
 /// Minimal project config that accepts TEST-(SYS|SUB)-NNNN IDs.
-const BASE_CONFIG: &str = r#"
+const BASE_CONFIG: &str = r#"schema_version = 1
+
 [repository]
 requirements_dir = ".rqtk/requirements"
 required_files = []
@@ -200,10 +201,6 @@ levels = ["Critical", "High", "Medium", "Low"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Approved"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -214,9 +211,6 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
 // ── lint ─────────────────────────────────────────────────────────────────────
@@ -252,22 +246,15 @@ fn lint_prints_all_requirement_ids_in_issues_when_present() {
 #[verifies("VA-CLI-002-01")]
 #[test]
 fn lint_exits_2_when_rationale_missing() {
-    let req_toml = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_toml = r#"id = "TEST-SYS-0001"
 title = "No rationale"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -581,24 +568,19 @@ fn diff_detects_added_requirement_between_baselines() {
         .success();
 
     // Add a new requirement, commit, and tag as v0.2.0.
-    let new_req = r#"[requirement]
-id = "FOBC-SW-0004"
+    let new_req = r#"id = "FOBC-SW-0004"
 title = "New requirement"
 category = "SW"
 type = "Functional"
-
-[requirement.statement]
-text = "The OBC software shall do something new."
-rationale = "Because we need it."
-
-[requirement.status]
 state = "Draft"
 priority = "High"
+statement = "The OBC software shall do something new."
+rationale = "Because we need it."
 
-[requirement.traceability]
+[trace]
 parents = ["FOBC-SYS-0001"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -716,47 +698,37 @@ fn baseline_rejects_invalid_semver() {
 #[test]
 fn lint_cycle_exits_2_and_reports_rq017() {
     // A→B→A circular parent chain
-    let req_a = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_a = r#"id = "TEST-SYS-0001"
 title = "A"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-0002"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 "#;
 
-    let req_b = r#"[requirement]
-id = "TEST-SYS-0002"
+    let req_b = r#"id = "TEST-SYS-0002"
 title = "B"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something else."
-rationale = "Because it also needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something else."
+rationale = "Because it also needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-0001"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -782,24 +754,19 @@ phase = "Development"
 // #[verifies("VA-SYS-003-02")]
 #[test]
 fn lint_broken_parent_exits_2_and_reports_rq015() {
-    let req_toml = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_toml = r#"id = "TEST-SYS-0001"
 title = "Broken parent"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-9999"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -834,23 +801,16 @@ fn lint_stdout_with_files(config: &str, files: &[(&str, &str)]) -> String {
 #[test]
 fn lint_rule_rq001_id_mismatch() {
     // id doesn't match id_pattern
-    let req = r#"[requirement]
-id = "TEST-WRONG-001"
+    let req = r#"id = "TEST-WRONG-001"
 title = "Bad ID"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -865,23 +825,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq002_unknown_category() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad category"
 category = "UNKNOWN"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -896,23 +849,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq003_unknown_type() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad type"
 category = "SYS"
 type = "Unknown"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -927,23 +873,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq004_invalid_state() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad state"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Invalid"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -958,23 +897,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq005_invalid_priority() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad priority"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Invalid"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -989,24 +921,17 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq006_invalid_criticality() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad criticality"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
 criticality = "InvalidCrit"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1021,22 +946,15 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq007_missing_rationale() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "No rationale"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1051,23 +969,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq008_empty_verification_method() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Empty method"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = ""
 level = "System"
 phase = "Development"
@@ -1082,23 +993,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq009_unknown_verification_method() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad method"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Seance"
 level = "System"
 phase = "Development"
@@ -1113,23 +1017,16 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq010_no_shall_keyword() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "No shall"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system does something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system does something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1145,7 +1042,8 @@ phase = "Development"
 #[test]
 fn lint_rule_rq011_forbidden_keyword_in_mandatory() {
     // Need custom config with "Mandatory" in priority levels and "should" in forbidden_keywords
-    let config = r#"
+    let config = r#"schema_version = 1
+
 [project]
 name = "test"
 version = "0.1.0"
@@ -1183,10 +1081,6 @@ levels = ["Critical", "Mandatory"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Draft"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -1197,28 +1091,18 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = ["should"]
-
-[export]
-formats = []
 "#;
 
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Forbidden keyword"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall not use should anywhere."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Mandatory"
+statement = "The system shall not use should anywhere."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1234,7 +1118,8 @@ phase = "Development"
 #[test]
 fn lint_rule_rq012_missing_parent_for_required_level() {
     // SUB category with require_parent_for_levels = ["SUB"]
-    let config = r#"
+    let config = r#"schema_version = 1
+
 [project]
 name = "test"
 version = "0.1.0"
@@ -1272,10 +1157,6 @@ levels = ["Critical"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Draft"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -1286,28 +1167,18 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
-    let req = r#"[requirement]
-id = "TEST-SUB-0001"
+    let req = r#"id = "TEST-SUB-0001"
 title = "No parent"
 category = "SUB"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1323,24 +1194,17 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq013_tbd_not_allowed() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "TBD req"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
 tbd = true
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1355,24 +1219,17 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq014_tbr_not_allowed() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "TBR req"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
 tbr = true
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1387,24 +1244,19 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq015_unknown_parent_reference() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad parent"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-9999"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1419,24 +1271,19 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq016_unknown_dependency_reference() {
-    let req = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req = r#"id = "TEST-SYS-0001"
 title = "Bad depends_on"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
+[trace]
 depends_on = ["TEST-SYS-9999"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1451,47 +1298,37 @@ phase = "Development"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq017_circular_parent_chain() {
-    let req_a = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_a = r#"id = "TEST-SYS-0001"
 title = "A"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-0002"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 "#;
 
-    let req_b = r#"[requirement]
-id = "TEST-SYS-0002"
+    let req_b = r#"id = "TEST-SYS-0002"
 title = "B"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something else."
-rationale = "Because it also needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something else."
+rationale = "Because it also needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-0001"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1512,7 +1349,8 @@ phase = "Development"
 #[test]
 fn lint_rule_rq018_orphan_with_no_path_to_root() {
     // SUB requirement with no parents and forbid_orphans=true
-    let config = r#"
+    let config = r#"schema_version = 1
+
 [project]
 name = "test"
 version = "0.1.0"
@@ -1550,10 +1388,6 @@ levels = ["Critical"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Draft"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -1564,28 +1398,18 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
-    let req = r#"[requirement]
-id = "TEST-SUB-0001"
+    let req = r#"id = "TEST-SUB-0001"
 title = "Orphan"
 category = "SUB"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -1619,7 +1443,8 @@ fn init_scaffolds_root_config_and_custom_requirements_dir() {
 
 #[test]
 fn lint_reports_missing_required_repository_paths() {
-    let config = r#"
+    let config = r#"schema_version = 1
+
 [repository]
 requirements_dir = ".rqtk/requirements"
 required_files = ["README.md"]
@@ -1658,10 +1483,6 @@ levels = ["Critical"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Draft"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -1672,9 +1493,6 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
     let (_dir, repo_root) = write_fixture(config, &[]);
@@ -1689,7 +1507,8 @@ formats = []
 // ── stakeholder & need helpers ────────────────────────────────────────────────
 
 /// Config that enables stakeholders_dir and needs_dir alongside requirements.
-const BASE_CONFIG_WITH_STAKEHOLDERS: &str = r#"
+const BASE_CONFIG_WITH_STAKEHOLDERS: &str = r#"schema_version = 1
+
 [repository]
 requirements_dir = ".rqtk/requirements"
 stakeholders_dir = ".rqtk/stakeholders"
@@ -1730,10 +1549,6 @@ levels = ["Critical", "High", "Medium", "Low"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Approved"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -1744,9 +1559,6 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
 /// Write a complete fixture including stakeholder and need files.
@@ -1774,21 +1586,16 @@ fn write_fixture_full(
     (dir, repo_root)
 }
 
-// ── STK001: need references unknown stakeholder ───────────────────────────────
+// ── RQ023: need references unknown stakeholder ───────────────────────────────
 
 #[verifies("VA-SYS-004-01")]
 #[test]
-fn lint_rule_stk001_need_references_unknown_stakeholder() {
-    let need_toml = r#"[need]
-id = "NEED-0001"
+fn lint_rule_rq023_need_references_unknown_stakeholder() {
+    let need_toml = r#"id = "NEED-0001"
 title = "Some need"
-stakeholders = ["UNKNOWN-STK"]
-
-[need.statement]
-text = "The system shall satisfy this need."
-
-[need.status]
 state = "Draft"
+stakeholders = ["UNKNOWN-STK"]
+statement = "The system shall satisfy this need."
 "#;
     let (_dir, repo_root) = write_fixture_full(
         BASE_CONFIG_WITH_STAKEHOLDERS,
@@ -1799,8 +1606,8 @@ state = "Draft"
     let output = rqtk(&repo_root).arg("lint").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(
-        stdout.contains("STK001"),
-        "expected STK001 in output; got:\n{stdout}"
+        stdout.contains("RQ023") && stdout.contains("NEED-0001"),
+        "expected RQ023 for NEED-0001 in output; got:\n{stdout}"
     );
 }
 
@@ -1809,28 +1616,21 @@ state = "Draft"
 #[verifies("VA-SYS-004-01")]
 #[test]
 fn lint_rule_rq023_validation_stakeholder_unknown() {
-    let req_toml = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_toml = r#"id = "TEST-SYS-0001"
 title = "Validated requirement"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "To satisfy a need."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "To satisfy a need."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 
-[requirement.validation]
+[validation]
 stakeholder = "UNKNOWN-STK"
 "#;
     let (_dir, repo_root) = write_fixture_full(
@@ -1897,7 +1697,237 @@ fn add_need_creates_file() {
     assert!(content.contains("Operator visibility"), "title not in file");
 }
 
-// ── report / graph ───────────────────────────────────────────────────────────
+// ── schema v1: loading, diagnostics and format-preserving writes ─────────────
+
+/// A valid requirement whose category is taken from its ID (`TEST-<CAT>-NNNN`).
+fn valid_req(id: &str) -> String {
+    let category = id.split('-').nth(1).unwrap();
+    format!(
+        r#"id = "{id}"
+title = "Requirement {id}"
+category = "{category}"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "The system shall do {id}."
+rationale = "Because."
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+"#
+    )
+}
+
+fn lint_output(files: &[(&str, &str)]) -> (i32, String) {
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, files);
+    let output = rqtk(&repo_root).arg("lint").output().unwrap();
+    (
+        output.status.code().unwrap(),
+        String::from_utf8(output.stdout).unwrap(),
+    )
+}
+
+#[test]
+fn lint_reports_unknown_field_with_line_number() {
+    let req = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
+    let (code, out) = lint_output(&[("SYS/TEST-SYS-0001.toml", &req)]);
+    assert_eq!(code, 2, "{out}");
+    assert!(out.contains("RQ100"), "{out}");
+    assert!(out.contains("unknown field `ratoinale`"), "{out}");
+    assert!(out.contains("TEST-SYS-0001.toml:8"), "{out}");
+}
+
+#[test]
+fn lint_reports_every_broken_file_in_one_run() {
+    let broken_syntax = format!("{}garbage =\n", valid_req("TEST-SYS-0001"));
+    let missing_field = valid_req("TEST-SYS-0002").replace("priority = \"High\"\n", "");
+    let (_, out) = lint_output(&[
+        ("SYS/TEST-SYS-0001.toml", &broken_syntax),
+        ("SYS/TEST-SYS-0002.toml", &missing_field),
+        ("SYS/TEST-SYS-0003.toml", &valid_req("TEST-SYS-0003")),
+    ]);
+    assert!(out.contains("TEST-SYS-0001.toml"), "{out}");
+    assert!(out.contains("missing field `priority`"), "{out}");
+    assert_eq!(out.matches("RQ100").count(), 2, "{out}");
+}
+
+#[test]
+fn lint_does_not_cascade_from_a_broken_parent_file() {
+    let parent = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
+    let child = format!(
+        "{}\n[trace]\nparents = [\"TEST-SYS-0001\"]\n",
+        valid_req("TEST-SUB-0001")
+    );
+    let (_, out) = lint_output(&[
+        ("SYS/TEST-SYS-0001.toml", &parent),
+        ("SUB/TEST-SUB-0001.toml", &child),
+    ]);
+    assert!(out.contains("RQ100"), "{out}");
+    assert!(!out.contains("RQ015"), "{out}");
+}
+
+#[test]
+fn lint_rule_rq101_duplicate_id_across_files() {
+    let (_, out) = lint_output(&[
+        ("SYS/TEST-SYS-0001.toml", &valid_req("TEST-SYS-0001")),
+        ("SUB/TEST-SYS-0001.toml", &valid_req("TEST-SYS-0001")),
+    ]);
+    assert!(out.contains("RQ101"), "{out}");
+}
+
+#[test]
+fn lint_rule_rq102_file_name_must_match_id() {
+    let (_, out) = lint_output(&[("SYS/renamed.toml", &valid_req("TEST-SYS-0001"))]);
+    assert!(out.contains("RQ102"), "{out}");
+    assert!(out.contains("expected `TEST-SYS-0001.toml`"), "{out}");
+}
+
+#[test]
+fn lint_rules_rq024_rq025_invalid_verification_level_and_phase() {
+    let req = valid_req("TEST-SYS-0001")
+        .replace("level = \"System\"", "level = \"Galactic\"")
+        .replace("phase = \"Development\"", "phase = \"Someday\"");
+    let (_, out) = lint_output(&[("SYS/TEST-SYS-0001.toml", &req)]);
+    assert!(out.contains("RQ024"), "{out}");
+    assert!(out.contains("RQ025"), "{out}");
+}
+
+#[test]
+fn lint_rule_rq026_unknown_refines_reference() {
+    let req = format!(
+        "{}\n[trace]\nrefines = [\"TEST-SYS-9999\"]\n",
+        valid_req("TEST-SYS-0001")
+    );
+    let (_, out) = lint_output(&[("SYS/TEST-SYS-0001.toml", &req)]);
+    assert!(out.contains("RQ026"), "{out}");
+}
+
+#[test]
+fn lint_rule_rq027_duplicate_activity_id() {
+    let activity = "\n[[verification.activities]]\nid = \"VA-1\"\nname = \"Shared\"\n";
+    let a = format!("{}{activity}", valid_req("TEST-SYS-0001"));
+    let b = format!("{}{activity}", valid_req("TEST-SYS-0002"));
+    let (_, out) = lint_output(&[
+        ("SYS/TEST-SYS-0001.toml", &a),
+        ("SYS/TEST-SYS-0002.toml", &b),
+    ]);
+    assert!(out.contains("RQ027"), "{out}");
+}
+
+#[test]
+fn lint_mutual_conflicts_with_is_not_a_cycle() {
+    let a = format!(
+        "{}\n[trace]\nconflicts_with = [\"TEST-SYS-0002\"]\n",
+        valid_req("TEST-SYS-0001")
+    );
+    let b = format!(
+        "{}\n[trace]\nconflicts_with = [\"TEST-SYS-0001\"]\n",
+        valid_req("TEST-SYS-0002")
+    );
+    let (code, out) = lint_output(&[
+        ("SYS/TEST-SYS-0001.toml", &a),
+        ("SYS/TEST-SYS-0002.toml", &b),
+    ]);
+    assert_eq!(code, 0, "{out}");
+}
+
+#[test]
+fn lint_rq017_names_every_requirement_in_the_cycle() {
+    let a = format!(
+        "{}\n[trace]\ndepends_on = [\"TEST-SYS-0002\"]\n",
+        valid_req("TEST-SYS-0001")
+    );
+    let b = format!(
+        "{}\n[trace]\nderived_from = [\"TEST-SYS-0001\"]\n",
+        valid_req("TEST-SYS-0002")
+    );
+    let (_, out) = lint_output(&[
+        ("SYS/TEST-SYS-0001.toml", &a),
+        ("SYS/TEST-SYS-0002.toml", &b),
+    ]);
+    assert_eq!(out.matches("RQ017").count(), 2, "{out}");
+    assert!(out.contains("TEST-SYS-0001 ↔ TEST-SYS-0002"), "{out}");
+}
+
+#[test]
+fn lint_forbidden_keyword_matches_whole_words_only() {
+    let config = BASE_CONFIG.replace(
+        "forbidden_keywords = []",
+        "forbidden_keywords = [\"should\"]",
+    );
+    let ok = valid_req("TEST-SYS-0001").replace("do TEST-SYS-0001", "move the shoulder joint");
+    let bad = valid_req("TEST-SYS-0002").replace("do TEST-SYS-0002", "do what it should");
+    let out = lint_stdout_with_files(
+        &config,
+        &[
+            ("SYS/TEST-SYS-0001.toml", &ok),
+            ("SYS/TEST-SYS-0002.toml", &bad),
+        ],
+    );
+    assert_eq!(out.matches("RQ011").count(), 1, "{out}");
+    assert!(out.contains("TEST-SYS-0002"), "{out}");
+}
+
+#[test]
+fn native_toml_dates_are_accepted() {
+    let req = format!(
+        "{}\n[[verification.activities]]\nid = \"VA-1\"\nname = \"Run\"\nstatus = \"Passed\"\nexecuted_at = 2024-11-15\n",
+        valid_req("TEST-SYS-0001")
+    );
+    let (code, out) = lint_output(&[("SYS/TEST-SYS-0001.toml", &req)]);
+    assert_eq!(code, 0, "{out}");
+}
+
+#[test]
+fn old_config_without_schema_version_is_rejected_clearly() {
+    let config = BASE_CONFIG.replace("schema_version = 1\n", "");
+    let (_dir, repo_root) = write_fixture(&config, &[]);
+    rqtk(&repo_root)
+        .arg("lint")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("supports schema_version 1"));
+}
+
+#[test]
+fn rehash_preserves_comments_and_layout() {
+    let req = format!(
+        "# Owned by the systems team.\n{}",
+        valid_req("TEST-SYS-0001").replace("title =", "# keep this note\ntitle =")
+    );
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    rqtk(&repo_root).arg("rehash").assert().success();
+
+    let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    let written = fs::read_to_string(&path).unwrap();
+    assert!(
+        written.starts_with("# Owned by the systems team.\n"),
+        "{written}"
+    );
+    assert!(written.contains("# keep this note\ntitle ="), "{written}");
+    assert!(written.contains("content_hash = \"v1:"), "{written}");
+    rqtk(&repo_root).arg("lint").assert().code(0);
+    // A second run is a no-op.
+    rqtk(&repo_root)
+        .arg("rehash")
+        .assert()
+        .stdout(predicate::str::contains("current"));
+    assert_eq!(fs::read_to_string(&path).unwrap(), written);
+}
+
+#[test]
+fn add_requires_flags_and_rejects_unknown_category() {
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
+    rqtk(&repo_root).arg("add").assert().failure();
+    rqtk(&repo_root)
+        .args(["add", "--category", "NOPE", "--type", "Functional"])
+        .args(["--title", "T", "--statement", "The system shall work."])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("expected one of: SUB, SYS"));
+}
 
 #[test]
 fn report_prints_markdown_to_stdout() {
@@ -1920,10 +1950,4 @@ fn graph_rejects_graphml() {
         .args(["graph", "--format", "graphml"])
         .assert()
         .failure();
-}
-
-#[test]
-fn add_requires_flags() {
-    let repo_root = fixture_root("firesat-obc");
-    rqtk(&repo_root).arg("add").assert().failure();
 }

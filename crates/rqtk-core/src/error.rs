@@ -16,20 +16,28 @@ pub enum RqtkError {
         #[source]
         source: toml::de::Error,
     },
+    #[error("failed to parse TOML {path}: {source}")]
+    TomlEdit {
+        path: PathBuf,
+        #[source]
+        source: toml_edit::TomlError,
+    },
     #[error("failed to serialize TOML: {0}")]
     TomlSerialize(#[from] toml::ser::Error),
+    #[error("{path} has schema_version {found}, but this rqtk supports schema_version {supported}")]
+    UnsupportedSchemaVersion {
+        path: PathBuf,
+        found: u32,
+        supported: u32,
+    },
     #[error("invalid id pattern regex `{pattern}`: {source}")]
     InvalidIdPattern {
         pattern: String,
         #[source]
         source: regex::Error,
     },
-    #[error("duplicate requirement id `{0}`")]
-    DuplicateRequirement(RequirementId),
     #[error("requirement `{0}` not found")]
     RequirementNotFound(RequirementId),
-    #[error("unsupported export format `{0}`")]
-    UnsupportedExportFormat(String),
     #[error("git error: {0}")]
     Git(String),
     #[error("baseline `{0}` not found — create it with `rqtk baseline {0}`")]

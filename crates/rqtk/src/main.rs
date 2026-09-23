@@ -78,7 +78,7 @@ enum Command {
         #[arg(short, long)]
         short: bool,
     },
-    /// Print the requirement traceability graph.
+    /// Print the traceability graph of stakeholders, needs and requirements.
     Graph {
         #[arg(long, value_enum, default_value_t = commands::graph::GraphFormat::Dot)]
         format: commands::graph::GraphFormat,

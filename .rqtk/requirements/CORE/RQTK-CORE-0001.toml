@@ -1,38 +1,32 @@
-[requirement]
 id = "RQTK-CORE-0001"
 title = "Core Library Algorithm Correctness"
 category = "CORE"
 type = "Functional"
-
-[requirement.statement]
-text = "The rqtk-core library shall implement all requirement processing algorithms correctly."
-rationale = "The core library is shared across all frontends; algorithm correctness is essential for reliable operation."
-
-[requirement.status]
 state = "Approved"
 priority = "Critical"
+statement = "The rqtk-core library shall implement all requirement processing algorithms correctly."
+rationale = "The core library is shared across all frontends; algorithm correctness is essential for reliable operation."
+content_hash = "v1:a4a734607e43dbb4f37dd6c9672c6e7da3599f69216d64ad13c503db062d2464"
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "Unit"
 phase = "Development"
 success_criteria = "All unit tests for cycle detection, ID generation, and policy enforcement pass."
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CORE-002-01"
 name = "Cycle detection unit test"
 status = "Passed"
 expected_result = "RQ017 produced for A→B→A circular parent chain"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CORE-003-01"
 name = "ID generation unit test"
 status = "Passed"
 expected_result = "next_requirement_id increments correctly from existing IDs"
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "VA-CORE-004-01"
 name = "Config-driven policy unit test"
 status = "Passed"

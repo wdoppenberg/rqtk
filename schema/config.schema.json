@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "RqtkConfig",
+  "title": "Config",
   "type": "object",
   "properties": {
     "categories": {
@@ -9,14 +9,8 @@
         "$ref": "#/$defs/Category"
       }
     },
-    "change_control": {
-      "$ref": "#/$defs/ChangeControl"
-    },
     "criticality": {
       "$ref": "#/$defs/CriticalityPolicy"
-    },
-    "export": {
-      "$ref": "#/$defs/ExportConfig"
     },
     "identification": {
       "$ref": "#/$defs/IdentificationScheme"
@@ -33,10 +27,18 @@
     "repository": {
       "$ref": "#/$defs/RepositoryLayout",
       "default": {
+        "needs_dir": ".rqtk/needs",
         "required_dirs": [],
         "required_files": [],
-        "requirements_dir": "requirements"
+        "requirements_dir": ".rqtk/requirements",
+        "stakeholders_dir": ".rqtk/stakeholders"
       }
+    },
+    "schema_version": {
+      "description": "File format version; must equal the version supported by this build of rqtk.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
     },
     "standards": {
       "type": "array",
@@ -55,7 +57,9 @@
       "$ref": "#/$defs/VerificationPolicy"
     }
   },
+  "additionalProperties": false,
   "required": [
+    "schema_version",
     "project",
     "identification",
     "categories",
@@ -64,9 +68,7 @@
     "lifecycle",
     "priority",
     "criticality",
-    "change_control",
-    "validation",
-    "export"
+    "validation"
   ],
   "$defs": {
     "Category": {
@@ -79,7 +81,7 @@
           ]
         },
         "is_root": {
-          "description": "Marks this category as a traceability root (replaces the hard-coded \"STAKE\" sentinel).\nAt least one category should set this to `true` for orphan detection to work.",
+          "description": "Marks this category as a traceability root. At least one category should set this\nto `true` for orphan detection to work.",
           "type": "boolean",
           "default": false
         },
@@ -93,31 +95,10 @@
           "type": "string"
         }
       },
+      "additionalProperties": false,
       "required": [
         "name",
         "level"
-      ]
-    },
-    "ChangeControl": {
-      "type": "object",
-      "properties": {
-        "approvers": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        },
-        "ccb_required_after": {
-          "type": "string"
-        },
-        "require_signoff": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "ccb_required_after",
-        "require_signoff"
       ]
     },
     "CriticalityPolicy": {
@@ -130,27 +111,10 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "levels"
       ]
-    },
-    "ExportConfig": {
-      "type": "object",
-      "properties": {
-        "default_output_dir": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "formats": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     },
     "IdentificationScheme": {
       "type": "object",
@@ -173,6 +137,7 @@
           "minimum": 0
         }
       },
+      "additionalProperties": false,
       "required": [
         "id_pattern"
       ]
@@ -190,6 +155,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "states",
         "default_state"
@@ -205,6 +171,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "levels"
       ]
@@ -222,8 +189,7 @@
           "type": [
             "string",
             "null"
-          ],
-          "format": "date"
+          ]
         },
         "description": {
           "type": [
@@ -266,13 +232,13 @@
           "type": [
             "string",
             "null"
-          ],
-          "format": "date"
+          ]
         },
         "version": {
           "type": "string"
         }
       },
+      "additionalProperties": false,
       "required": [
         "name",
         "version"
@@ -305,11 +271,16 @@
             "null"
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "RepositoryLayout": {
       "type": "object",
       "properties": {
+        "needs_dir": {
+          "type": "string",
+          "default": ".rqtk/needs"
+        },
         "required_dirs": {
           "type": "array",
           "default": [],
@@ -326,9 +297,14 @@
         },
         "requirements_dir": {
           "type": "string",
-          "default": "requirements"
+          "default": ".rqtk/requirements"
+        },
+        "stakeholders_dir": {
+          "type": "string",
+          "default": ".rqtk/stakeholders"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Standard": {
       "type": "object",
@@ -346,6 +322,7 @@
           "type": "string"
         }
       },
+      "additionalProperties": false,
       "required": [
         "id",
         "title"
@@ -361,6 +338,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "allowed"
       ]
@@ -408,6 +386,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "require_rationale",
         "require_verification_method",
@@ -439,6 +418,7 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "methods",
         "levels",

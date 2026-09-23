@@ -7,7 +7,8 @@ use tempfile::TempDir;
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 /// The minimal config that works for all "TEST-" tests.
-const BASE_CONFIG: &str = r#"
+const BASE_CONFIG: &str = r#"schema_version = 1
+
 [repository]
 requirements_dir = ".rqtk/requirements"
 required_files = []
@@ -50,10 +51,6 @@ levels = ["Critical", "High", "Medium", "Low"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Approved"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -64,31 +61,21 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
 /// A single valid requirement as a TOML string. The caller can replace fields as needed.
 fn valid_req(id: &str, category: &str) -> String {
     format!(
-        r#"[requirement]
-id = "{id}"
+        r#"id = "{id}"
 title = "Test requirement"
 category = "{category}"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -133,23 +120,16 @@ fn lifecycle_round_trip() {
 
     for state in &states {
         let req_toml = format!(
-            r#"[requirement]
-id = "TEST-SYS-0001"
+            r#"id = "TEST-SYS-0001"
 title = "Round-trip req"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "{state}"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -166,16 +146,16 @@ phase = "Development"
             .unwrap_or_else(|| panic!("requirement not found for state {state}"));
 
         assert_eq!(
-            req.requirement.status.state, *state,
+            req.state, *state,
             "state mismatch after round-trip for {state}"
         );
         assert_eq!(
-            req.requirement.id,
+            req.id,
             RequirementId("TEST-SYS-0001".to_owned()),
             "id mismatch after round-trip for {state}"
         );
         assert_eq!(
-            req.requirement.title, "Round-trip req",
+            req.title, "Round-trip req",
             "title mismatch after round-trip for {state}"
         );
     }
@@ -210,47 +190,37 @@ fn load_project_requirements_without_errors() {
 fn cycle_detection_unit_produces_rq017() {
     // A.parents = [B], B.parents = [A] — circular
     // Both are SYS (root) so no orphan issues. forbid_circular_traces = true.
-    let req_a = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_a = r#"id = "TEST-SYS-0001"
 title = "A"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-0002"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
 "#;
 
-    let req_b = r#"[requirement]
-id = "TEST-SYS-0002"
+    let req_b = r#"id = "TEST-SYS-0002"
 title = "B"
 category = "SYS"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something else."
-rationale = "Because it also needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something else."
+rationale = "Because it also needs to."
 
-[requirement.traceability]
+[trace]
 parents = ["TEST-SYS-0001"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -301,23 +271,16 @@ fn next_requirement_id_increments_correctly() {
 #[verifies("VA-CORE-004-01")]
 #[test]
 fn unknown_category_produces_rq002() {
-    let req_toml = r#"[requirement]
-id = "TEST-SYS-0001"
+    let req_toml = r#"id = "TEST-SYS-0001"
 title = "Test"
 category = "UNKNOWN"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
@@ -339,7 +302,8 @@ phase = "Development"
 #[verifies("VA-CORE-004-01")]
 fn known_category_suppresses_rq002() {
     // Add "EXTRA" category to config; the requirement uses it; RQ002 should not fire.
-    let config_with_extra = r#"
+    let config_with_extra = r#"schema_version = 1
+
 [project]
 name = "test"
 version = "0.1.0"
@@ -381,10 +345,6 @@ levels = ["Critical"]
 [criticality]
 levels = ["Mission-Critical"]
 
-[change_control]
-ccb_required_after = "Draft"
-require_signoff = false
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -395,28 +355,18 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = []
 "#;
 
-    let req_toml = r#"[requirement]
-id = "TEST-EXTRA-0001"
+    let req_toml = r#"id = "TEST-EXTRA-0001"
 title = "Test"
 category = "EXTRA"
 type = "Functional"
-
-[requirement.statement]
-text = "The system shall do something."
-rationale = "Because it needs to."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The system shall do something."
+rationale = "Because it needs to."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"

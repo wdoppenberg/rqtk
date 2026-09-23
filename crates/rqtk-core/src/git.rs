@@ -1,5 +1,5 @@
 use crate::error::RqtkError;
-use crate::model::{RequirementFile, RequirementId};
+use crate::model::{Requirement, RequirementId};
 use chrono::{DateTime, Utc};
 use gix::refs::transaction::PreviousValue;
 use std::collections::BTreeMap;
@@ -471,32 +471,17 @@ impl GitContext {
         common.sort();
 
         for id in common {
-            let from_r = &from_reqs[&id].requirement;
-            let to_r = &to_reqs[&id].requirement;
+            let from_r = &from_reqs[&id];
+            let to_r = &to_reqs[&id];
 
-            let from_ser = toml::to_string_pretty(&RequirementFile {
-                requirement: from_r.clone(),
-            })
-            .unwrap_or_default();
-            let to_ser = toml::to_string_pretty(&RequirementFile {
-                requirement: to_r.clone(),
-            })
-            .unwrap_or_default();
-
+            let from_ser = toml::to_string(from_r).unwrap_or_default();
+            let to_ser = toml::to_string(to_r).unwrap_or_default();
             if from_ser == to_ser {
                 continue;
             }
 
-            let from_hash = from_r
-                .content_hash
-                .clone()
-                .unwrap_or_else(|| from_r.compute_content_hash());
-            let to_hash = to_r
-                .content_hash
-                .clone()
-                .unwrap_or_else(|| to_r.compute_content_hash());
-
-            let change_kind = if from_hash != to_hash {
+            // Always recompute: a stored hash may be stale.
+            let change_kind = if from_r.compute_content_hash() != to_r.compute_content_hash() {
                 ChangeKind::Semantic
             } else {
                 ChangeKind::Cosmetic
@@ -576,7 +561,7 @@ impl GitContext {
         &self,
         baseline: &BaselineName,
         req_path: &Path,
-    ) -> Result<Option<RequirementFile>, RqtkError> {
+    ) -> Result<Option<Requirement>, RqtkError> {
         let tree_id = self.resolve_baseline_tree_id(baseline)?;
         let tree = self
             .repo
@@ -608,7 +593,7 @@ impl GitContext {
                     .map_err(|e| RqtkError::Git(e.to_string()))?;
                 let content =
                     std::str::from_utf8(&obj.data).map_err(|e| RqtkError::Git(e.to_string()))?;
-                let req: RequirementFile =
+                let req: Requirement =
                     toml::from_str(content).map_err(|source| RqtkError::TomlParse {
                         path: req_path.to_path_buf(),
                         source,
@@ -648,7 +633,7 @@ fn read_requirements_from_tree(
     tree: &gix::Tree<'_>,
     req_dir: &Path,
     repo_root: &Path,
-) -> Result<BTreeMap<RequirementId, RequirementFile>, RqtkError> {
+) -> Result<BTreeMap<RequirementId, Requirement>, RqtkError> {
     let req_dir_c = req_dir
         .canonicalize()
         .unwrap_or_else(|_| req_dir.to_path_buf());
@@ -692,8 +677,8 @@ fn read_requirements_from_tree(
         let Ok(content) = std::str::from_utf8(&obj.data) else {
             continue;
         };
-        if let Ok(req_file) = toml::from_str::<RequirementFile>(content) {
-            requirements.insert(req_file.requirement.id.clone(), req_file);
+        if let Ok(req) = toml::from_str::<Requirement>(content) {
+            requirements.insert(req.id.clone(), req);
         }
     }
 

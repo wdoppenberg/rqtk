@@ -1,26 +1,19 @@
-[requirement]
 id = "FOBC-SYS-0002"
 title = "OBC Mass Budget"
 category = "SYS"
 type = "Constraint"
-
-[requirement.statement]
-text = "The OBC assembly shall not exceed a total mass of 2.5 kg."
-rationale = "The spacecraft mass budget constrains the OBC to 2.5 kg to achieve the required launch mass."
-
-[requirement.status]
 state = "Approved"
 priority = "High"
+statement = "The OBC assembly shall not exceed a total mass of 2.5 kg."
+rationale = "The spacecraft mass budget constrains the OBC to 2.5 kg to achieve the required launch mass."
 
-[requirement.traceability]
-
-[requirement.verification]
+[verification]
 method = "Inspection"
 level = "System"
 phase = "Pre-release"
 success_criteria = "Measured OBC mass does not exceed 2.5 kg."
 
-[[requirement.verification.activities]]
+[[verification.activities]]
 id = "FOBC-VA-SYS-002-01"
 name = "Mass measurement"
 status = "Passed"

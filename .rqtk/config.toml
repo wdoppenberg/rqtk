@@ -1,3 +1,5 @@
+schema_version = 1
+
 [repository]
 requirements_dir = ".rqtk/requirements"
 stakeholders_dir = ".rqtk/stakeholders"
@@ -46,11 +48,6 @@ levels = ["Critical", "High", "Medium", "Low"]
 [criticality]
 levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
 
-[change_control]
-ccb_required_after = "Approved"
-require_signoff = false
-approvers = []
-
 [validation]
 require_rationale = true
 require_verification_method = true
@@ -61,7 +58,3 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
-
-[export]
-formats = ["json", "csv", "markdown"]
-default_output_dir = "exports"

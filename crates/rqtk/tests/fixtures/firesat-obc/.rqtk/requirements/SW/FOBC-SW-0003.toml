@@ -1,21 +1,16 @@
-[requirement]
 id = "FOBC-SW-0003"
 title = "Watchdog Timer Reset"
 category = "SW"
 type = "Functional"
-
-[requirement.statement]
-text = "The OBC software shall trigger a hardware watchdog timer reset if the main task loop fails to execute within 10 seconds."
-rationale = "Automatic watchdog resets prevent the OBC from becoming permanently unresponsive due to software faults."
-
-[requirement.status]
 state = "Draft"
 priority = "Critical"
+statement = "The OBC software shall trigger a hardware watchdog timer reset if the main task loop fails to execute within 10 seconds."
+rationale = "Automatic watchdog resets prevent the OBC from becoming permanently unresponsive due to software faults."
 
-[requirement.traceability]
+[trace]
 parents = ["FOBC-SYS-0001"]
 
-[requirement.verification]
+[verification]
 method = "Test"
 level = "System"
 phase = "Development"
