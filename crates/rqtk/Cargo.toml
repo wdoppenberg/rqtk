@@ -13,7 +13,7 @@ readme = "../../README.md"
 
 [dependencies]
 rqtk-core = { workspace = true }
-rqtk-export = { workspace = true, features = ["clap"] }
+rqtk-export = { workspace = true }
 rqtk-macros = { workspace = true, optional = true }
 rqtk-report = { workspace = true }
 serde = { workspace = true }
@@ -29,8 +29,14 @@ chrono = "0.4.44"
 
 [features]
 default = ["cli"]
+# The command-line tool (the `rqtk` binary).
+cli = ["dep:clap", "rqtk-export/clap"]
+# `rqtk::verifies` and `rqtk::requirements_docs`: link Rust tests and docs to requirements.
 macros = ["dep:rqtk-macros"]
-cli = ["dep:clap"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [[bin]]
 name = "rqtk"

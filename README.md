@@ -200,7 +200,7 @@ From 1.0, the `rqtk` command line follows semantic versioning. Within 1.x, the f
 | Lint rule codes | A code keeps its meaning and is never reused. New rules may be added, so lint can find new problems after an upgrade. |
 | Content hash | Tagged with its version (`v1:`); a different algorithm gets a new tag. |
 
-Not covered: human-readable text output, and the Rust library crates (`rqtk-core`, `rqtk-export`, `rqtk-report`, `rqtk-macros`), which stay at 0.x and may change between minor versions.
+Not covered: human-readable text output, and the Rust library crates (`rqtk-core`, `rqtk-export`, `rqtk-report`, `rqtk-macros`), which stay at 0.x and may change between minor versions, along with their re-exports from the `rqtk` crate (`rqtk::core`, `rqtk::export`, `rqtk::macros`). The `#[rqtk::verifies("…")]` attribute itself is covered.
 
 ## Data model
 
@@ -413,17 +413,22 @@ exclude = ["tests/fixtures/**"]       # gitignore-style globs
 
 ### Rust
 
-Add `rqtk-macros` as a dev-dependency and annotate test functions:
+Enable the `macros` feature of the `rqtk` crate as a dev-dependency and annotate test functions:
+
+```toml
+[dev-dependencies]
+rqtk = { version = "1", default-features = false, features = ["macros"] }
+```
 
 ```rust
-use rqtk_macros::verifies;
-
-#[verifies("VA-SYS-001-01")]
+#[rqtk::verifies("VA-SYS-001-01")]
 #[test]
 fn telemetry_acquisition_rate() {
     // ...
 }
 ```
+
+The same macros are available as `rqtk::macros::*`, or from the standalone `rqtk-macros` crate.
 
 The macro resolves the activity ID at compile time by walking up from `CARGO_MANIFEST_DIR` to find `.rqtk/config.toml`. If the activity does not exist in any requirement file, the build fails with an error pointing to the annotation. When it does exist, the macro injects the requirement context as rustdoc on the function — visible in IDE hover and `cargo doc` — and registers the requirement file as a build input, so editing it triggers a rebuild.
 
