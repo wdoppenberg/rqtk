@@ -4,10 +4,12 @@ All notable changes to the `rqtk` command line. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows
 [semantic versioning](https://semver.org) as described under *Stability* in the README.
 
-## [Unreleased] — 1.0.0
+## [1.0.0] — 2026-09-23
 
-First stable release. Everything below is new or changed since 0.1.0; breaking changes were
-allowed on the way to 1.0.
+First stable release: from here on the command line, file format, `--json` output, exit codes
+and lint rule codes follow the *Stability* promise in the README. The code is the same as
+0.1.0; the list below is everything that changed on the way from the first internal drafts,
+where breaking changes were still allowed.
 
 ### Verification from test evidence
 - `rqtk scan` finds `verifies` links in source: Rust `#[verifies("…")]`, Python
@@ -50,3 +52,9 @@ allowed on the way to 1.0.
 - C++ bindings (`rqtk-cpp`, `codegen-cpp-verifies`), GraphML output, the Typst/PDF report
   (`rqtk report` now writes Markdown), interactive prompts, and the unused
   `[change_control]` and `[export]` configuration sections.
+
+## [0.1.0] — 2026-09-23
+
+Pre-release of the same code as 1.0.0, published to exercise the release pipeline: GitHub
+Release with installers, crates.io, and rqtk.dev. The library crates (`rqtk-core`,
+`rqtk-export`, `rqtk-report`, `rqtk-macros`) remain at 0.1.0.
