@@ -603,7 +603,11 @@ method = "Test"
 level = "System"
 phase = "Development"
 "#;
-    std::fs::write(repo_root.join(".rqtk/requirements/FOBC-SW-0004.toml"), new_req).unwrap();
+    std::fs::write(
+        repo_root.join(".rqtk/requirements/FOBC-SW-0004.toml"),
+        new_req,
+    )
+    .unwrap();
     git_commit_all(&repo_root, "add FOBC-SW-0004");
     rqtk(&repo_root)
         .arg("baseline")
@@ -642,7 +646,9 @@ fn new_creates_requirement_file_with_correct_id() {
         .success()
         .stdout(predicate::str::contains("FOBC-SW-0004"));
     assert!(
-        repo_root.join(".rqtk/requirements/SW/FOBC-SW-0004.toml").exists(),
+        repo_root
+            .join(".rqtk/requirements/SW/FOBC-SW-0004.toml")
+            .exists(),
         "Expected SW/FOBC-SW-0004.toml to be created"
     );
 }
@@ -1678,4 +1684,211 @@ formats = []
         .code(2)
         .stdout(predicate::str::contains("RQ019"))
         .stdout(predicate::str::contains("RQ020"));
+}
+
+// ── stakeholder & need helpers ────────────────────────────────────────────────
+
+/// Config that enables stakeholders_dir and needs_dir alongside requirements.
+const BASE_CONFIG_WITH_STAKEHOLDERS: &str = r#"
+[repository]
+requirements_dir = ".rqtk/requirements"
+stakeholders_dir = ".rqtk/stakeholders"
+needs_dir = ".rqtk/needs"
+required_files = []
+required_dirs = []
+
+[project]
+name = "test"
+version = "0.1.0"
+
+[identification]
+id_pattern = "^TEST-(SYS)-\\d{4}$"
+id_separator = "-"
+prefix = "TEST"
+zero_padding = 4
+
+[categories.SYS]
+name = "System"
+level = 1
+is_root = true
+
+[types]
+allowed = ["Functional"]
+
+[verification]
+methods = ["Test"]
+levels = ["System"]
+phases = ["Development"]
+
+[lifecycle]
+states = ["Draft", "Review", "Approved", "Implemented", "Verified", "Deprecated"]
+default_state = "Draft"
+
+[priority]
+levels = ["Critical", "High", "Medium", "Low"]
+
+[criticality]
+levels = ["Mission-Critical"]
+
+[change_control]
+ccb_required_after = "Approved"
+require_signoff = false
+
+[validation]
+require_rationale = true
+require_verification_method = true
+require_parent_for_levels = []
+forbid_orphans = false
+forbid_circular_traces = true
+allow_tbd = false
+allow_tbr = false
+shall_keywords = ["shall"]
+forbidden_keywords = []
+
+[export]
+formats = []
+"#;
+
+/// Write a complete fixture including stakeholder and need files.
+fn write_fixture_full(
+    config: &str,
+    reqs: &[(&str, &str)],
+    stakeholders: &[(&str, &str)],
+    needs: &[(&str, &str)],
+) -> (tempfile::TempDir, PathBuf) {
+    let (dir, repo_root) = write_fixture(config, reqs);
+    let rqtk_dir = repo_root.join(".rqtk");
+
+    let stakeholders_root = rqtk_dir.join("stakeholders");
+    fs::create_dir_all(&stakeholders_root).unwrap();
+    for (filename, content) in stakeholders {
+        fs::write(stakeholders_root.join(filename), content).unwrap();
+    }
+
+    let needs_root = rqtk_dir.join("needs");
+    fs::create_dir_all(&needs_root).unwrap();
+    for (filename, content) in needs {
+        fs::write(needs_root.join(filename), content).unwrap();
+    }
+
+    (dir, repo_root)
+}
+
+// ── STK001: need references unknown stakeholder ───────────────────────────────
+
+#[verifies("VA-SYS-004-01")]
+#[test]
+fn lint_rule_stk001_need_references_unknown_stakeholder() {
+    let need_toml = r#"[need]
+id = "NEED-0001"
+title = "Some need"
+stakeholders = ["UNKNOWN-STK"]
+
+[need.statement]
+text = "The system shall satisfy this need."
+
+[need.status]
+state = "Draft"
+"#;
+    let (_dir, repo_root) =
+        write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[("NEED-0001.toml", need_toml)]);
+    let output = rqtk(&repo_root).arg("lint").output().unwrap();
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(
+        stdout.contains("STK001"),
+        "expected STK001 in output; got:\n{stdout}"
+    );
+}
+
+// ── RQ023: validation.stakeholder unknown ─────────────────────────────────────
+
+#[verifies("VA-SYS-004-01")]
+#[test]
+fn lint_rule_rq023_validation_stakeholder_unknown() {
+    let req_toml = r#"[requirement]
+id = "TEST-SYS-0001"
+title = "Validated requirement"
+category = "SYS"
+type = "Functional"
+
+[requirement.statement]
+text = "The system shall do something."
+rationale = "To satisfy a need."
+
+[requirement.status]
+state = "Draft"
+priority = "Critical"
+
+[requirement.traceability]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Development"
+
+[requirement.validation]
+stakeholder = "UNKNOWN-STK"
+"#;
+    let (_dir, repo_root) = write_fixture_full(
+        BASE_CONFIG_WITH_STAKEHOLDERS,
+        &[("SYS/TEST-SYS-0001.toml", req_toml)],
+        &[],
+        &[],
+    );
+    let output = rqtk(&repo_root).arg("lint").output().unwrap();
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(
+        stdout.contains("RQ023"),
+        "expected RQ023 in output; got:\n{stdout}"
+    );
+}
+
+// ── add-stakeholder command ───────────────────────────────────────────────────
+
+#[test]
+fn add_stakeholder_creates_file() {
+    let (_dir, repo_root) = write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[]);
+    rqtk(&repo_root)
+        .args([
+            "add-stakeholder",
+            "--id",
+            "STK-001",
+            "--name",
+            "Mission Ops",
+            "--role",
+            "Systems Engineer",
+            "--organization",
+            "ACME",
+        ])
+        .assert()
+        .success();
+    let stk_path = repo_root.join(".rqtk/stakeholders/STK-001.toml");
+    assert!(stk_path.exists(), "stakeholder file not created");
+    let content = fs::read_to_string(&stk_path).unwrap();
+    assert!(content.contains("STK-001"), "ID not in file");
+    assert!(content.contains("Mission Ops"), "name not in file");
+}
+
+// ── add-need command ──────────────────────────────────────────────────────────
+
+#[test]
+fn add_need_creates_file() {
+    let (_dir, repo_root) = write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[]);
+    rqtk(&repo_root)
+        .args([
+            "add-need",
+            "--id",
+            "NEED-0001",
+            "--title",
+            "Operator visibility",
+            "--statement",
+            "The system shall provide operator visibility.",
+        ])
+        .assert()
+        .success();
+    let need_path = repo_root.join(".rqtk/needs/NEED-0001.toml");
+    assert!(need_path.exists(), "need file not created");
+    let content = fs::read_to_string(&need_path).unwrap();
+    assert!(content.contains("NEED-0001"), "ID not in file");
+    assert!(content.contains("Operator visibility"), "title not in file");
 }

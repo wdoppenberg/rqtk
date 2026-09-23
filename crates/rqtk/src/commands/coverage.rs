@@ -1,4 +1,4 @@
-use std::{error::Error, path::Path};
+use std::{collections::BTreeMap, error::Error, path::Path};
 
 use rqtk_core::{ClosureStatus, RequirementSet, SatisfactionStatus};
 
@@ -32,10 +32,39 @@ pub fn run(repo_root: &Path, strict: bool, short: bool) -> Result<(), Box<dyn Er
         );
 
         if !short && needs_gap {
-            output::section("Unsatisfied needs", "(no requirement satisfies this need)");
+            // Group unsatisfied needs by stakeholder; ungrouped under "(none)".
+            let mut by_stakeholder: BTreeMap<String, Vec<String>> = BTreeMap::new();
             for id in &unsatisfied {
-                let title = set.needs.get(id).map(|n| n.need.title.as_str()).unwrap_or("");
-                output::item(&format!("{id}  {title}"));
+                let stks = set
+                    .needs
+                    .get(id)
+                    .map(|n| n.need.stakeholders.clone())
+                    .unwrap_or_default();
+                let title = set
+                    .needs
+                    .get(id)
+                    .map(|n| n.need.title.as_str())
+                    .unwrap_or("");
+                let entry = format!("{id}  {title}");
+                if stks.is_empty() {
+                    by_stakeholder
+                        .entry("(none)".to_owned())
+                        .or_default()
+                        .push(entry);
+                } else {
+                    for stk in stks {
+                        by_stakeholder.entry(stk).or_default().push(entry.clone());
+                    }
+                }
+            }
+            for (stk, entries) in &by_stakeholder {
+                output::section(
+                    &format!("Unsatisfied needs — {stk}"),
+                    "(no requirement satisfies this need)",
+                );
+                for e in entries {
+                    output::item(e);
+                }
             }
         }
     }

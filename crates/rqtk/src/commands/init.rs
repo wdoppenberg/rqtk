@@ -16,8 +16,14 @@ pub fn run(
         &[
             ("config", &config_path.display().to_string()),
             ("requirements", &req_path.display().to_string()),
-            ("stakeholders", &repo_root.join(".rqtk/stakeholders").display().to_string()),
-            ("needs", &repo_root.join(".rqtk/needs").display().to_string()),
+            (
+                "stakeholders",
+                &repo_root.join(".rqtk/stakeholders").display().to_string(),
+            ),
+            (
+                "needs",
+                &repo_root.join(".rqtk/needs").display().to_string(),
+            ),
         ],
     );
     Ok(())
@@ -44,10 +50,41 @@ fn scaffold_repository(
 
     std::fs::write(&config_path, default_config_toml(requirements_dir))?;
     std::fs::create_dir_all(repo_root.join(requirements_dir).join("SYS"))?;
-    std::fs::create_dir_all(rqtk_dir.join("stakeholders"))?;
-    std::fs::create_dir_all(rqtk_dir.join("needs"))?;
+    let stakeholders_dir = rqtk_dir.join("stakeholders");
+    let needs_dir = rqtk_dir.join("needs");
+    std::fs::create_dir_all(&stakeholders_dir)?;
+    std::fs::create_dir_all(&needs_dir)?;
+    std::fs::write(stakeholders_dir.join("STK-001.toml"), EXAMPLE_STAKEHOLDER_TOML)?;
+    std::fs::write(needs_dir.join("NEED-0001.toml"), EXAMPLE_NEED_TOML)?;
     Ok(())
 }
+
+const EXAMPLE_STAKEHOLDER_TOML: &str = r#"[stakeholder]
+id = "STK-001"
+name = "Example Stakeholder"
+role = "System Engineer"
+organization = "Example Org"
+
+[stakeholder.concerns]
+primary = ["Functionality", "Reliability"]
+secondary = []
+
+[stakeholder.authority]
+approval_required = false
+"#;
+
+const EXAMPLE_NEED_TOML: &str = r#"[need]
+id = "NEED-0001"
+title = "Example Stakeholder Need"
+stakeholders = ["STK-001"]
+
+[need.statement]
+text = "The system shall fulfil this example stakeholder need."
+rationale = "Example rationale."
+
+[need.status]
+state = "Draft"
+"#;
 
 fn default_config_toml(requirements_dir: &str) -> String {
     format!(

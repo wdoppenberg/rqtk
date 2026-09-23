@@ -3,8 +3,9 @@ use crate::git::GitContext;
 use crate::io::write_requirement_file;
 use crate::model::{Approval, ProjectConfig, RepositoryLayout, RqtkConfig};
 use crate::model::{
-    NeedFile, NeedId, RequirementBody, RequirementFile, RequirementId, ScaffoldInput, Statement,
-    Status, StakeholderFile, Traceability, Verification,
+    NeedBody, NeedFile, NeedId, NeedStatement, NeedStatus, RequirementBody, RequirementFile,
+    RequirementId, ScaffoldInput, StakeholderAuthority, StakeholderBody, StakeholderConcerns,
+    StakeholderFile, Statement, Status, Traceability, Verification,
 };
 use crate::validation::{
     LintIssue, has_path_to_stake, is_single_shall_sentence_violation, issue_error, issue_warning,
@@ -282,6 +283,8 @@ impl RequirementSet<Loaded> {
 
         let known_ids: HashSet<_> = self.requirements.keys().cloned().collect();
         let known_categories: HashSet<_> = self.config.categories.keys().cloned().collect();
+        let known_need_ids: HashSet<_> = self.needs.keys().cloned().collect();
+        let known_stakeholder_ids: HashSet<_> = self.stakeholders.keys().cloned().collect();
 
         for (req_id, req_file) in &self.requirements {
             let req = &req_file.requirement;
@@ -463,13 +466,38 @@ impl RequirementSet<Loaded> {
                     ));
                 }
             }
-            let known_need_ids: HashSet<_> = self.needs.keys().cloned().collect();
             for need_id in &req.traceability.satisfies {
                 if !known_need_ids.contains(need_id) {
                     issues.push(issue_error(
                         "RQ022",
                         format!("satisfies references unknown need `{need_id}`"),
                         Some(req_id.clone()),
+                        path.clone(),
+                    ));
+                }
+            }
+            if let Some(validation) = &req.validation {
+                if let Some(stk_id) = &validation.stakeholder {
+                    if !known_stakeholder_ids.contains(stk_id.as_str()) {
+                        issues.push(issue_error(
+                            "RQ023",
+                            format!("validation.stakeholder `{stk_id}` is not a known stakeholder"),
+                            Some(req_id.clone()),
+                            path.clone(),
+                        ));
+                    }
+                }
+            }
+        }
+
+        for (need_id, need_file) in &self.needs {
+            let path = self.needs_by_id.get(need_id).cloned();
+            for stk_id in &need_file.need.stakeholders {
+                if !known_stakeholder_ids.contains(stk_id.as_str()) {
+                    issues.push(issue_error(
+                        "STK001",
+                        format!("need `{need_id}` references unknown stakeholder `{stk_id}`"),
+                        None,
                         path.clone(),
                     ));
                 }
@@ -563,8 +591,7 @@ impl RequirementSet<Validated> {
 
     pub fn to_dot(&self) -> String {
         const PALETTE: &[&str] = &[
-            "#AED6F1", "#A9DFBF", "#FAD7A0", "#F1948A",
-            "#D7BDE2", "#A3E4D7", "#F9E79F", "#FADBD8",
+            "#AED6F1", "#A9DFBF", "#FAD7A0", "#F1948A", "#D7BDE2", "#A3E4D7", "#F9E79F", "#FADBD8",
         ];
 
         let mut cats: Vec<&str> = self
@@ -588,7 +615,10 @@ impl RequirementSet<Validated> {
 
         for (id, req_file) in &self.requirements {
             let req = &req_file.requirement;
-            let color = color_map.get(req.category.as_str()).copied().unwrap_or("#FFFFFF");
+            let color = color_map
+                .get(req.category.as_str())
+                .copied()
+                .unwrap_or("#FFFFFF");
             let is_root = self
                 .config
                 .categories
@@ -608,10 +638,7 @@ impl RequirementSet<Validated> {
         for (id, req_file) in &self.requirements {
             let t = &req_file.requirement.traceability;
             for parent in &t.parents {
-                out.push_str(&format!(
-                    "    \"{}\" -> \"{}\";\n",
-                    id.0, parent.0
-                ));
+                out.push_str(&format!("    \"{}\" -> \"{}\";\n", id.0, parent.0));
             }
             for dep in &t.depends_on {
                 out.push_str(&format!(
@@ -651,17 +678,17 @@ impl RequirementSet<Validated> {
         out.push_str("         xsi:schemaLocation=\"http://graphml.graphdrawing.org/graphml http://graphml.graphdrawing.org/graphml/graphml-attributes.xsd\">\n");
 
         let node_keys = [
-            ("d_title",    "title",                "string"),
-            ("d_cat",      "category",             "string"),
-            ("d_type",     "req_type",             "string"),
-            ("d_state",    "state",                "string"),
-            ("d_priority", "priority",             "string"),
-            ("d_crit",     "criticality",          "string"),
-            ("d_vmethod",  "verification_method",  "string"),
-            ("d_vlevel",   "verification_level",   "string"),
-            ("d_tbd",      "tbd",                  "boolean"),
-            ("d_tbr",      "tbr",                  "boolean"),
-            ("d_stmt",     "statement",            "string"),
+            ("d_title", "title", "string"),
+            ("d_cat", "category", "string"),
+            ("d_type", "req_type", "string"),
+            ("d_state", "state", "string"),
+            ("d_priority", "priority", "string"),
+            ("d_crit", "criticality", "string"),
+            ("d_vmethod", "verification_method", "string"),
+            ("d_vlevel", "verification_level", "string"),
+            ("d_tbd", "tbd", "boolean"),
+            ("d_tbr", "tbr", "boolean"),
+            ("d_stmt", "statement", "string"),
         ];
         for (key_id, name, typ) in &node_keys {
             out.push_str(&format!(
@@ -669,24 +696,38 @@ impl RequirementSet<Validated> {
                 key_id, name, typ
             ));
         }
-        out.push_str("  <key id=\"d_etype\" for=\"edge\" attr.name=\"type\" attr.type=\"string\"/>\n");
+        out.push_str(
+            "  <key id=\"d_etype\" for=\"edge\" attr.name=\"type\" attr.type=\"string\"/>\n",
+        );
 
         out.push_str("  <graph id=\"G\" edgedefault=\"directed\">\n");
 
         for (id, req_file) in &self.requirements {
             let req = &req_file.requirement;
             out.push_str(&format!("    <node id=\"{}\">\n", xml_escape(&id.0)));
-            out.push_str(&gml_data("d_title",    &xml_escape(&req.title)));
-            out.push_str(&gml_data("d_cat",      &xml_escape(&req.category)));
-            out.push_str(&gml_data("d_type",     &xml_escape(&req.req_type)));
-            out.push_str(&gml_data("d_state",    &xml_escape(&req.status.state)));
+            out.push_str(&gml_data("d_title", &xml_escape(&req.title)));
+            out.push_str(&gml_data("d_cat", &xml_escape(&req.category)));
+            out.push_str(&gml_data("d_type", &xml_escape(&req.req_type)));
+            out.push_str(&gml_data("d_state", &xml_escape(&req.status.state)));
             out.push_str(&gml_data("d_priority", &xml_escape(&req.status.priority)));
-            out.push_str(&gml_data("d_crit",     &xml_escape(req.status.criticality.as_deref().unwrap_or(""))));
-            out.push_str(&gml_data("d_vmethod",  &xml_escape(&req.verification.method)));
-            out.push_str(&gml_data("d_vlevel",   &xml_escape(&req.verification.level)));
-            out.push_str(&gml_data("d_tbd",      if req.status.tbd { "true" } else { "false" }));
-            out.push_str(&gml_data("d_tbr",      if req.status.tbr { "true" } else { "false" }));
-            out.push_str(&gml_data("d_stmt",     &xml_escape(&req.statement.text)));
+            out.push_str(&gml_data(
+                "d_crit",
+                &xml_escape(req.status.criticality.as_deref().unwrap_or("")),
+            ));
+            out.push_str(&gml_data(
+                "d_vmethod",
+                &xml_escape(&req.verification.method),
+            ));
+            out.push_str(&gml_data("d_vlevel", &xml_escape(&req.verification.level)));
+            out.push_str(&gml_data(
+                "d_tbd",
+                if req.status.tbd { "true" } else { "false" },
+            ));
+            out.push_str(&gml_data(
+                "d_tbr",
+                if req.status.tbr { "true" } else { "false" },
+            ));
+            out.push_str(&gml_data("d_stmt", &xml_escape(&req.statement.text)));
             out.push_str("    </node>\n");
         }
 
@@ -696,17 +737,29 @@ impl RequirementSet<Validated> {
             let emit = |out: &mut String, eid: &mut usize, src: &str, tgt: &str, etype: &str| {
                 out.push_str(&format!(
                     "    <edge id=\"e{}\" source=\"{}\" target=\"{}\">\n",
-                    eid, xml_escape(src), xml_escape(tgt)
+                    eid,
+                    xml_escape(src),
+                    xml_escape(tgt)
                 ));
                 out.push_str(&gml_data("d_etype", etype));
                 out.push_str("    </edge>\n");
                 *eid += 1;
             };
-            for p in &t.parents         { emit(&mut out, &mut edge_id, &id.0, &p.0, "parent"); }
-            for d in &t.depends_on      { emit(&mut out, &mut edge_id, &id.0, &d.0, "depends_on"); }
-            for d in &t.derived_from    { emit(&mut out, &mut edge_id, &id.0, &d.0, "derived_from"); }
-            for r in &t.refines         { emit(&mut out, &mut edge_id, &id.0, &r.0, "refines"); }
-            for c in &t.conflicts_with  { emit(&mut out, &mut edge_id, &id.0, &c.0, "conflicts_with"); }
+            for p in &t.parents {
+                emit(&mut out, &mut edge_id, &id.0, &p.0, "parent");
+            }
+            for d in &t.depends_on {
+                emit(&mut out, &mut edge_id, &id.0, &d.0, "depends_on");
+            }
+            for d in &t.derived_from {
+                emit(&mut out, &mut edge_id, &id.0, &d.0, "derived_from");
+            }
+            for r in &t.refines {
+                emit(&mut out, &mut edge_id, &id.0, &r.0, "refines");
+            }
+            for c in &t.conflicts_with {
+                emit(&mut out, &mut edge_id, &id.0, &c.0, "conflicts_with");
+            }
         }
 
         out.push_str("  </graph>\n");
@@ -875,6 +928,60 @@ impl<S> RequirementSet<S> {
         RequirementFile { requirement: body }
     }
 
+    pub fn next_stakeholder_id(&self) -> String {
+        let max = self
+            .stakeholders
+            .keys()
+            .filter_map(|id| id.strip_prefix("STK-").and_then(|n| n.parse::<usize>().ok()))
+            .max()
+            .unwrap_or(0);
+        format!("STK-{:03}", max + 1)
+    }
+
+    pub fn scaffold_stakeholder(&self, id: &str, name: &str) -> StakeholderFile {
+        StakeholderFile {
+            stakeholder: StakeholderBody {
+                id: id.to_owned(),
+                name: name.to_owned(),
+                role: None,
+                organization: None,
+                concerns: StakeholderConcerns::default(),
+                authority: StakeholderAuthority::default(),
+            },
+        }
+    }
+
+    pub fn next_need_id(&self) -> NeedId {
+        let max = self
+            .needs
+            .keys()
+            .filter_map(|id| id.0.strip_prefix("NEED-").and_then(|n| n.parse::<usize>().ok()))
+            .max()
+            .unwrap_or(0);
+        NeedId(format!("NEED-{:04}", max + 1))
+    }
+
+    pub fn scaffold_need(&self, id: NeedId, title: &str, statement: &str) -> NeedFile {
+        let mut body = NeedBody {
+            id,
+            title: title.to_owned(),
+            stakeholders: Vec::new(),
+            priority: None,
+            content_hash: None,
+            statement: NeedStatement {
+                text: statement.to_owned(),
+                rationale: None,
+            },
+            status: NeedStatus {
+                state: "Draft".to_owned(),
+            },
+            acceptance: None,
+            keywords: Vec::new(),
+        };
+        body.content_hash = Some(body.compute_content_hash());
+        NeedFile { need: body }
+    }
+
     fn has_trace_cycles(&self) -> bool {
         is_cyclic_directed(&self.build_trace_graph())
     }
@@ -892,19 +999,29 @@ impl<S> RequirementSet<S> {
             if let Some(&from) = nodes.get(id) {
                 let t = &req.requirement.traceability;
                 for p in &t.parents {
-                    if let Some(&to) = nodes.get(p) { graph.add_edge(from, to, TraceEdge::Parent); }
+                    if let Some(&to) = nodes.get(p) {
+                        graph.add_edge(from, to, TraceEdge::Parent);
+                    }
                 }
                 for d in &t.depends_on {
-                    if let Some(&to) = nodes.get(d) { graph.add_edge(from, to, TraceEdge::Dependency); }
+                    if let Some(&to) = nodes.get(d) {
+                        graph.add_edge(from, to, TraceEdge::Dependency);
+                    }
                 }
                 for d in &t.derived_from {
-                    if let Some(&to) = nodes.get(d) { graph.add_edge(from, to, TraceEdge::DerivedFrom); }
+                    if let Some(&to) = nodes.get(d) {
+                        graph.add_edge(from, to, TraceEdge::DerivedFrom);
+                    }
                 }
                 for r in &t.refines {
-                    if let Some(&to) = nodes.get(r) { graph.add_edge(from, to, TraceEdge::Refines); }
+                    if let Some(&to) = nodes.get(r) {
+                        graph.add_edge(from, to, TraceEdge::Refines);
+                    }
                 }
                 for c in &t.conflicts_with {
-                    if let Some(&to) = nodes.get(c) { graph.add_edge(from, to, TraceEdge::ConflictsWith); }
+                    if let Some(&to) = nodes.get(c) {
+                        graph.add_edge(from, to, TraceEdge::ConflictsWith);
+                    }
                 }
             }
         }

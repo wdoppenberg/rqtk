@@ -1,0 +1,71 @@
+[repository]
+requirements_dir = ".rqtk/requirements"
+stakeholders_dir = ".rqtk/stakeholders"
+needs_dir = ".rqtk/needs"
+required_files = []
+required_dirs = []
+
+[project]
+name = "FireSat OBC"
+version = "0.1.0"
+
+[identification]
+id_pattern = "^FOBC-(SYS|SW|HW|ICD)-\\d{4}$"
+id_separator = "-"
+prefix = "FOBC"
+zero_padding = 4
+
+[categories.SYS]
+name = "System"
+level = 1
+is_root = true
+
+[categories.SW]
+name = "Software"
+level = 2
+
+[categories.HW]
+name = "Hardware"
+level = 2
+
+[categories.ICD]
+name = "Interface Control"
+level = 3
+
+[types]
+allowed = ["Functional", "Performance", "Interface", "Constraint"]
+
+[verification]
+methods = ["Test", "Analysis", "Inspection", "Demonstration"]
+levels = ["Unit", "Integration", "System", "Acceptance"]
+phases = ["Development", "Pre-release", "Release"]
+
+[lifecycle]
+states = ["Draft", "Review", "Approved", "Implemented", "Verified", "Deprecated"]
+default_state = "Draft"
+
+[priority]
+levels = ["Critical", "High", "Medium", "Low"]
+
+[criticality]
+levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
+
+[change_control]
+ccb_required_after = "Approved"
+require_signoff = false
+approvers = []
+
+[validation]
+require_rationale = true
+require_verification_method = true
+require_parent_for_levels = []
+forbid_orphans = false
+forbid_circular_traces = true
+allow_tbd = false
+allow_tbr = false
+shall_keywords = ["shall"]
+forbidden_keywords = []
+
+[export]
+formats = ["json", "csv", "markdown"]
+default_output_dir = "exports"

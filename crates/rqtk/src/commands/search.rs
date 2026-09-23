@@ -133,6 +133,14 @@ fn search_req(
     matches
 }
 
+fn print_matches(path_str: &str, field_matches: &[FieldMatch]) {
+    println!("\n{}", style(path_str).bold().underlined());
+    for fm in field_matches {
+        let highlighted = highlight(&fm.value, &fm.match_ranges);
+        println!("  {:<12} {}", style(fm.label).cyan(), highlighted);
+    }
+}
+
 pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(repo_root)?;
     let fields = args.field.as_deref();
@@ -144,26 +152,75 @@ pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
         if field_matches.is_empty() {
             continue;
         }
-
         total_matches += field_matches.len();
-
-        let path = set
+        let path_str = set
             .files_by_id
             .get(id)
-            .map(|p| {
-                p.strip_prefix(&set.repo_root)
-                    .unwrap_or(p)
-                    .display()
-                    .to_string()
-            })
+            .map(|p| p.strip_prefix(&set.repo_root).unwrap_or(p).display().to_string())
             .unwrap_or_else(|| id.to_string());
+        print_matches(&path_str, &field_matches);
+    }
 
-        println!("\n{}", style(&path).bold().underlined());
-
-        for fm in &field_matches {
-            let highlighted = highlight(&fm.value, &fm.match_ranges);
-            println!("  {:<12} {}", style(fm.label).cyan(), highlighted,);
+    for (id, need_file) in &set.needs {
+        let need = &need_file.need;
+        let want = |name: &str| match fields {
+            None => true,
+            Some(fs) => fs.iter().any(|f| f.eq_ignore_ascii_case(name)),
+        };
+        let mut field_matches = Vec::new();
+        for (label, value) in [("id", id.0.as_str()), ("title", need.title.as_str()), ("statement", need.statement.text.as_str())] {
+            if want(label) {
+                let ranges = find_matches(value, &args.pattern, args.ignore_case);
+                if !ranges.is_empty() {
+                    field_matches.push(FieldMatch { label, value: value.to_owned(), match_ranges: ranges });
+                }
+            }
         }
+        if field_matches.is_empty() {
+            continue;
+        }
+        total_matches += field_matches.len();
+        let path_str = set
+            .needs_by_id
+            .get(id)
+            .map(|p| p.strip_prefix(&set.repo_root).unwrap_or(p).display().to_string())
+            .unwrap_or_else(|| id.to_string());
+        print_matches(&path_str, &field_matches);
+    }
+
+    for (id, stk_file) in &set.stakeholders {
+        let stk = &stk_file.stakeholder;
+        let want = |name: &str| match fields {
+            None => true,
+            Some(fs) => fs.iter().any(|f| f.eq_ignore_ascii_case(name)),
+        };
+        let mut field_matches = Vec::new();
+        for (label, value) in [("id", id.as_str()), ("name", stk.name.as_str())] {
+            if want(label) {
+                let ranges = find_matches(value, &args.pattern, args.ignore_case);
+                if !ranges.is_empty() {
+                    field_matches.push(FieldMatch { label, value: value.to_owned(), match_ranges: ranges });
+                }
+            }
+        }
+        if let Some(role) = &stk.role {
+            if want("role") {
+                let ranges = find_matches(role, &args.pattern, args.ignore_case);
+                if !ranges.is_empty() {
+                    field_matches.push(FieldMatch { label: "role", value: role.clone(), match_ranges: ranges });
+                }
+            }
+        }
+        if field_matches.is_empty() {
+            continue;
+        }
+        total_matches += field_matches.len();
+        let path_str = set
+            .stakeholders_by_id
+            .get(id)
+            .map(|p| p.strip_prefix(&set.repo_root).unwrap_or(p).display().to_string())
+            .unwrap_or_else(|| id.to_string());
+        print_matches(&path_str, &field_matches);
     }
 
     if total_matches == 0 {

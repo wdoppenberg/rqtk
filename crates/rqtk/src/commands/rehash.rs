@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use rqtk_core::{RequirementSet, io::write_requirement_file};
+use rqtk_core::{RequirementSet, io::{write_need_file, write_requirement_file}};
 
 use crate::output;
 
@@ -14,6 +14,16 @@ pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
             req_file.requirement.content_hash = Some(computed);
             let path = set.files_by_id[id].clone();
             write_requirement_file(&path, req_file)?;
+            updated += 1;
+        }
+    }
+
+    for (id, need_file) in &mut set.needs {
+        let computed = need_file.need.compute_content_hash();
+        if need_file.need.content_hash.as_deref() != Some(computed.as_str()) {
+            need_file.need.content_hash = Some(computed);
+            let path = set.needs_by_id[id].clone();
+            write_need_file(&path, need_file)?;
             updated += 1;
         }
     }

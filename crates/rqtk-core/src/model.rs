@@ -475,6 +475,18 @@ pub struct Acceptance {
     pub validated_at: Option<NaiveDate>,
 }
 
+impl NeedBody {
+    pub fn compute_content_hash(&self) -> String {
+        let mut h = Sha256::new();
+        h.update(self.id.0.as_bytes());
+        h.update(self.statement.text.as_bytes());
+        for stk in &self.stakeholders {
+            h.update(stk.as_bytes());
+        }
+        format!("{:x}", h.finalize())
+    }
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 fn default_separator() -> String {

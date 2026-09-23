@@ -16,10 +16,12 @@ pub use model::{
     Acceptance, Allocation, Approval, Category, ChangeControl, CriticalityPolicy, ExportConfig,
     ExternalTrace, IdentificationScheme, NeedBody, NeedFile, NeedId, NeedStatement, NeedStatus,
     Parameter, PriorityPolicy, ProjectConfig, ProjectMeta, ProjectOrganization, RepositoryLayout,
-    RequirementBody, RequirementFile, RequirementId, Risk, RqtkConfig, ScaffoldInput, Standard,
-    Statement, Status, StakeholderAuthority, StakeholderBody, StakeholderConcerns, StakeholderFile,
-    Traceability, ValidationRules, ValidationSpec, Verification, VerificationActivity,
-    VerificationPolicy,
+    RequirementBody, RequirementFile, RequirementId, Risk, RqtkConfig, ScaffoldInput,
+    StakeholderAuthority, StakeholderBody, StakeholderConcerns, StakeholderFile, Standard,
+    Statement, Status, Traceability, ValidationRules, ValidationSpec, Verification,
+    VerificationActivity, VerificationPolicy,
 };
-pub use repository::{ClosureStatus, Loaded, RequirementSet, SatisfactionStatus, TraceView, Validated};
+pub use repository::{
+    ClosureStatus, Loaded, RequirementSet, SatisfactionStatus, TraceView, Validated,
+};
 pub use validation::{LintIssue, LintSeverity};

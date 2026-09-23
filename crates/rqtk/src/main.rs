@@ -37,6 +37,29 @@ enum Command {
         #[arg(long)]
         rationale: Option<String>,
     },
+    /// Add a new stakeholder definition.
+    AddStakeholder {
+        #[arg(long)]
+        id: Option<String>,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        role: Option<String>,
+        #[arg(long)]
+        organization: Option<String>,
+    },
+    /// Add a new stakeholder need.
+    AddNeed {
+        #[arg(long)]
+        id: Option<String>,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        statement: Option<String>,
+        /// Stakeholder IDs associated with this need (comma-separated).
+        #[arg(long, value_delimiter = ',')]
+        stakeholders: Option<Vec<String>>,
+    },
     /// Lint the requirement set for errors and inconsistencies.
     Lint,
     /// Trace the lifecycle of a requirement by its ID.
@@ -134,6 +157,38 @@ fn run() -> Result<(), Box<dyn Error>> {
                     title,
                     statement,
                     rationale,
+                },
+            )?;
+        }
+        Command::AddStakeholder {
+            id,
+            name,
+            role,
+            organization,
+        } => {
+            commands::add_stakeholder::run(
+                root,
+                commands::add_stakeholder::AddStakeholderArgs {
+                    id,
+                    name,
+                    role,
+                    organization,
+                },
+            )?;
+        }
+        Command::AddNeed {
+            id,
+            title,
+            statement,
+            stakeholders,
+        } => {
+            commands::add_need::run(
+                root,
+                commands::add_need::AddNeedArgs {
+                    id,
+                    title,
+                    statement,
+                    stakeholders,
                 },
             )?;
         }

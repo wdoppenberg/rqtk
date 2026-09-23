@@ -34,26 +34,28 @@ pub fn build_verification_doc(activity_id: &str, info: &ActivityInfo) -> String 
 pub fn find_activity_from_manifest_dir(activity_id: &str) -> Result<Option<ActivityInfo>, String> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
         .map_err(|_| "CARGO_MANIFEST_DIR is not set".to_owned())?;
-    let requirements_dir = find_requirements_dir_from(PathBuf::from(manifest_dir))?.ok_or_else(
-        || "no `.rqtk/config.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned(),
-    )?;
+    let requirements_dir =
+        find_requirements_dir_from(PathBuf::from(manifest_dir))?.ok_or_else(|| {
+            "no `.rqtk/config.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned()
+        })?;
     scan_dir_for_activity(&requirements_dir, activity_id)
 }
 
 pub fn find_activity_from_current_dir(activity_id: &str) -> Result<Option<ActivityInfo>, String> {
     let start =
         std::env::current_dir().map_err(|e| format!("cannot read current directory: {e}"))?;
-    let requirements_dir = find_requirements_dir_from(start)?.ok_or_else(
-        || "no `.rqtk/config.toml` found by walking up from current working directory".to_owned(),
-    )?;
+    let requirements_dir = find_requirements_dir_from(start)?.ok_or_else(|| {
+        "no `.rqtk/config.toml` found by walking up from current working directory".to_owned()
+    })?;
     scan_dir_for_activity(&requirements_dir, activity_id)
 }
 
 pub fn build_requirements_doc_from_manifest_dir() -> Result<String, String> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
         .map_err(|_| "CARGO_MANIFEST_DIR is not set".to_owned())?;
-    let repo_root = find_repo_root_from(PathBuf::from(manifest_dir))?
-        .ok_or_else(|| "no `.rqtk/config.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned())?;
+    let repo_root = find_repo_root_from(PathBuf::from(manifest_dir))?.ok_or_else(|| {
+        "no `.rqtk/config.toml` found by walking up from CARGO_MANIFEST_DIR".to_owned()
+    })?;
     build_requirements_doc_from_repo_root(&repo_root)
 }
 

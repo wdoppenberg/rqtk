@@ -1,4 +1,4 @@
-use rqtk_core::model::{RequirementFile, RqtkConfig};
+use rqtk_core::model::{NeedFile, RequirementFile, RqtkConfig, StakeholderFile};
 use schemars::schema_for;
 use serde::Serialize;
 use std::fs;
@@ -16,6 +16,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     write_schema(
         &schema_dir.join("requirements.schema.json"),
         &schema_for!(RequirementFile),
+    )?;
+    write_schema(
+        &schema_dir.join("stakeholders.schema.json"),
+        &schema_for!(StakeholderFile),
+    )?;
+    write_schema(
+        &schema_dir.join("needs.schema.json"),
+        &schema_for!(NeedFile),
     )?;
 
     Ok(())

@@ -1,0 +1,51 @@
+[requirement]
+id = "RQTK-SYS-0001"
+title = "System Requirement Traceability and Lifecycle"
+category = "SYS"
+type = "Functional"
+
+[requirement.statement]
+text = "The rqtk system shall maintain full traceability of requirements through their lifecycle states."
+rationale = "End-to-end traceability from stakeholder needs through verification is the core value proposition of the tool."
+
+[requirement.status]
+state = "Approved"
+priority = "Critical"
+
+[requirement.traceability]
+
+[requirement.verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "All lifecycle, format, cycle-detection, lint, and export capabilities demonstrated."
+
+[[requirement.verification.activities]]
+id = "VA-SYS-001-01"
+name = "Lifecycle state round-trip"
+status = "Passed"
+expected_result = "Requirements persist and reload with correct lifecycle state"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-002-01"
+name = "Project requirement file load"
+status = "Passed"
+expected_result = "All project requirement files load without parse errors"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-003-01"
+name = "Circular traceability detection via CLI"
+status = "Passed"
+expected_result = "lint exits 2 and reports RQ017 when a cycle exists"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-004-01"
+name = "Lint rule coverage matrix"
+status = "Passed"
+expected_result = "Each lint rule fires for its corresponding violation"
+
+[[requirement.verification.activities]]
+id = "VA-SYS-005-01"
+name = "Export format coverage"
+status = "Passed"
+expected_result = "JSON export contains all requirement IDs"
