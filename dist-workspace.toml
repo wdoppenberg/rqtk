@@ -17,3 +17,5 @@ install-path = "CARGO_HOME"
 hosting = "github"
 # Whether to install an updater program
 install-updater = false
+# Publish the crates to crates.io after the binaries are uploaded
+publish-jobs = ["./publish-crates"]
