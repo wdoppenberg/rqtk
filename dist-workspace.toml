@@ -15,6 +15,10 @@ targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-da
 install-path = "CARGO_HOME"
 # Where to host releases
 hosting = "github"
+# Build only the released package (-p rqtk). A whole-workspace build also builds rqtk-py,
+# whose library is named `rqtk` too; on Windows its rqtk.dll/rqtk.pdb collide with the
+# CLI's rqtk.exe/rqtk.pdb and break the build.
+precise-builds = true
 # Whether to install an updater program
 install-updater = false
 # Publish the crates to crates.io after the binaries are uploaded
