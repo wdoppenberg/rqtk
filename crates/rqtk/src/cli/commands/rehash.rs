@@ -3,7 +3,7 @@ use std::{error::Error, path::PathBuf};
 use rqtk_core::{EntityRef, RequirementSet};
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
 struct Updated {

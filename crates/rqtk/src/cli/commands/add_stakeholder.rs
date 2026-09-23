@@ -2,7 +2,7 @@ use std::error::Error;
 
 use rqtk_core::{RequirementSet, StakeholderId};
 
-use crate::output::{Ctx, Exit};
+use crate::cli::output::{Ctx, Exit};
 
 pub struct AddStakeholderArgs {
     pub id: Option<String>,

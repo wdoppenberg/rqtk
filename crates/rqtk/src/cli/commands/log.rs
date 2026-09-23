@@ -3,7 +3,7 @@ use std::error::Error;
 use rqtk_core::{EntityRef, RequirementId, RequirementSet, RqtkError};
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
 struct Commit {

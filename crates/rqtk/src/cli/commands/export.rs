@@ -4,7 +4,7 @@ use rqtk_core::RequirementSet;
 use rqtk_export::{ExportFormat, default_export_path, export_set};
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
 struct Report<'a> {

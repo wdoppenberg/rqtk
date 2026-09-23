@@ -2,7 +2,7 @@ use std::error::Error;
 
 use rqtk_core::{NeedId, RequirementSet, StakeholderId};
 
-use crate::output::{Ctx, Exit};
+use crate::cli::output::{Ctx, Exit};
 
 pub struct AddNeedArgs {
     pub id: Option<String>,

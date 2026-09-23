@@ -1,0 +1,34 @@
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[project]
+name = "rqtk"
+description = "Requirements that live in your repository, proven by tests: the rqtk command line and the @verifies decorator."
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+requires-python = ">=3.9"
+dynamic = ["version"]
+keywords = ["requirements", "traceability", "verification", "testing"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+
+[project.urls]
+Homepage = "https://rqtk.dev"
+Documentation = "https://rqtk.dev/docs/"
+Repository = "https://github.com/wdoppenberg/rqtk"
+Changelog = "https://github.com/wdoppenberg/rqtk/blob/master/CHANGELOG.md"
+
+[project.scripts]
+rqtk = "rqtk._cli:main"
+
+[tool.maturin]
+module-name = "rqtk._rqtk"
+python-source = "python"

@@ -6,7 +6,7 @@ use std::{collections::BTreeMap, error::Error, path::Path, path::PathBuf};
 use console::style;
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage};
 
 struct Embedded {
     /// Path relative to the skills directory, e.g. `rqtk-requirements/SKILL.md`.
@@ -16,7 +16,7 @@ struct Embedded {
 
 macro_rules! embed {
     ($($path:literal),* $(,)?) => {
-        &[$(Embedded { path: $path, content: include_str!(concat!("../../skills/", $path)) }),*]
+        &[$(Embedded { path: $path, content: include_str!(concat!("../../../skills/", $path)) }),*]
     };
 }
 

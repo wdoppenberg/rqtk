@@ -4,7 +4,7 @@ use console::style;
 use rqtk_core::query::{Context, Summary};
 use rqtk_core::{ActivityState, RequirementSet};
 
-use crate::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage};
 
 pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
     let (set, mut diagnostics) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();

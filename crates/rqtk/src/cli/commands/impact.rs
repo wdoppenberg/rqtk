@@ -3,7 +3,7 @@ use std::error::Error;
 use rqtk_core::RequirementSet;
 use rqtk_core::query::{ChangeKind, ItemChange, ReverifyReason};
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 /// Informational: always exits 0 unless the comparison itself fails.
 pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {

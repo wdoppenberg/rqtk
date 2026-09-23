@@ -29,6 +29,10 @@
 //! 1.x stability promise; the `#[verifies("…")]` attribute itself is.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[cfg(feature = "cli")]
+#[doc(hidden)]
+pub mod cli;
+
 pub use rqtk_core as core;
 pub use rqtk_export as export;
 

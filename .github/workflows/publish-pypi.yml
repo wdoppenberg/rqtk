@@ -1,0 +1,94 @@
+name: PyPI
+
+# Builds the `rqtk` Python package (crates/rqtk-py): abi3 wheels for Linux (glibc and musl),
+# macOS and Windows, plus an sdist. On a version tag it publishes them to PyPI.
+#
+# Publishing uses PyPI Trusted Publishing (no stored token). PyPI doesn't support it from
+# reusable workflows, so this runs on the tag itself rather than as a cargo-dist publish job.
+# The trusted publisher on pypi.org: repository wdoppenberg/rqtk, workflow publish-pypi.yml,
+# environment pypi.
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  pull_request:
+    paths: ["crates/rqtk-py/**", "crates/rqtk/**", ".github/workflows/publish-pypi.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wheels:
+    name: wheel (${{ matrix.os }}, ${{ matrix.target }}${{ matrix.manylinux && format(', {0}', matrix.manylinux) || '' }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64, manylinux: auto }
+          - { os: ubuntu-latest, target: aarch64, manylinux: auto }
+          - { os: ubuntu-latest, target: x86_64, manylinux: musllinux_1_2 }
+          - { os: ubuntu-latest, target: aarch64, manylinux: musllinux_1_2 }
+          - { os: macos-14, target: x86_64 }
+          - { os: macos-14, target: aarch64 }
+          - { os: windows-latest, target: x64 }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux || 'auto' }}
+          args: --release --locked --out dist -m crates/rqtk-py/Cargo.toml
+      # Smoke-test one wheel as users get it: the decorator and the `rqtk` command.
+      - name: Test the wheel
+        if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64' && matrix.manylinux == 'auto'
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet dist/*.whl pytest
+          /tmp/venv/bin/python -m pytest -q crates/rqtk-py/tests
+          /tmp/venv/bin/rqtk --version
+          /tmp/venv/bin/rqtk lint
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheel-${{ matrix.os }}-${{ matrix.target }}-${{ matrix.manylinux || 'native' }}
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Python package version matches the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "rqtk-py") | .version')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::rqtk-py is $version but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist -m crates/rqtk-py/Cargo.toml
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [wheels, sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/rqtk
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true

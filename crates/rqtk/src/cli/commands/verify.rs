@@ -5,7 +5,7 @@ use rqtk_core::evidence::{self, ActivityRun, EVIDENCE_PATH};
 use rqtk_core::{Evidence, EvidenceChange, Outcome, RequirementSet, scan};
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit};
+use crate::cli::output::{self, Ctx, Exit};
 
 pub struct VerifyArgs {
     pub results: Vec<PathBuf>,

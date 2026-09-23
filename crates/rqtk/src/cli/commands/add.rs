@@ -4,7 +4,7 @@ use rqtk_core::io::create_toml_file;
 use rqtk_core::{RequirementSet, ScaffoldInput};
 use serde::Serialize;
 
-use crate::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage};
 
 pub struct AddArgs {
     pub category: String,
