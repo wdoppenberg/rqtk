@@ -16,3 +16,8 @@ rqtk-core = { path = "crates/rqtk-core", version = "0.1.0" }
 rqtk-export = { path = "crates/rqtk-export", version = "0.1.0" }
 rqtk-macros = { path = "crates/rqtk-macros", version = "0.1.0" }
 rqtk-report = { path = "crates/rqtk-report", version = "0.1.0" }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

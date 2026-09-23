@@ -1,0 +1,39 @@
+name: Site
+
+# Builds rqtk.dev on every change that can affect it; deploys from master only.
+on:
+  push:
+    branches: [master]
+    paths: ["site/**", "crates/**", "CHANGELOG.md", ".github/workflows/site.yml"]
+  pull_request:
+    paths: ["site/**", "crates/**", "CHANGELOG.md", ".github/workflows/site.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          # Pinned: the theme overrides mdBook's CSS variables, which can change between versions.
+          tool: mdbook@0.5.4
+
+      # The reference pages are generated from this build of rqtk.
+      - run: cargo build --release -p rqtk
+      - run: python3 site/build.py --rqtk target/release/rqtk
+
+      - name: Deploy to Cloudflare
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: site
+          command: deploy

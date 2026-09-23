@@ -35,3 +35,7 @@ tempfile = "3"
 trybuild = "1"
 # Path only: unversioned dev-dependencies are dropped on publish, avoiding a cycle.
 rqtk-macros = { path = "../rqtk-macros" }
+
+[package.metadata.dist]
+# `generate_schemas` is a developer tool, not something to release.
+dist = false

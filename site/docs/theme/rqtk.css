@@ -1,0 +1,105 @@
+/*
+ * Monochrome theme matching rqtk.dev: black background, white text, monospace headings.
+ * Registered as an extra theme ("rqtk") on top of mdBook's built-in ones.
+ */
+
+.rqtk {
+  --bg: #000;
+  --fg: #e6e6e6;
+
+  --sidebar-bg: #0a0a0a;
+  --sidebar-fg: #bdbdbd;
+  --sidebar-non-existant: #555;
+  --sidebar-active: #fff;
+  --sidebar-spacer: #1e1e1e;
+
+  --scrollbar: #333;
+
+  --icons: #8a8a8a;
+  --icons-hover: #fff;
+
+  --links: #fff;
+
+  --inline-code-color: #fff;
+
+  --theme-popup-bg: #0a0a0a;
+  --theme-popup-border: #333;
+  --theme-hover: #1a1a1a;
+
+  --quote-bg: #0d0d0d;
+  --quote-border: #333;
+
+  --warning-border: #8a8a8a;
+
+  --table-border-color: #262626;
+  --table-header-bg: #111;
+  --table-alternate-bg: #070707;
+
+  --searchbar-border-color: #333;
+  --searchbar-bg: #0a0a0a;
+  --searchbar-fg: #fff;
+  --searchbar-shadow-color: #000;
+  --searchresults-header-fg: #8a8a8a;
+  --searchresults-border-color: #262626;
+  --searchresults-li-bg: #0a0a0a;
+  --search-mark-bg: #444;
+
+  --color-scheme: dark;
+
+  --copy-button-filter: invert(80%);
+  --copy-button-filter-hover: invert(100%);
+
+  --footnote-highlight: #444;
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --blockquote-note-color: #8a8a8a;
+  --blockquote-tip-color: #8a8a8a;
+  --blockquote-important-color: #fff;
+  --blockquote-warning-color: #fff;
+  --blockquote-caution-color: #fff;
+  --sidebar-header-border-color: #262626;
+}
+
+:root {
+  --mono-font: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --code-font-size: 0.875em;
+}
+
+.rqtk h1,
+.rqtk h2,
+.rqtk h3,
+.rqtk h4,
+.rqtk .menu-title,
+.rqtk .chapter li a,
+.rqtk .sidebar .chapter strong {
+  font-family: var(--mono-font);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rqtk .content a {
+  text-decoration: underline;
+  text-decoration-color: #555;
+  text-underline-offset: 0.2em;
+}
+
+.rqtk .content a:hover {
+  text-decoration-color: #fff;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.rqtk pre,
+.rqtk code {
+  background: #0d0d0d;
+}
+
+.rqtk pre {
+  border: 1px solid #1e1e1e;
+}
+
+/* Syntax colours: grey scale, with a single bright tone for emphasis. */
+.rqtk .hljs { color: #e6e6e6; background: #0d0d0d; }
+.rqtk .hljs-comment, .rqtk .hljs-quote { color: #6f6f6f; font-style: italic; }
+.rqtk .hljs-keyword, .rqtk .hljs-selector-tag, .rqtk .hljs-built_in,
+.rqtk .hljs-name, .rqtk .hljs-section, .rqtk .hljs-title { color: #fff; font-weight: 600; }
+.rqtk .hljs-string, .rqtk .hljs-attr, .rqtk .hljs-attribute,
+.rqtk .hljs-literal, .rqtk .hljs-number, .rqtk .hljs-meta { color: #b3b3b3; }

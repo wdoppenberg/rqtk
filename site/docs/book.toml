@@ -1,0 +1,22 @@
+[book]
+title = "rqtk"
+description = "Requirements that live in your repository, proven by tests."
+authors = ["Wouter Doppenberg"]
+language = "en"
+src = "src"
+
+[build]
+# site/build.py assembles the full site; this puts the docs under /docs/.
+build-dir = "../dist/docs"
+
+[output.html]
+site-url = "/docs/"
+default-theme = "rqtk"
+preferred-dark-theme = "rqtk"
+additional-css = ["theme/rqtk.css"]
+git-repository-url = "https://github.com/wdoppenberg/rqtk"
+edit-url-template = "https://github.com/wdoppenberg/rqtk/edit/master/site/docs/{path}"
+no-section-label = true
+
+[output.html.search]
+enable = true

@@ -28,6 +28,12 @@ allowed on the way to 1.0.
   `/requirements-review`), installed with `rqtk skills install` or `rqtk init --agents` into
   `.agents/skills` with links for Claude Code; also available as a Claude Code plugin.
 
+### Distribution
+- Prebuilt binaries for macOS, Linux and Windows with shell and PowerShell installers
+  (`curl -LsSf https://rqtk.dev/install.sh | sh`), built by cargo-dist on each release tag.
+- Documentation at [rqtk.dev](https://rqtk.dev), with `llms.txt` and a Markdown copy of every
+  page for agents.
+
 ### File format (schema_version 1)
 - Flat files: `statement = "…"` and status fields at the top level, links in `[trace]`.
 - Unknown fields are errors; every broken file is reported in one run with its line

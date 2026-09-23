@@ -1,0 +1,14 @@
+// rqtk.dev: a static-assets-only Cloudflare Worker serving site/dist (built by site/build.py).
+{
+  "name": "rqtk-site",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    // Serve the nearest 404.html: the docs' own inside /docs/, the landing one elsewhere.
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "routes": [
+    { "pattern": "rqtk.dev", "custom_domain": true }
+  ]
+}

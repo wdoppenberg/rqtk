@@ -1,6 +1,6 @@
 # rqtk
 
-Requirements engineering that lives in your repository.
+Requirements engineering that lives in your repository. Documentation: **[rqtk.dev](https://rqtk.dev)**.
 
 Requirements are TOML files, checked in alongside code. Baselines are git tags. History is `git log`. There is no separate tool, database, or export step standing between your requirements and your version control.
 
@@ -61,8 +61,11 @@ This fits the workflow developers already use. It also makes requirements audita
 ## Install
 
 ```bash
-cargo install rqtk
+curl -LsSf https://rqtk.dev/install.sh | sh     # macOS and Linux
+cargo install rqtk --locked                     # or from source
 ```
+
+Windows: `powershell -ExecutionPolicy Bypass -c "irm https://rqtk.dev/install.ps1 | iex"`.
 
 ## Commands
 

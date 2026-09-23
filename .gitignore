@@ -1,2 +1,10 @@
 /target
 .idea/
+
+# rqtk.dev build output and pages generated from the binary by site/build.py
+/site/dist/
+/site/docs/src/reference/commands.md
+/site/docs/src/reference/configuration.md
+/site/docs/src/reference/file-formats.md
+/site/docs/src/reference/lint-rules.md
+/site/.wrangler/

@@ -2811,8 +2811,26 @@ fn documented_commands_and_flags_exist() {
             fs::read_to_string(&path).unwrap(),
         ));
     }
-    let readme = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../README.md");
-    docs.push(("README.md".into(), fs::read_to_string(readme).unwrap()));
+    let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    docs.push((
+        "README.md".into(),
+        fs::read_to_string(repo.join("README.md")).unwrap(),
+    ));
+    // The hand-written pages of rqtk.dev (the reference pages are generated from the binary).
+    let mut pending = vec![repo.join("site/docs/src")];
+    while let Some(dir) = pending.pop() {
+        for entry in fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                pending.push(path);
+            } else if path.extension().is_some_and(|e| e == "md") {
+                docs.push((
+                    path.display().to_string(),
+                    fs::read_to_string(&path).unwrap(),
+                ));
+            }
+        }
+    }
 
     // Inline code spans in prose, and command lines inside fenced blocks
     // (trailing `# comment` dropped).
@@ -2842,17 +2860,38 @@ fn documented_commands_and_flags_exist() {
             }
         }
         for (command, rest) in invocations {
-            let help = help_cache.entry(command.clone()).or_insert_with(|| {
-                let out = rqtk(Path::new("."))
-                    .args([&command, "--help"])
-                    .output()
-                    .unwrap();
-                assert!(
-                    out.status.success(),
-                    "{source}: `rqtk {command}` is not a command"
-                );
-                String::from_utf8(out.stdout).unwrap()
-            });
+            // `rqtk skills install --for …`: check flags against the subcommand's help.
+            let sub = rest
+                .split_whitespace()
+                .next()
+                .filter(|w| {
+                    !w.starts_with('-') && w.chars().all(|c| c.is_ascii_lowercase() || c == '-')
+                })
+                .unwrap_or("")
+                .to_owned();
+            let help = help_cache
+                .entry(format!("{command} {sub}"))
+                .or_insert_with(|| {
+                    if !sub.is_empty() {
+                        let out = rqtk(Path::new("."))
+                            .args([command.as_str(), sub.as_str(), "--help"])
+                            .output()
+                            .unwrap();
+                        if out.status.success() {
+                            return String::from_utf8(out.stdout).unwrap();
+                        }
+                    }
+                    let out = rqtk(Path::new("."))
+                        .args([&command, "--help"])
+                        .output()
+                        .unwrap();
+                    assert!(
+                        out.status.success(),
+                        "{source}: `rqtk {command}` is not a command"
+                    );
+                    String::from_utf8(out.stdout).unwrap()
+                })
+                .clone();
             for f in flag.find_iter(&rest) {
                 let f = f.as_str();
                 let global = ["--json", "--repo-root", "--help"].contains(&f);
@@ -2863,13 +2902,13 @@ fn documented_commands_and_flags_exist() {
                 });
                 assert!(
                     global || listed,
-                    "{source}: `rqtk {command}` has no flag {f}"
+                    "{source}: `rqtk {command} {sub}` has no flag {f}"
                 );
             }
             checked += 1;
         }
     }
-    assert!(checked > 40, "only {checked} invocations found");
+    assert!(checked > 80, "only {checked} invocations found");
 }
 
 #[verifies("VA-CLI-005-01")]
