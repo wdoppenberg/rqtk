@@ -20,6 +20,9 @@ where breaking changes were still allowed.
 - Coverage adds **Suspect** (tests passed for an earlier version of the requirement) and
   **Failed**. The hand-written `status` of a test-linked activity is ignored (lint RQ029).
 - `#[verifies]` rebuilds the annotated test when its requirement file changes.
+- Rust projects need just one crate: `rqtk` with its `macros` feature provides
+  `#[rqtk::verifies("…")]` (also as `rqtk::macros`), without pulling in the CLI's
+  dependencies.
 
 ### For coding agents
 - Global `--json` on every command; fixed exit codes (0 ok, 1 findings, 2 usage, 3 error);

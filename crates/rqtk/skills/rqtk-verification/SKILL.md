@@ -13,7 +13,7 @@ A requirement is **verified** only by recorded test results, never by editing a 
 
 1. **Pick the activity.** `rqtk context <ID> --json` lists the requirement's activities, the state of each, and the tests already linked to them.
 2. **Link a test.** Put the activity ID directly above the test function:
-   - Rust: `#[rqtk_macros::verifies("VA-…")]`. An unknown ID is a compile error.
+   - Rust: `#[rqtk::verifies("VA-…")]`, from the `rqtk` crate with its `macros` feature as a dev-dependency. An unknown ID is a compile error.
    - Python: `@rqtk.verifies("VA-…")`
    - Any other language: a comment `// rqtk: verifies VA-…` (or `#`, `--`) on the line above the test.
 

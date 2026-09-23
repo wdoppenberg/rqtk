@@ -15,7 +15,7 @@ Put the activity ID directly above the test function.
 
 | Language | Annotation | Checked when |
 |---|---|---|
-| Rust | `#[rqtk_macros::verifies("VA-…")]` | compile time |
+| Rust | `#[rqtk::verifies("VA-…")]` (the `rqtk` crate with its `macros` feature) | compile time |
 | Python | `@rqtk.verifies("VA-…")` | test collection |
 | Anything | `// rqtk: verifies VA-…` (or `#`, `--`) | `rqtk lint` |
 
