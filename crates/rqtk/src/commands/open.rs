@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use rqtk_core::{RequirementId, RequirementSet, RqtkError};
+use rqtk_core::{EntityRef, RequirementId, RequirementSet, RqtkError};
 
 use crate::output::{Ctx, Exit};
 
@@ -9,8 +9,7 @@ pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let req_id = RequirementId(id);
     let path = set
-        .files_by_id
-        .get(&req_id)
+        .path_of(&EntityRef::Requirement(req_id.clone()))
         .ok_or_else(|| RqtkError::RequirementNotFound(req_id.clone()))?;
     let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vi".to_string());
     let status = std::process::Command::new(&editor).arg(path).status()?;

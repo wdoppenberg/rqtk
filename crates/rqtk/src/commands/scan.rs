@@ -16,13 +16,13 @@ struct Report<'a> {
 /// List every `verifies` link in source, grouped by activity, then any link problems.
 pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let links = scan::scan(&set.repo_root, &set.config.scan)?;
+    let links = scan::scan(set.repo_root(), &set.config().scan)?;
     let mut by_activity: BTreeMap<&str, Vec<&SourceLink>> = BTreeMap::new();
     for link in &links {
         by_activity.entry(&link.activity).or_default().push(link);
     }
     let unlinked: Vec<&str> = set
-        .requirements
+        .requirements()
         .values()
         .flat_map(|r| &r.verification.activities)
         .map(|a| a.id.as_str())

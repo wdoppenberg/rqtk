@@ -1,7 +1,7 @@
 use std::{error::Error, path::PathBuf, process::Command};
 
 use chrono::Utc;
-use rqtk_core::{BaselineName, RequirementSet};
+use rqtk_core::{BaselineName, EntityRef, RequirementSet};
 use semver::Version;
 use serde::Serialize;
 
@@ -20,11 +20,15 @@ pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, Box<dyn Er
         .map_err(|e| Usage(format!("baseline version `{version}` is not semver: {e}")))?;
     let name: BaselineName = parsed.to_string().parse()?;
     let mut set = RequirementSet::load_from_repo_root(&ctx.root)?;
-    let by = set.git.committer_name()?;
+    let by = set.git().committer_name()?;
     let tag = format!("rqtk/{name}");
 
     let stamped = if dry_run {
-        set.files_by_id.values().cloned().collect()
+        set.requirements()
+            .keys()
+            .filter_map(|id| set.path_of(&EntityRef::Requirement(id.clone())))
+            .map(|p| p.to_path_buf())
+            .collect()
     } else {
         let stamped = set.stamp_baseline(&by, Utc::now().date_naive())?;
         if !stamped.is_empty() {
@@ -34,9 +38,9 @@ pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, Box<dyn Er
         }
         let message = format!(
             "Requirements baseline {name}\n\nProject: {}",
-            set.config.project.name
+            set.config().project.name
         );
-        set.git.create_baseline_tag(&name, &message)?;
+        set.git().create_baseline_tag(&name, &message)?;
         stamped
     };
 

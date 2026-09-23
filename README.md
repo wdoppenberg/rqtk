@@ -182,6 +182,21 @@ The skills work with any agent that reads [Agent Skills](https://agentskills.io)
 
 Claude Code users can instead install the skills as a plugin from this repository (`/plugin marketplace add wdoppenberg/rqtk`, then `/plugin install rqtk-skills@rqtk`). That route tracks the repository, not your installed binary, and covers Claude Code only. Pick one route: installing both leaves every skill twice.
 
+## Stability
+
+From 1.0, the `rqtk` command line follows semantic versioning. Within 1.x, the following change only in backwards-compatible ways:
+
+| Surface | Promise within 1.x |
+|---|---|
+| File format (`schema_version = 1`) | Files valid today stay valid. New optional fields may be added. A breaking change gets a new `schema_version`. |
+| Commands and flags | None removed or renamed. |
+| `--json` output | Fields are only added, never removed, renamed or retyped. A test enforces this against a recorded snapshot. |
+| Exit codes | 0, 1, 2 and 3 keep their meaning. |
+| Lint rule codes | A code keeps its meaning and is never reused. New rules may be added, so lint can find new problems after an upgrade. |
+| Content hash | Tagged with its version (`v1:`); a different algorithm gets a new tag. |
+
+Not covered: human-readable text output, and the Rust library crates (`rqtk-core`, `rqtk-export`, `rqtk-report`, `rqtk-macros`), which stay at 0.x and may change between minor versions.
+
 ## Data model
 
 The file format is versioned: `.rqtk/config.toml` declares `schema_version = 1`, and rqtk refuses to load any other version. JSON Schemas for every file kind live in [`schema/`](schema/) and are regenerated with `cargo run -p rqtk-core --bin generate_schemas`.
@@ -428,3 +443,14 @@ rqtk install-hook
 ```
 
 Writes a `pre-commit` hook to `.git/hooks/` that runs `rqtk rehash` (updates content hashes) and `rqtk lint` before every commit. Pass `--force` to overwrite an existing hook.
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

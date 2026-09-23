@@ -7,7 +7,7 @@ pub struct CsvExporter;
 impl Exporter for CsvExporter {
     fn export(&self, set: &RequirementSet<Validated>, out: &Path) -> Result<(), ExportError> {
         let mut csv = String::from("id,title,category,type,state,priority,verification_method\n");
-        for (id, r) in &set.requirements {
+        for (id, r) in set.requirements() {
             let row = [
                 id.0.as_str(),
                 &r.title,

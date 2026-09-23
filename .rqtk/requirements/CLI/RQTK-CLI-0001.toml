@@ -1,55 +1,21 @@
 id = "RQTK-CLI-0001"
-title = "CLI Command Interface"
+title = "JSON output"
 category = "CLI"
 type = "Functional"
 state = "Approved"
 priority = "Critical"
-statement = "The rqtk CLI shall provide a consistent command interface for all requirement management operations."
-rationale = "A single coherent CLI reduces the learning curve and enables scripting and CI integration."
-content_hash = "v1:bc36dd875d43829c32f229ffb434b785ca7f8ccf83c2f64df9d0c994475d3990"
+statement = "Every rqtk command that reports data shall print a single JSON document when given `--json` and only add fields within a major version."
+rationale = "Agents and scripts parse the output; removing or retyping a field breaks them."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
 
 [verification]
 method = "Test"
 level = "System"
-phase = "Development"
-success_criteria = "All CLI commands complete without error on valid inputs and report meaningful errors on invalid inputs."
+phase = "Release"
+success_criteria = "Every command's JSON parses and keeps every field and type of the recorded snapshot."
 
 [[verification.activities]]
 id = "VA-CLI-001-01"
-name = "add command creates file with correct ID"
-expected_result = "New requirement file created with auto-incremented ID"
-
-[[verification.activities]]
-id = "VA-CLI-002-01"
-name = "lint command exits zero on valid project"
-expected_result = "lint exits 0 with zero errors on valid fixture"
-
-[[verification.activities]]
-id = "VA-CLI-003-01"
-name = "trace upward path reaches system root"
-expected_result = "trace output includes all ancestor IDs"
-
-[[verification.activities]]
-id = "VA-CLI-004-01"
-name = "coverage exits non-zero when gaps present and strict"
-expected_result = "coverage --strict exits 1 when any Gap exists"
-
-[[verification.activities]]
-id = "VA-CLI-005-01"
-name = "graph dot output is valid digraph"
-expected_result = "graph --format dot emits a digraph block"
-
-[[verification.activities]]
-id = "VA-CLI-006-01"
-name = "export JSON creates file with all IDs"
-expected_result = "Exported JSON file contains all requirement IDs"
-
-[[verification.activities]]
-id = "VA-CLI-007-01"
-name = "baseline creates git tag"
-expected_result = "rqtk/VERSION tag exists after baseline command"
-
-[[verification.activities]]
-id = "VA-CLI-008-01"
-name = "diff detects added requirement between baselines"
-expected_result = "diff output contains the new requirement ID"
+name = "JSON contract"

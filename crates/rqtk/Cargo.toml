@@ -1,13 +1,21 @@
 [package]
 name = "rqtk"
 version = "0.1.0"
-edition = "2024"
+description = "Requirements that live in your repository: TOML requirements, git baselines, test-backed verification, and skills for coding agents."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+keywords = ["requirements", "traceability", "verification", "systems-engineering", "cli"]
+categories = ["command-line-utilities", "development-tools", "development-tools::testing"]
+readme = "../../README.md"
 
 [dependencies]
-rqtk-core = { path = "../rqtk-core" }
-rqtk-export = { path = "../rqtk-export", features = ["clap"] }
-rqtk-macros = { path = "../rqtk-macros", optional = true }
-rqtk-report = { path = "../rqtk-report" }
+rqtk-core = { workspace = true }
+rqtk-export = { workspace = true, features = ["clap"] }
+rqtk-macros = { workspace = true, optional = true }
+rqtk-report = { workspace = true }
 serde = { workspace = true }
 serde_json = "1.0.145"
 toml = { workspace = true }
@@ -34,4 +42,5 @@ assert_cmd = "2.0"
 gix = "0.83.0"
 predicates = "3.0"
 tempfile = "3.0"
+# Path only: unversioned dev-dependencies are dropped on publish, avoiding a cycle.
 rqtk-macros = { path = "../rqtk-macros" }

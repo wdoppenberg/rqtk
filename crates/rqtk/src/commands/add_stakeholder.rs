@@ -21,6 +21,6 @@ pub fn run(ctx: &Ctx, args: AddStakeholderArgs) -> Result<Exit, Box<dyn Error>> 
     stakeholder.role = args.role;
     stakeholder.organization = args.organization;
 
-    let path = set.stakeholders_root.join(format!("{id}.toml"));
+    let path = set.stakeholders_dir().join(format!("{id}.toml"));
     super::add::finish(ctx, "Stakeholder", &id.0, path, &stakeholder, args.dry_run)
 }

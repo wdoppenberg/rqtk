@@ -9,7 +9,7 @@ required_dirs = []
 
 [project]
 name = "rqtk"
-version = "0.1.0"
+version = "1.0.0"
 
 [identification]
 id_pattern = "^RQTK-(SYS|CLI|CORE)-\\d{4}$"
@@ -51,8 +51,8 @@ levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
 [validation]
 require_rationale = true
 require_verification_method = true
-require_parent_for_levels = []
-forbid_orphans = false
+require_parent_for_levels = ["CLI", "CORE"]
+forbid_orphans = true
 forbid_circular_traces = true
 allow_tbd = false
 allow_tbr = false

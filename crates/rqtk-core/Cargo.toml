@@ -1,7 +1,14 @@
 [package]
 name = "rqtk-core"
 version = "0.1.0"
-edition = "2024"
+description = "Core library of rqtk: requirement model, loading and lint rules, verification evidence, and git integration."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+keywords = ["requirements", "traceability", "verification"]
+categories = ["development-tools"]
 
 [features]
 verification-lookup = []
@@ -26,4 +33,5 @@ toml_edit = "0.25"
 gix = "0.83.0"
 tempfile = "3"
 trybuild = "1"
+# Path only: unversioned dev-dependencies are dropped on publish, avoiding a cycle.
 rqtk-macros = { path = "../rqtk-macros" }

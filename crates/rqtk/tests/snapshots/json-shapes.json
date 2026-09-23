@@ -1,0 +1,205 @@
+{
+  "add --category SW --type Functional --title T --statement The OBC shall work. --dry-run": {
+    "dry_run": "bool",
+    "id": "string",
+    "item": {
+      "allocation": "null",
+      "approval": "null",
+      "category": "string",
+      "content_hash": "string",
+      "criticality": "null",
+      "id": "string",
+      "maturity": "null",
+      "notes": "null",
+      "priority": "string",
+      "rationale": "null",
+      "risk": "null",
+      "state": "string",
+      "statement": "string",
+      "title": "string",
+      "type": "string",
+      "validation": "null",
+      "verification": {
+        "level": "string",
+        "method": "string",
+        "owner": "null",
+        "phase": "string",
+        "success_criteria": "null"
+      }
+    },
+    "path": "string"
+  },
+  "context FOBC-SW-0001": {
+    "ancestors": [
+      {
+        "id": "string",
+        "statement": "string",
+        "title": "string"
+      }
+    ],
+    "children": [
+      {
+        "id": "string",
+        "statement": "string",
+        "title": "string"
+      }
+    ],
+    "diagnostics": [],
+    "evidence": [],
+    "kind": "string",
+    "links": [],
+    "needs": [],
+    "path": "string",
+    "requirement": {
+      "allocation": "null",
+      "approval": "null",
+      "category": "string",
+      "content_hash": "null",
+      "criticality": "null",
+      "id": "string",
+      "maturity": "null",
+      "notes": "null",
+      "priority": "string",
+      "rationale": "string",
+      "risk": "null",
+      "state": "string",
+      "statement": "string",
+      "title": "string",
+      "trace": {
+        "parents": [
+          "string"
+        ]
+      },
+      "type": "string",
+      "validation": "null",
+      "verification": {
+        "activities": [
+          {
+            "expected_result": "string",
+            "id": "string",
+            "name": "string",
+            "procedure": "null",
+            "status": "string"
+          }
+        ],
+        "level": "string",
+        "method": "string",
+        "owner": "null",
+        "phase": "string",
+        "success_criteria": "string"
+      }
+    },
+    "tests": [],
+    "verification": {
+      "activities": [
+        [
+          "string"
+        ]
+      ],
+      "status": "string"
+    }
+  },
+  "coverage": {
+    "needs": [],
+    "requirements": [
+      {
+        "activities": [
+          [
+            "string"
+          ]
+        ],
+        "id": "string",
+        "status": "string"
+      }
+    ],
+    "summary": {
+      "gap": "number",
+      "verified": "number"
+    },
+    "unsatisfied_needs": "number"
+  },
+  "explain": [
+    {
+      "code": "string",
+      "fix": "string",
+      "severity": "string",
+      "summary": "string"
+    }
+  ],
+  "explain RQ001": {
+    "code": "string",
+    "fix": "string",
+    "severity": "string",
+    "summary": "string"
+  },
+  "lint": {
+    "checked": "number",
+    "diagnostics": [],
+    "errors": "number",
+    "warnings": "number"
+  },
+  "rehash --dry-run": {
+    "dry_run": "bool",
+    "updated": [
+      {
+        "hash": "string",
+        "path": "string",
+        "subject": {
+          "id": "string",
+          "kind": "string"
+        }
+      }
+    ]
+  },
+  "scan": {
+    "diagnostics": [],
+    "links": [],
+    "unlinked_activities": [
+      "string"
+    ]
+  },
+  "schema": [
+    {
+      "file": "string",
+      "kind": "string"
+    }
+  ],
+  "search telemetry -i": {
+    "hits": [
+      {
+        "matches": [
+          {
+            "field": "string",
+            "ranges": [
+              [
+                "number"
+              ]
+            ],
+            "value": "string"
+          }
+        ],
+        "path": "string",
+        "subject": {
+          "id": "string",
+          "kind": "string"
+        }
+      }
+    ]
+  },
+  "skills list": [
+    {
+      "description": "string",
+      "name": "string",
+      "user_invoked": "bool"
+    }
+  ],
+  "trace FOBC-SW-0001": {
+    "ancestors": [
+      "string"
+    ],
+    "descendants": [
+      "string"
+    ],
+    "id": "string"
+  }
+}

@@ -231,6 +231,7 @@ fn lint_prints_summary_with_zero_errors() {
         .stdout(predicate::str::contains("All requirements passed lint"));
 }
 
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_prints_all_requirement_ids_in_issues_when_present() {
     // The fixture has no errors so the output should not contain error lines,
@@ -270,7 +271,7 @@ phase = "Development"
 
 // ── trace ─────────────────────────────────────────────────────────────────────
 
-#[verifies("VA-CLI-003-01")]
+#[verifies("VA-SYS-004-01")]
 #[test]
 fn trace_upward_path_reaches_system_root() {
     // FOBC-SW-0001 → FOBC-SYS-0001
@@ -284,6 +285,7 @@ fn trace_upward_path_reaches_system_root() {
         .stdout(predicate::str::contains("FOBC-SYS-0001"));
 }
 
+#[verifies("VA-SYS-004-01")]
 #[test]
 fn trace_downward_path_from_root_includes_children() {
     // FOBC-SYS-0001 has children FOBC-SW-0001 and FOBC-HW-0001
@@ -298,6 +300,7 @@ fn trace_downward_path_from_root_includes_children() {
         .stdout(predicate::str::contains("FOBC-HW-0001"));
 }
 
+#[verifies("VA-SYS-004-01")]
 #[test]
 fn trace_deep_chain_upward_crosses_multiple_levels() {
     // FOBC-ICD-0001 → FOBC-SW-0001 → FOBC-SYS-0001
@@ -311,6 +314,7 @@ fn trace_deep_chain_upward_crosses_multiple_levels() {
         .stdout(predicate::str::contains("FOBC-SYS-0001"));
 }
 
+#[verifies("VA-SYS-004-01")]
 #[test]
 fn trace_leaf_has_empty_downward_section() {
     // FOBC-ICD-0001 has no children
@@ -329,6 +333,7 @@ fn trace_leaf_has_empty_downward_section() {
     assert!(!downward_section.contains("FOBC-SW-0001"), "{text}");
 }
 
+#[verifies("VA-SYS-004-01")]
 #[test]
 fn trace_unknown_id_exits_nonzero() {
     let repo_root = fixture_root("firesat-obc");
@@ -341,7 +346,7 @@ fn trace_unknown_id_exits_nonzero() {
 
 // ── coverage ──────────────────────────────────────────────────────────────────
 
-#[verifies("VA-CLI-004-01")]
+#[verifies("VA-SYS-004-02")]
 #[test]
 fn coverage_exits_nonzero_when_gaps_present_and_strict() {
     let repo_root = fixture_root("firesat-obc");
@@ -352,6 +357,7 @@ fn coverage_exits_nonzero_when_gaps_present_and_strict() {
         .failure();
 }
 
+#[verifies("VA-SYS-004-02")]
 #[test]
 fn coverage_lists_requirement_missing_activities() {
     // FOBC-SW-0003 has no verification activities
@@ -362,6 +368,7 @@ fn coverage_lists_requirement_missing_activities() {
         .stdout(predicate::str::contains("FOBC-SW-0003"));
 }
 
+#[verifies("VA-SYS-004-02")]
 #[test]
 fn coverage_lists_requirement_missing_success_criteria() {
     // FOBC-ICD-0001 has activities but no success_criteria
@@ -372,6 +379,7 @@ fn coverage_lists_requirement_missing_success_criteria() {
         .stdout(predicate::str::contains("FOBC-ICD-0001"));
 }
 
+#[verifies("VA-SYS-004-02")]
 #[test]
 fn coverage_does_not_flag_fully_covered_requirements() {
     let repo_root = fixture_root("firesat-obc");
@@ -401,7 +409,7 @@ fn coverage_does_not_flag_fully_covered_requirements() {
 
 // ── graph ─────────────────────────────────────────────────────────────────────
 
-#[verifies("VA-CLI-005-01")]
+#[verifies("VA-CLI-007-02")]
 #[test]
 fn graph_dot_output_is_valid_digraph() {
     let repo_root = fixture_root("firesat-obc");
@@ -412,6 +420,7 @@ fn graph_dot_output_is_valid_digraph() {
         .stdout(predicate::str::contains("digraph {"));
 }
 
+#[verifies("VA-CLI-007-02")]
 #[test]
 fn graph_dot_output_contains_all_requirement_ids() {
     let repo_root = fixture_root("firesat-obc");
@@ -436,6 +445,7 @@ fn graph_dot_output_contains_all_requirement_ids() {
     }
 }
 
+#[verifies("VA-CLI-007-02")]
 #[test]
 fn graph_unsupported_format_exits_nonzero() {
     let repo_root = fixture_root("firesat-obc");
@@ -449,8 +459,7 @@ fn graph_unsupported_format_exits_nonzero() {
 
 // ── export ────────────────────────────────────────────────────────────────────
 
-#[verifies("VA-CLI-006-01")]
-#[verifies("VA-SYS-005-01")]
+#[verifies("VA-CLI-007-01")]
 #[test]
 fn export_json_creates_file_with_all_ids() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -475,6 +484,7 @@ fn export_json_creates_file_with_all_ids() {
     }
 }
 
+#[verifies("VA-CLI-007-01")]
 #[test]
 fn export_csv_has_correct_header_and_rows() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -499,6 +509,7 @@ fn export_csv_has_correct_header_and_rows() {
     assert!(content.contains("Approved"), "CSV missing state value");
 }
 
+#[verifies("VA-CLI-007-01")]
 #[test]
 fn export_markdown_has_heading_and_sections() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -526,6 +537,7 @@ fn export_markdown_has_heading_and_sections() {
     );
 }
 
+#[verifies("VA-CLI-007-01")]
 #[test]
 fn export_unsupported_format_exits_nonzero() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -539,6 +551,7 @@ fn export_unsupported_format_exits_nonzero() {
 
 // ── diff ──────────────────────────────────────────────────────────────────────
 
+#[verifies("VA-SYS-001-04")]
 #[test]
 fn diff_fails_when_baseline_tag_does_not_exist() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -550,7 +563,7 @@ fn diff_fails_when_baseline_tag_does_not_exist() {
         .failure();
 }
 
-#[verifies("VA-CLI-008-01")]
+#[verifies("VA-SYS-001-04")]
 #[test]
 fn diff_detects_added_requirement_between_baselines() {
     let (dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -608,7 +621,7 @@ phase = "Development"
 
 // ── new ───────────────────────────────────────────────────────────────────────
 
-#[verifies("VA-CLI-001-01")]
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn new_creates_requirement_file_with_correct_id() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -633,6 +646,7 @@ fn new_creates_requirement_file_with_correct_id() {
     );
 }
 
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn new_created_file_passes_lint() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -656,7 +670,7 @@ fn new_created_file_passes_lint() {
 
 // ── baseline ──────────────────────────────────────────────────────────────────
 
-#[verifies("VA-CLI-007-01")]
+#[verifies("VA-SYS-001-03")]
 #[test]
 fn baseline_creates_git_tag() {
     let (dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -680,6 +694,7 @@ fn baseline_creates_git_tag() {
     drop(dir);
 }
 
+#[verifies("VA-SYS-001-03")]
 #[test]
 fn baseline_rejects_invalid_semver() {
     let (_dir, repo_root) = copy_fixture_to_temp("firesat-obc");
@@ -692,7 +707,7 @@ fn baseline_rejects_invalid_semver() {
 
 // ── VA-SYS-003-01: cycle detection via CLI ────────────────────────────────────
 
-#[verifies("VA-SYS-003-01")]
+#[verifies("VA-CORE-002-01")]
 #[test]
 fn lint_cycle_exits_1_and_reports_rq017() {
     // A→B→A circular parent chain
@@ -750,6 +765,7 @@ phase = "Development"
 // ── VA-SYS-003-02: broken reference via CLI ───────────────────────────────────
 
 // #[verifies("VA-SYS-003-02")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_broken_parent_exits_1_and_reports_rq015() {
     let req_toml = r#"id = "TEST-SYS-0001"
@@ -795,7 +811,7 @@ fn lint_stdout_with_files(config: &str, files: &[(&str, &str)]) -> String {
     String::from_utf8(output.stdout).unwrap()
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq001_id_mismatch() {
     // id doesn't match id_pattern
@@ -820,7 +836,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq002_unknown_category() {
     let req = r#"id = "TEST-SYS-0001"
@@ -844,7 +860,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq003_unknown_type() {
     let req = r#"id = "TEST-SYS-0001"
@@ -868,7 +884,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq004_invalid_state() {
     let req = r#"id = "TEST-SYS-0001"
@@ -892,7 +908,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq005_invalid_priority() {
     let req = r#"id = "TEST-SYS-0001"
@@ -916,7 +932,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq006_invalid_criticality() {
     let req = r#"id = "TEST-SYS-0001"
@@ -941,7 +957,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq007_missing_rationale() {
     let req = r#"id = "TEST-SYS-0001"
@@ -964,7 +980,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq008_empty_verification_method() {
     let req = r#"id = "TEST-SYS-0001"
@@ -988,7 +1004,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq009_unknown_verification_method() {
     let req = r#"id = "TEST-SYS-0001"
@@ -1012,7 +1028,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq010_no_shall_keyword() {
     let req = r#"id = "TEST-SYS-0001"
@@ -1036,7 +1052,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq011_forbidden_keyword_in_mandatory() {
     // Need custom config with "Mandatory" in priority levels and "should" in forbidden_keywords
@@ -1112,7 +1128,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq012_missing_parent_for_required_level() {
     // SUB category with require_parent_for_levels = ["SUB"]
@@ -1189,7 +1205,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq013_tbd_not_allowed() {
     let req = r#"id = "TEST-SYS-0001"
@@ -1214,7 +1230,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq014_tbr_not_allowed() {
     let req = r#"id = "TEST-SYS-0001"
@@ -1239,7 +1255,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq015_unknown_parent_reference() {
     let req = r#"id = "TEST-SYS-0001"
@@ -1266,7 +1282,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq016_unknown_dependency_reference() {
     let req = r#"id = "TEST-SYS-0001"
@@ -1293,7 +1309,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq017_circular_parent_chain() {
     let req_a = r#"id = "TEST-SYS-0001"
@@ -1343,7 +1359,7 @@ phase = "Development"
     );
 }
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq018_orphan_with_no_path_to_root() {
     // SUB requirement with no parents and forbid_orphans=true
@@ -1420,6 +1436,7 @@ phase = "Development"
     );
 }
 
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn init_scaffolds_root_config_and_custom_requirements_dir() {
     let dir = tempfile::tempdir().unwrap();
@@ -1439,6 +1456,7 @@ fn init_scaffolds_root_config_and_custom_requirements_dir() {
     assert!(repo_root.join("reqs").join("SYS").is_dir());
 }
 
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_reports_missing_required_repository_paths() {
     let config = r#"schema_version = 1
@@ -1586,7 +1604,7 @@ fn write_fixture_full(
 
 // ── RQ023: need references unknown stakeholder ───────────────────────────────
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq023_need_references_unknown_stakeholder() {
     let need_toml = r#"id = "NEED-0001"
@@ -1611,7 +1629,7 @@ statement = "The system shall satisfy this need."
 
 // ── RQ023: validation.stakeholder unknown ─────────────────────────────────────
 
-#[verifies("VA-SYS-004-01")]
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq023_validation_stakeholder_unknown() {
     let req_toml = r#"id = "TEST-SYS-0001"
@@ -1647,6 +1665,7 @@ stakeholder = "UNKNOWN-STK"
 
 // ── add-stakeholder command ───────────────────────────────────────────────────
 
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn add_stakeholder_creates_file() {
     let (_dir, repo_root) = write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[]);
@@ -1673,6 +1692,7 @@ fn add_stakeholder_creates_file() {
 
 // ── add-need command ──────────────────────────────────────────────────────────
 
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn add_need_creates_file() {
     let (_dir, repo_root) = write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[]);
@@ -1727,6 +1747,7 @@ fn lint_output(files: &[(&str, &str)]) -> (i32, String) {
     )
 }
 
+#[verifies("VA-CORE-001-02")]
 #[test]
 fn lint_reports_unknown_field_with_line_number() {
     let req = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
@@ -1737,6 +1758,7 @@ fn lint_reports_unknown_field_with_line_number() {
     assert!(out.contains("TEST-SYS-0001.toml:8"), "{out}");
 }
 
+#[verifies("VA-CORE-001-01")]
 #[test]
 fn lint_reports_every_broken_file_in_one_run() {
     let broken_syntax = format!("{}garbage =\n", valid_req("TEST-SYS-0001"));
@@ -1751,6 +1773,7 @@ fn lint_reports_every_broken_file_in_one_run() {
     assert_eq!(out.matches("RQ100").count(), 2, "{out}");
 }
 
+#[verifies("VA-CORE-001-01")]
 #[test]
 fn lint_does_not_cascade_from_a_broken_parent_file() {
     let parent = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
@@ -1766,6 +1789,7 @@ fn lint_does_not_cascade_from_a_broken_parent_file() {
     assert!(!out.contains("RQ015"), "{out}");
 }
 
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq101_duplicate_id_across_files() {
     let (_, out) = lint_output(&[
@@ -1775,6 +1799,7 @@ fn lint_rule_rq101_duplicate_id_across_files() {
     assert!(out.contains("RQ101"), "{out}");
 }
 
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq102_file_name_must_match_id() {
     let (_, out) = lint_output(&[("SYS/renamed.toml", &valid_req("TEST-SYS-0001"))]);
@@ -1792,6 +1817,7 @@ fn lint_rules_rq024_rq025_invalid_verification_level_and_phase() {
     assert!(out.contains("RQ025"), "{out}");
 }
 
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq026_unknown_refines_reference() {
     let req = format!(
@@ -1802,6 +1828,7 @@ fn lint_rule_rq026_unknown_refines_reference() {
     assert!(out.contains("RQ026"), "{out}");
 }
 
+#[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_rule_rq027_duplicate_activity_id() {
     let activity = "\n[[verification.activities]]\nid = \"VA-1\"\nname = \"Shared\"\n";
@@ -1814,6 +1841,7 @@ fn lint_rule_rq027_duplicate_activity_id() {
     assert!(out.contains("RQ027"), "{out}");
 }
 
+#[verifies("VA-CORE-002-01")]
 #[test]
 fn lint_mutual_conflicts_with_is_not_a_cycle() {
     let a = format!(
@@ -1849,6 +1877,7 @@ fn lint_rq017_names_every_requirement_in_the_cycle() {
     assert!(out.contains("TEST-SYS-0001 ↔ TEST-SYS-0002"), "{out}");
 }
 
+#[verifies("VA-CORE-005-01")]
 #[test]
 fn lint_forbidden_keyword_matches_whole_words_only() {
     let config = BASE_CONFIG.replace(
@@ -1868,6 +1897,7 @@ fn lint_forbidden_keyword_matches_whole_words_only() {
     assert!(out.contains("TEST-SYS-0002"), "{out}");
 }
 
+#[verifies("VA-CORE-001-02")]
 #[test]
 fn native_toml_dates_are_accepted() {
     let req = format!(
@@ -1878,6 +1908,7 @@ fn native_toml_dates_are_accepted() {
     assert_eq!(code, 0, "{out}");
 }
 
+#[verifies("VA-CORE-001-02")]
 #[test]
 fn old_config_without_schema_version_is_rejected_clearly() {
     let config = BASE_CONFIG.replace("schema_version = 1\n", "");
@@ -1889,6 +1920,7 @@ fn old_config_without_schema_version_is_rejected_clearly() {
         .stderr(predicate::str::contains("supports schema_version 1"));
 }
 
+#[verifies("VA-CORE-004-01")]
 #[test]
 fn rehash_preserves_comments_and_layout() {
     let req = format!(
@@ -1915,6 +1947,7 @@ fn rehash_preserves_comments_and_layout() {
     assert_eq!(fs::read_to_string(&path).unwrap(), written);
 }
 
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn add_requires_flags_and_rejects_unknown_category() {
     let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
@@ -1927,6 +1960,7 @@ fn add_requires_flags_and_rejects_unknown_category() {
         .stderr(predicate::str::contains("expected one of: SUB, SYS"));
 }
 
+#[verifies("VA-CLI-007-02")]
 #[test]
 fn report_prints_markdown_to_stdout() {
     let repo_root = fixture_root("firesat-obc");
@@ -1941,6 +1975,7 @@ fn report_prints_markdown_to_stdout() {
         .stdout(predicate::str::contains("#### `FOBC-SYS-0001`"));
 }
 
+#[verifies("VA-CLI-007-02")]
 #[test]
 fn graph_rejects_graphml() {
     let repo_root = fixture_root("firesat-obc");
@@ -2007,6 +2042,7 @@ fn write_junit(repo_root: &Path, cases: &[(&str, bool)]) -> PathBuf {
     path
 }
 
+#[verifies("VA-CORE-006-01")]
 #[test]
 fn scan_lists_links_with_test_names() {
     let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
@@ -2019,6 +2055,7 @@ fn scan_lists_links_with_test_names() {
         .stdout(predicate::str::contains("boots"));
 }
 
+#[verifies("VA-SYS-002-01")]
 #[test]
 fn verify_then_edit_makes_requirement_suspect_until_reverified() {
     let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
@@ -2086,6 +2123,7 @@ fn verify_then_edit_makes_requirement_suspect_until_reverified() {
         .success();
 }
 
+#[verifies("VA-SYS-002-02")]
 #[test]
 fn verify_records_failures_and_exits_nonzero() {
     let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
@@ -2104,6 +2142,7 @@ fn verify_records_failures_and_exits_nonzero() {
         .stdout(predicate::str::contains("VA-1 failed"));
 }
 
+#[verifies("VA-SYS-002-03")]
 #[test]
 fn verify_partial_run_keeps_other_evidence() {
     let (_dir, repo_root) =
@@ -2132,6 +2171,7 @@ fn verify_partial_run_keeps_other_evidence() {
         .stdout(predicate::str::contains("Verified 1"));
 }
 
+#[verifies("VA-SYS-002-03")]
 #[test]
 fn verify_leaves_evidence_alone_when_a_linked_test_was_skipped() {
     let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots"), ("VA-1", "halts")]);
@@ -2146,6 +2186,7 @@ fn verify_leaves_evidence_alone_when_a_linked_test_was_skipped() {
     assert!(!repo_root.join(".rqtk/evidence.toml").exists());
 }
 
+#[verifies("VA-CORE-006-01")]
 #[test]
 fn lint_cross_checks_source_links() {
     let req = req_with_activities("TEST-SYS-0001", &["VA-1"]).replace(
@@ -2167,6 +2208,7 @@ fn lint_cross_checks_source_links() {
     assert!(out.contains("RQ030"), "{out}");
 }
 
+#[verifies("VA-CORE-006-01")]
 #[test]
 fn scan_honours_exclude_patterns() {
     let config = format!("{BASE_CONFIG}\n[scan]\nexclude = [\"tests/**\"]\n");
@@ -2190,6 +2232,7 @@ fn json_stdout(repo_root: &Path, args: &[&str]) -> (i32, serde_json::Value) {
     (output.status.code().unwrap(), value)
 }
 
+#[verifies("VA-CLI-002-01")]
 #[test]
 fn exit_codes_distinguish_findings_usage_and_errors() {
     let bad = valid_req("TEST-SYS-0001").replace("rationale = \"Because.\"\n", "");
@@ -2211,6 +2254,7 @@ fn exit_codes_distinguish_findings_usage_and_errors() {
     rqtk(empty.path()).arg("lint").assert().code(3);
 }
 
+#[verifies("VA-CLI-001-01")]
 #[test]
 fn json_errors_go_to_stderr() {
     let empty = tempfile::tempdir().unwrap();
@@ -2231,6 +2275,7 @@ fn json_errors_go_to_stderr() {
     );
 }
 
+#[verifies("VA-CLI-001-01")]
 #[test]
 fn lint_json_reports_located_diagnostics() {
     let bad = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
@@ -2248,6 +2293,7 @@ fn lint_json_reports_located_diagnostics() {
     assert_eq!(diag["location"]["line"], 8);
 }
 
+#[verifies("VA-CLI-001-01")]
 #[test]
 fn coverage_and_search_json() {
     let repo_root = fixture_root("firesat-obc");
@@ -2264,6 +2310,7 @@ fn coverage_and_search_json() {
     assert!(hit["matches"][0]["ranges"].is_array());
 }
 
+#[verifies("VA-CLI-003-01")]
 #[test]
 fn dry_runs_write_nothing() {
     let (_dir, repo_root) = write_fixture(
@@ -2317,6 +2364,7 @@ fn dry_runs_write_nothing() {
     assert!(!fresh.path().join(".rqtk").exists());
 }
 
+#[verifies("VA-CLI-003-01")]
 #[test]
 fn verify_dry_run_does_not_write_evidence() {
     let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
@@ -2336,6 +2384,7 @@ fn verify_dry_run_does_not_write_evidence() {
     assert!(!repo_root.join(".rqtk/evidence.toml").exists());
 }
 
+#[verifies("VA-CLI-006-01")]
 #[test]
 fn schema_prints_json_schema_per_kind() {
     let repo_root = fixture_root("firesat-obc");
@@ -2351,6 +2400,7 @@ fn schema_prints_json_schema_per_kind() {
         .stdout(predicate::str::contains("evidence"));
 }
 
+#[verifies("VA-CLI-006-01")]
 #[test]
 fn explain_describes_rules_and_fixes() {
     let repo_root = fixture_root("firesat-obc");
@@ -2367,6 +2417,7 @@ fn explain_describes_rules_and_fixes() {
     rqtk(&repo_root).args(["explain", "RQ999"]).assert().code(2);
 }
 
+#[verifies("VA-SYS-003-01")]
 #[test]
 fn context_briefs_a_requirement_need_and_stakeholder() {
     let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
@@ -2411,6 +2462,7 @@ fn context_briefs_a_requirement_need_and_stakeholder() {
         .code(2);
 }
 
+#[verifies("VA-SYS-003-02")]
 #[test]
 fn impact_reports_changes_downstream_and_reverification() {
     let parent = req_with_activities("TEST-SYS-0001", &["VA-1"]);
@@ -2497,6 +2549,7 @@ fn skills_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("skills")
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_list_names_model_and_user_invoked_skills() {
     let repo_root = fixture_root("firesat-obc");
@@ -2526,6 +2579,7 @@ fn actions(report: &serde_json::Value) -> Vec<(String, String)> {
         .collect()
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_defaults_to_shared_dir_with_claude_links() {
     let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
@@ -2558,6 +2612,7 @@ fn skills_install_defaults_to_shared_dir_with_claude_links() {
     );
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_for_one_agent_family_or_as_copies() {
     let (_dir, claude_only) = write_fixture(BASE_CONFIG, &[]);
@@ -2601,6 +2656,7 @@ fn skills_install_for_one_agent_family_or_as_copies() {
     );
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_keeps_local_edits_and_earlier_copies() {
     let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
@@ -2638,6 +2694,7 @@ fn skills_install_keeps_local_edits_and_earlier_copies() {
     assert_ne!(fs::read_to_string(&shared).unwrap(), "my own version\n");
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_updates_existing_instruction_files_only() {
     // Neither file: nothing created.
@@ -2694,6 +2751,7 @@ fn skills_install_updates_existing_instruction_files_only() {
     );
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_into_a_custom_dir() {
     let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
@@ -2707,6 +2765,7 @@ fn skills_install_into_a_custom_dir() {
     assert!(!repo_root.join(".agents").exists() && !repo_root.join(".claude").exists());
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_dry_run_and_init_agents() {
     let fresh = tempfile::tempdir().unwrap();
@@ -2741,6 +2800,7 @@ fn skills_install_dry_run_and_init_agents() {
 
 /// Every `rqtk <command> --flag` a skill, the README or the instructions block tells an agent
 /// to run must exist in the CLI, so the docs cannot drift from the binary.
+#[verifies("VA-CLI-006-02")]
 #[test]
 fn documented_commands_and_flags_exist() {
     let mut docs: Vec<(String, String)> = Vec::new();
@@ -2812,6 +2872,7 @@ fn documented_commands_and_flags_exist() {
     assert!(checked > 40, "only {checked} invocations found");
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn plugin_manifest_lists_every_bundled_skill() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -2843,6 +2904,7 @@ fn plugin_manifest_lists_every_bundled_skill() {
     .unwrap();
 }
 
+#[verifies("VA-CLI-005-01")]
 #[test]
 fn skills_install_upgrades_untouched_files_but_keeps_edits() {
     use sha2::{Digest, Sha256};
@@ -2883,5 +2945,115 @@ fn skills_install_upgrades_untouched_files_but_keeps_edits() {
     assert_eq!(
         fs::read_to_string(dir.join("to-requirements/SKILL.md")).unwrap(),
         "my own version\n"
+    );
+}
+
+// ── 1.0: JSON output contract ────────────────────────────────────────────────
+
+/// The type structure of a JSON value: objects keep their keys, arrays are represented by
+/// their first element, scalars by their type name.
+fn shape(value: &serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match value {
+        Value::Object(map) => {
+            Value::Object(map.iter().map(|(k, v)| (k.clone(), shape(v))).collect())
+        }
+        Value::Array(items) => Value::Array(items.first().map(shape).into_iter().collect()),
+        Value::String(_) => "string".into(),
+        Value::Number(_) => "number".into(),
+        Value::Bool(_) => "bool".into(),
+        Value::Null => "null".into(),
+    }
+}
+
+/// Every key and type in `old` is still present in `new`. `new` may add keys, and a value
+/// that was `null` (an unset optional field) may since have become any type.
+fn missing_from(
+    old: &serde_json::Value,
+    new: &serde_json::Value,
+    path: &str,
+    out: &mut Vec<String>,
+) {
+    use serde_json::Value;
+    match (old, new) {
+        (Value::Object(o), Value::Object(n)) => {
+            for (k, v) in o {
+                match n.get(k) {
+                    Some(nv) => missing_from(v, nv, &format!("{path}.{k}"), out),
+                    None => out.push(format!("{path}.{k} was removed")),
+                }
+            }
+        }
+        (Value::Array(o), Value::Array(n)) => {
+            if let (Some(o), Some(n)) = (o.first(), n.first()) {
+                missing_from(o, n, &format!("{path}[]"), out);
+            }
+        }
+        (Value::String(o), _) if o == "null" => {}
+        (o, n) if o == n => {}
+        (o, n) => out.push(format!("{path} changed from {o} to {n}")),
+    }
+}
+
+/// Commands whose `--json` output is covered by the 1.x compatibility promise, run on the
+/// FireSat fixture.
+const JSON_CONTRACT: &[&[&str]] = &[
+    &["lint"],
+    &["coverage"],
+    &["scan"],
+    &["search", "telemetry", "-i"],
+    &["trace", "FOBC-SW-0001"],
+    &["context", "FOBC-SW-0001"],
+    &["rehash", "--dry-run"],
+    &[
+        "add",
+        "--category",
+        "SW",
+        "--type",
+        "Functional",
+        "--title",
+        "T",
+        "--statement",
+        "The OBC shall work.",
+        "--dry-run",
+    ],
+    &["explain", "RQ001"],
+    &["explain"],
+    &["schema"],
+    &["skills", "list"],
+];
+
+#[verifies("VA-CLI-001-01")]
+#[test]
+fn json_output_only_grows() {
+    let repo_root = fixture_root("firesat-obc");
+    let current: serde_json::Map<String, serde_json::Value> = JSON_CONTRACT
+        .iter()
+        .map(|args| {
+            let (_, value) = json_stdout(&repo_root, args);
+            (args.join(" "), shape(&value))
+        })
+        .collect();
+    let current = serde_json::Value::Object(current);
+    let snapshot_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/snapshots/json-shapes.json");
+    if std::env::var_os("RQTK_UPDATE_SNAPSHOTS").is_some() {
+        fs::write(
+            &snapshot_path,
+            serde_json::to_string_pretty(&current).unwrap() + "\n",
+        )
+        .unwrap();
+        return;
+    }
+    let snapshot: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(&snapshot_path).expect("run with RQTK_UPDATE_SNAPSHOTS=1 to create"),
+    )
+    .unwrap();
+    let mut broken = Vec::new();
+    missing_from(&snapshot, &current, "", &mut broken);
+    assert!(
+        broken.is_empty(),
+        "JSON output lost fields or changed types (a breaking change in 1.x):\n{}",
+        broken.join("\n")
     );
 }

@@ -20,9 +20,9 @@ impl Exporter for JsonExporter {
     fn export(&self, set: &RequirementSet<Validated>, out: &Path) -> Result<(), ExportError> {
         let payload = serde_json::to_string_pretty(&ExportPayload {
             schema_version: rqtk_core::SCHEMA_VERSION,
-            requirements: &set.requirements,
-            stakeholders: &set.stakeholders,
-            needs: &set.needs,
+            requirements: set.requirements(),
+            stakeholders: set.stakeholders(),
+            needs: set.needs(),
         })?;
         std::fs::write(out, payload)?;
         Ok(())

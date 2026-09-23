@@ -1,30 +1,25 @@
 id = "RQTK-CORE-0001"
-title = "Core Library Algorithm Correctness"
+title = "Complete, located diagnostics"
 category = "CORE"
 type = "Functional"
 state = "Approved"
 priority = "Critical"
-statement = "The rqtk-core library shall implement all requirement processing algorithms correctly."
-rationale = "The core library is shared across all frontends; algorithm correctness is essential for reliable operation."
-content_hash = "v1:a4a734607e43dbb4f37dd6c9672c6e7da3599f69216d64ad13c503db062d2464"
+statement = "rqtk-core shall report every invalid file in a single load, each with its path and line."
+rationale = "Stopping at the first error forces one fix per run; locations let agents fix findings without searching."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
 
 [verification]
 method = "Test"
 level = "Unit"
-phase = "Development"
-success_criteria = "All unit tests for cycle detection, ID generation, and policy enforcement pass."
+phase = "Release"
+success_criteria = "A run with several broken files reports each of them with its line."
 
 [[verification.activities]]
-id = "VA-CORE-002-01"
-name = "Cycle detection unit test"
-expected_result = "RQ017 produced for A→B→A circular parent chain"
+id = "VA-CORE-001-01"
+name = "Every broken file in one run"
 
 [[verification.activities]]
-id = "VA-CORE-003-01"
-name = "ID generation unit test"
-expected_result = "next_requirement_id increments correctly from existing IDs"
-
-[[verification.activities]]
-id = "VA-CORE-004-01"
-name = "Config-driven policy unit test"
-expected_result = "Unknown category triggers RQ002; known category suppresses it"
+id = "VA-CORE-001-02"
+name = "Strict, versioned schema"

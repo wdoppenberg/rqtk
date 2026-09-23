@@ -1,0 +1,3 @@
+id = "STK-002"
+name = "Coding agent"
+role = "Implements, verifies and reviews changes on an engineer's behalf."

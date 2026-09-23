@@ -8,8 +8,8 @@ use crate::output::{self, Ctx, Exit};
 /// Informational: always exits 0 unless the comparison itself fails.
 pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let links = rqtk_core::scan::scan(&set.repo_root, &set.config.scan)?;
-    let changed_files = set.git.changed_files_since(base)?;
+    let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
+    let changed_files = set.git().changed_files_since(base)?;
     let impact = set.impact(base, &links, &changed_files)?;
 
     if ctx.json() {

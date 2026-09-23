@@ -1,6 +1,7 @@
 ---
 name: rqtk-verification
 description: Prove requirements with tests. Link tests to verification activities with `verifies`, record test results with `rqtk verify`, and close out with `rqtk coverage --strict`. Use when implementing or changing behaviour a requirement governs, when a requirement is Suspect, Failed or Planned, or when the user mentions verification, evidence, coverage or an activity ID such as VA-SYS-001-01.
+license: MIT OR Apache-2.0
 compatibility: Requires the rqtk CLI and a repository set up with rqtk init.
 ---
 

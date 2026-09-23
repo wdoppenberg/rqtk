@@ -1,0 +1,5 @@
+id = "NEED-0001"
+title = "Requirements live with the code"
+state = "Approved"
+stakeholders = ["STK-001"]
+statement = "Engineers need requirements versioned, reviewed and baselined together with the code, without a separate tool."

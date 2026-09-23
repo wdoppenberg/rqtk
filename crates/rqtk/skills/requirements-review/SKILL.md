@@ -2,6 +2,7 @@
 name: requirements-review
 description: "Review the changes since a fixed point against the requirements they touch: what changed, what needs re-verifying, and whether the code does what each statement demands. Run only when the user asks for it by name."
 disable-model-invocation: true
+license: MIT OR Apache-2.0
 compatibility: Requires the rqtk CLI and a repository set up with rqtk init.
 ---
 

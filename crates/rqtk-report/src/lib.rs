@@ -30,7 +30,7 @@ pub fn render_report(
 }
 
 fn write_header(out: &mut String, set: &RequirementSet<Validated>, date: NaiveDate) {
-    let meta = &set.config.project;
+    let meta = &set.config().project;
     let _ = writeln!(out, "# {} — Requirements Specification\n", meta.name);
     if let Some(desc) = &meta.description {
         let _ = writeln!(out, "{}\n", inline(desc));
@@ -66,18 +66,18 @@ fn write_summary(
     let _ = writeln!(
         out,
         "{} requirements, {} stakeholder needs, {} stakeholders.\n",
-        set.requirements.len(),
-        set.needs.len(),
-        set.stakeholders.len()
+        set.requirements().len(),
+        set.needs().len(),
+        set.stakeholders().len()
     );
 
     // Lifecycle states in configured order, then any unconfigured ones.
     let mut by_state: BTreeMap<&str, usize> = BTreeMap::new();
-    for req in set.requirements.values() {
+    for req in set.requirements().values() {
         *by_state.entry(req.state.as_str()).or_default() += 1;
     }
     out.push_str("### Lifecycle state\n\n| State | Count |\n|---|---:|\n");
-    for state in &set.config.lifecycle.states {
+    for state in &set.config().lifecycle.states {
         if let Some(n) = by_state.remove(state.as_str()) {
             let _ = writeln!(out, "| {} | {n} |", cell(state));
         }
@@ -101,7 +101,7 @@ fn write_summary(
     }
     out.push('\n');
 
-    if !set.needs.is_empty() {
+    if !set.needs().is_empty() {
         let satisfied = set
             .satisfaction_closure()
             .values()
@@ -110,14 +110,14 @@ fn write_summary(
         let _ = writeln!(
             out,
             "### Stakeholder needs\n\n{satisfied} of {} needs are satisfied by at least one requirement.\n",
-            set.needs.len()
+            set.needs().len()
         );
     }
 
     out.push_str("### By category\n\n| Category | Name | Total | Verified | Gap |\n|---|---|---:|---:|---:|\n");
     for (key, cat) in sorted_categories(set) {
         let ids: Vec<&RequirementId> = set
-            .requirements
+            .requirements()
             .iter()
             .filter(|(_, r)| &r.category == key)
             .map(|(id, _)| id)
@@ -151,7 +151,7 @@ fn write_categories(
             let _ = writeln!(out, "_{}_\n", inline(desc));
         }
         let reqs: Vec<&Requirement> = set
-            .requirements
+            .requirements()
             .values()
             .filter(|r| &r.category == key)
             .collect();
@@ -256,17 +256,17 @@ fn write_requirement(
 }
 
 fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
-    if set.needs.is_empty() {
+    if set.needs().is_empty() {
         return;
     }
     let mut satisfied_by: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
-    for (id, req) in &set.requirements {
+    for (id, req) in set.requirements() {
         for need in &req.trace.satisfies {
             satisfied_by.entry(&need.0).or_default().push(&id.0);
         }
     }
     out.push_str("## Stakeholder needs\n\n| Need | Title | State | Stakeholders | Satisfied by |\n|---|---|---|---|---|\n");
-    for (id, need) in &set.needs {
+    for (id, need) in set.needs() {
         let stakeholders: Vec<&str> = need.stakeholders.iter().map(|s| s.0.as_str()).collect();
         let by = satisfied_by.get(id.0.as_str()).map(|v| v.join(", "));
         let _ = writeln!(
@@ -283,7 +283,7 @@ fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
 
 fn write_trace_matrix(out: &mut String, set: &RequirementSet<Validated>) {
     out.push_str("## Traceability matrix\n\n| ID | Title | Category | Parents | Satisfies |\n|---|---|---|---|---|\n");
-    for (id, req) in &set.requirements {
+    for (id, req) in set.requirements() {
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} |",
@@ -302,7 +302,7 @@ fn write_verification_summary(
     closure: &BTreeMap<RequirementId, ClosureStatus>,
 ) {
     out.push_str("## Verification summary\n\n| ID | Title | Method | Level | Activities | Status |\n|---|---|---|---|---:|---|\n");
-    for (id, req) in &set.requirements {
+    for (id, req) in set.requirements() {
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} | {} |",
@@ -316,7 +316,7 @@ fn write_verification_summary(
 }
 
 fn sorted_categories(set: &RequirementSet<Validated>) -> Vec<(&String, &rqtk_core::Category)> {
-    let mut cats: Vec<_> = set.config.categories.iter().collect();
+    let mut cats: Vec<_> = set.config().categories.iter().collect();
     cats.sort_by_key(|(key, c)| (c.level, key.as_str()));
     cats
 }

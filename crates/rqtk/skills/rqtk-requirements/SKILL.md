@@ -1,6 +1,7 @@
 ---
 name: rqtk-requirements
 description: Read and write the requirements, needs and stakeholders tracked in `.rqtk/` with the rqtk CLI. Use when a task changes behaviour a requirement governs, when the user mentions a requirement, need, stakeholder, a "shall" statement or an ID such as SYS-0001, or when editing files under `.rqtk/`.
+license: MIT OR Apache-2.0
 compatibility: Requires the rqtk CLI and a repository set up with rqtk init.
 ---
 

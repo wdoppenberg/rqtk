@@ -445,6 +445,7 @@ mod tests {
         }
     }
 
+    // rqtk: verifies VA-CORE-006-02
     #[test]
     fn parses_outcomes() {
         let results = parse_junit(JUNIT).unwrap();
@@ -463,6 +464,7 @@ mod tests {
         );
     }
 
+    // rqtk: verifies VA-CORE-006-02
     #[test]
     fn parses_concatenated_documents() {
         let one = r#"<?xml version="1.0" encoding="UTF-8"?><testsuites><testsuite name="a"><testcase classname="x" name="t1"/></testsuite></testsuites>"#;
@@ -472,6 +474,7 @@ mod tests {
         assert_eq!(results[1].outcome, TestOutcome::Failed);
     }
 
+    // rqtk: verifies VA-CORE-006-02
     #[test]
     fn matches_by_name_suffix_and_parametrisation() {
         assert!(name_matches("tests::lint_bad", "lint_bad"));
@@ -480,6 +483,7 @@ mod tests {
         assert!(!name_matches("not_lint_bad", "lint_bad"));
     }
 
+    // rqtk: verifies VA-CORE-006-02
     #[test]
     fn activity_outcomes() {
         let results = parse_junit(JUNIT).unwrap();
@@ -504,6 +508,7 @@ mod tests {
         assert!(!runs.contains_key("D"));
     }
 
+    // rqtk: verifies VA-CORE-006-02
     #[test]
     fn prefers_results_from_the_links_file() {
         let results = vec![

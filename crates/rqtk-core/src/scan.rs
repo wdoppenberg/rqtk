@@ -142,18 +142,21 @@ mod tests {
         (activity.to_owned(), Some(test.to_owned()))
     }
 
+    // rqtk: verifies VA-CORE-006-01
     #[test]
     fn rust_attributes_including_stacked_and_qualified() {
         let src = "#[verifies(\"A\")]\n#[rqtk_macros::verifies(\"B\")]\n#[test]\nfn both() {}\n";
         assert_eq!(names(src), vec![link("A", "both"), link("B", "both")]);
     }
 
+    // rqtk: verifies VA-CORE-006-01
     #[test]
     fn python_decorators() {
         let src = "@rqtk.verifies(\"A\")\ndef test_a():\n    pass\n";
         assert_eq!(names(src), vec![link("A", "test_a")]);
     }
 
+    // rqtk: verifies VA-CORE-006-01
     #[test]
     fn comment_tags_in_other_languages() {
         let go = "// rqtk: verifies VA-1\nfunc TestBoot(t *testing.T) {}\n";
@@ -162,6 +165,7 @@ mod tests {
         assert_eq!(names(js), vec![link("VA-2", "boots quickly")]);
     }
 
+    // rqtk: verifies VA-CORE-006-01
     #[test]
     fn ignores_commented_out_annotations_calls_and_docs() {
         let src = concat!(
@@ -173,6 +177,7 @@ mod tests {
         assert!(names(src).is_empty(), "{:?}", names(src));
     }
 
+    // rqtk: verifies VA-CORE-006-01
     #[test]
     fn records_one_based_line_and_missing_function() {
         let links = scan_text(

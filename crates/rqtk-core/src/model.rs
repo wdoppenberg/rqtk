@@ -703,11 +703,13 @@ phase = "Development"
         .unwrap()
     }
 
+    // rqtk: verifies VA-CORE-003-01
     #[test]
     fn content_hash_is_versioned() {
         assert!(requirement("").compute_content_hash().starts_with("v1:"));
     }
 
+    // rqtk: verifies VA-CORE-003-01
     #[test]
     fn content_hash_frames_list_items() {
         let joined = requirement("[trace]\nparents = [\"AB\"]\n");
@@ -715,6 +717,7 @@ phase = "Development"
         assert_ne!(joined.compute_content_hash(), split.compute_content_hash());
     }
 
+    // rqtk: verifies VA-CORE-003-01
     #[test]
     fn content_hash_distinguishes_link_kinds() {
         let parent = requirement("[trace]\nparents = [\"X\"]\n");
@@ -725,6 +728,7 @@ phase = "Development"
         );
     }
 
+    // rqtk: verifies VA-CORE-003-01
     #[test]
     fn content_hash_ignores_administrative_fields() {
         let a = requirement("");

@@ -1,9 +1,15 @@
 [package]
 name = "rqtk-report"
 version = "0.1.0"
-edition = "2024"
-description = "Markdown report generation for rqtk requirement sets"
+description = "Markdown report generation for rqtk requirement sets."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+keywords = ["requirements", "traceability"]
+categories = ["development-tools"]
 
 [dependencies]
-rqtk-core = { path = "../rqtk-core" }
+rqtk-core = { workspace = true }
 chrono = "0.4"

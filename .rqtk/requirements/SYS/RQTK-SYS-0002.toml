@@ -1,0 +1,29 @@
+id = "RQTK-SYS-0002"
+title = "Verification from test evidence"
+category = "SYS"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall derive the status of every test-linked verification activity only from recorded test results for the requirement's current content."
+rationale = "A status anyone can type proves nothing; tying results to a content hash makes changed requirements visibly unverified."
+
+[trace]
+satisfies = ["NEED-0002"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Recorded passes verify, recorded failures fail, and a changed requirement becomes Suspect until its tests pass again."
+
+[[verification.activities]]
+id = "VA-SYS-002-01"
+name = "A changed requirement becomes Suspect"
+
+[[verification.activities]]
+id = "VA-SYS-002-02"
+name = "Failures are recorded and reported"
+
+[[verification.activities]]
+id = "VA-SYS-002-03"
+name = "Partial runs keep other evidence"

@@ -141,7 +141,7 @@ phase = "Development"
             .unwrap_or_else(|e| panic!("failed to load for state {state}: {e}"));
 
         let req = set
-            .requirements
+            .requirements()
             .get(&RequirementId("TEST-SYS-0001".to_owned()))
             .unwrap_or_else(|| panic!("requirement not found for state {state}"));
 
@@ -163,7 +163,7 @@ phase = "Development"
 
 // ── VA-SYS-002-01: file format inspection ────────────────────────────────────
 
-#[verifies("VA-SYS-002-01")]
+#[verifies("VA-SYS-001-02")]
 #[test]
 fn load_project_requirements_without_errors() {
     // Load the actual workspace requirements directory (the project dogfoods itself).
@@ -174,11 +174,11 @@ fn load_project_requirements_without_errors() {
         .expect("should load all project requirement files without parse errors");
 
     assert!(
-        !set.requirements.is_empty(),
+        !set.requirements().is_empty(),
         "expected at least one requirement to be loaded"
     );
 
-    for id in set.requirements.keys() {
+    for id in set.requirements().keys() {
         assert!(!id.0.is_empty(), "requirement ID must not be empty");
     }
 }
@@ -247,7 +247,7 @@ phase = "Development"
 
 // ── VA-CORE-003-01: ID generation unit test ──────────────────────────────────
 
-#[verifies("VA-CORE-003-01")]
+#[verifies("VA-CLI-004-01")]
 #[test]
 fn next_requirement_id_increments_correctly() {
     let req1 = valid_req("TEST-SYS-0001", "SYS");
@@ -268,7 +268,7 @@ fn next_requirement_id_increments_correctly() {
 
 // ── VA-CORE-004-01: config-driven policy ─────────────────────────────────────
 
-#[verifies("VA-CORE-004-01")]
+#[verifies("VA-CORE-005-01")]
 #[test]
 fn unknown_category_produces_rq002() {
     let req_toml = r#"id = "TEST-SYS-0001"
@@ -298,8 +298,8 @@ phase = "Development"
     );
 }
 
+#[verifies("VA-CORE-005-01")]
 #[test]
-#[verifies("VA-CORE-004-01")]
 fn known_category_suppresses_rq002() {
     // Add "EXTRA" category to config; the requirement uses it; RQ002 should not fire.
     let config_with_extra = r#"schema_version = 1

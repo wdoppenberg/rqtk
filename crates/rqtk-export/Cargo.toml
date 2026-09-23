@@ -1,10 +1,17 @@
 [package]
 name = "rqtk-export"
 version = "0.1.0"
-edition = "2024"
+description = "JSON, CSV and Markdown export of rqtk requirement sets."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+keywords = ["requirements", "traceability"]
+categories = ["development-tools"]
 
 [dependencies]
-rqtk-core = { path = "../rqtk-core" }
+rqtk-core = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0.145"
 thiserror = "2"

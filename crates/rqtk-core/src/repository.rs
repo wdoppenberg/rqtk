@@ -43,25 +43,28 @@ pub enum SatisfactionStatus {
     Unsatisfied,
 }
 
-/// gix::Repository is not Clone, so RequirementSet is not Clone either.
+/// A repository's requirements, needs and stakeholders, loaded from `.rqtk/`.
+///
+/// `RequirementSet<Loaded>` becomes `RequirementSet<Validated>` through [`Self::validate`],
+/// which is when lint findings are produced. gix::Repository is not Clone, so neither is this.
 #[derive(Debug)]
 pub struct RequirementSet<S = Loaded> {
-    pub config: Config,
-    pub requirements: BTreeMap<RequirementId, Requirement>,
-    pub needs: BTreeMap<NeedId, Need>,
-    pub stakeholders: BTreeMap<StakeholderId, Stakeholder>,
-    pub files_by_id: BTreeMap<RequirementId, PathBuf>,
-    pub needs_by_id: BTreeMap<NeedId, PathBuf>,
-    pub stakeholders_by_id: BTreeMap<StakeholderId, PathBuf>,
-    pub root: PathBuf,
-    pub needs_root: PathBuf,
-    pub stakeholders_root: PathBuf,
-    pub repo_root: PathBuf,
-    pub config_path: PathBuf,
-    pub git: GitContext,
+    pub(crate) config: Config,
+    pub(crate) requirements: BTreeMap<RequirementId, Requirement>,
+    pub(crate) needs: BTreeMap<NeedId, Need>,
+    pub(crate) stakeholders: BTreeMap<StakeholderId, Stakeholder>,
+    pub(crate) files_by_id: BTreeMap<RequirementId, PathBuf>,
+    pub(crate) needs_by_id: BTreeMap<NeedId, PathBuf>,
+    pub(crate) stakeholders_by_id: BTreeMap<StakeholderId, PathBuf>,
+    pub(crate) root: PathBuf,
+    pub(crate) needs_root: PathBuf,
+    pub(crate) stakeholders_root: PathBuf,
+    pub(crate) repo_root: PathBuf,
+    pub(crate) config_path: PathBuf,
+    pub(crate) git: GitContext,
     /// Findings from loading: files that failed to parse, duplicate IDs, misnamed files.
     /// Those files are left out of the set; `validate` reports these alongside lint findings.
-    pub load_diagnostics: Vec<Diagnostic>,
+    pub(crate) load_diagnostics: Vec<Diagnostic>,
     /// IDs found in files that failed to load. References to them are not reported as
     /// unknown, since the root cause is already reported against the broken file.
     unloaded_ids: HashSet<String>,
@@ -630,6 +633,56 @@ fn dot_escape(s: &str) -> String {
 }
 
 impl<S> RequirementSet<S> {
+    pub fn config(&self) -> &Config {
+        &self.config
+    }
+
+    pub fn requirements(&self) -> &BTreeMap<RequirementId, Requirement> {
+        &self.requirements
+    }
+
+    pub fn needs(&self) -> &BTreeMap<NeedId, Need> {
+        &self.needs
+    }
+
+    pub fn stakeholders(&self) -> &BTreeMap<StakeholderId, Stakeholder> {
+        &self.stakeholders
+    }
+
+    /// The file an item was loaded from.
+    pub fn path_of(&self, item: &EntityRef) -> Option<&Path> {
+        match item {
+            EntityRef::Requirement(id) => self.files_by_id.get(id),
+            EntityRef::Need(id) => self.needs_by_id.get(id),
+            EntityRef::Stakeholder(id) => self.stakeholders_by_id.get(id),
+        }
+        .map(PathBuf::as_path)
+    }
+
+    /// The directory containing `.rqtk/`.
+    pub fn repo_root(&self) -> &Path {
+        &self.repo_root
+    }
+
+    /// Where requirement files live (`repository.requirements_dir`).
+    pub fn requirements_dir(&self) -> &Path {
+        &self.root
+    }
+
+    /// Where need files live (`repository.needs_dir`).
+    pub fn needs_dir(&self) -> &Path {
+        &self.needs_root
+    }
+
+    /// Where stakeholder files live (`repository.stakeholders_dir`).
+    pub fn stakeholders_dir(&self) -> &Path {
+        &self.stakeholders_root
+    }
+
+    pub fn git(&self) -> &GitContext {
+        &self.git
+    }
+
     pub fn trace_view(&self, root_id: &RequirementId) -> Result<TraceView, RqtkError> {
         if !self.requirements.contains_key(root_id) {
             return Err(RqtkError::RequirementNotFound(root_id.clone()));

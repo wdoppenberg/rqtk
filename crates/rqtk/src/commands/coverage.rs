@@ -43,7 +43,7 @@ pub fn run(ctx: &Ctx, strict: bool, short: bool) -> Result<Exit, Box<dyn Error>>
         .into_keys()
         .map(|id| NeedStatus {
             satisfied_by: set
-                .requirements
+                .requirements()
                 .iter()
                 .filter(|(_, r)| r.trace.satisfies.contains(&id))
                 .map(|(rid, _)| rid.clone())
@@ -151,7 +151,7 @@ fn print_unsatisfied(set: &RequirementSet<rqtk_core::Validated>, needs: &[NeedSt
     // Group unsatisfied needs by stakeholder; ungrouped under "(none)".
     let mut by_stakeholder: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for status in needs.iter().filter(|n| n.satisfied_by.is_empty()) {
-        let Some(need) = set.needs.get(&status.id) else {
+        let Some(need) = set.needs().get(&status.id) else {
             continue;
         };
         let entry = format!("{}  {}", status.id, need.title);

@@ -1,11 +1,19 @@
 [package]
 name = "rqtk-py"
 version = "0.1.0"
-edition = "2024"
+description = "Python bindings for rqtk: the verifies decorator."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+keywords = ["requirements", "traceability", "python"]
+categories = ["development-tools::testing"]
+publish = false
 
 [dependencies]
 pyo3 = { version = "0.28.3", features = ["extension-module"] }
-rqtk-core = { path = "../rqtk-core", default-features = false, features = ["verification-lookup"] }
+rqtk-core = { workspace = true, features = ["verification-lookup"] }
 
 [lib]
 name = "rqtk"

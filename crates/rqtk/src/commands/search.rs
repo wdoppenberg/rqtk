@@ -76,6 +76,12 @@ fn push_hit<'a>(
     }
 }
 
+/// Every loaded item has a file; `path_of` only fails for IDs not in the set.
+fn file_of<'a, S>(set: &'a RequirementSet<S>, subject: &EntityRef) -> &'a Path {
+    set.path_of(subject)
+        .expect("item listed by the set has a file")
+}
+
 pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let re = RegexBuilder::new(&regex::escape(&args.pattern))
@@ -85,7 +91,7 @@ pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
     let mut hits = Vec::new();
     let mut push = |subject, path, matches| push_hit(&mut hits, &ctx.root, subject, path, matches);
 
-    for (id, req) in &set.requirements {
+    for (id, req) in set.requirements() {
         let mut candidates = vec![
             ("id", id.0.as_str()),
             ("title", req.title.as_str()),
@@ -94,13 +100,11 @@ pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
         candidates.extend(req.rationale.as_deref().map(|r| ("rationale", r)));
         candidates.extend(req.notes.as_deref().map(|n| ("notes", n)));
         candidates.extend(req.keywords.iter().map(|k| ("keywords", k.as_str())));
-        push(
-            EntityRef::Requirement(id.clone()),
-            &set.files_by_id[id],
-            search_fields(&re, fields, candidates),
-        );
+        let subject = EntityRef::Requirement(id.clone());
+        let path = file_of(&set, &subject);
+        push(subject, path, search_fields(&re, fields, candidates));
     }
-    for (id, need) in &set.needs {
+    for (id, need) in set.needs() {
         let mut candidates = vec![
             ("id", id.0.as_str()),
             ("title", need.title.as_str()),
@@ -108,21 +112,17 @@ pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
         ];
         candidates.extend(need.rationale.as_deref().map(|r| ("rationale", r)));
         candidates.extend(need.keywords.iter().map(|k| ("keywords", k.as_str())));
-        push(
-            EntityRef::Need(id.clone()),
-            &set.needs_by_id[id],
-            search_fields(&re, fields, candidates),
-        );
+        let subject = EntityRef::Need(id.clone());
+        let path = file_of(&set, &subject);
+        push(subject, path, search_fields(&re, fields, candidates));
     }
-    for (id, stk) in &set.stakeholders {
+    for (id, stk) in set.stakeholders() {
         let mut candidates = vec![("id", id.0.as_str()), ("name", stk.name.as_str())];
         candidates.extend(stk.role.as_deref().map(|r| ("role", r)));
         candidates.extend(stk.organization.as_deref().map(|o| ("organization", o)));
-        push(
-            EntityRef::Stakeholder(id.clone()),
-            &set.stakeholders_by_id[id],
-            search_fields(&re, fields, candidates),
-        );
+        let subject = EntityRef::Stakeholder(id.clone());
+        let path = file_of(&set, &subject);
+        push(subject, path, search_fields(&re, fields, candidates));
     }
 
     if ctx.json() {

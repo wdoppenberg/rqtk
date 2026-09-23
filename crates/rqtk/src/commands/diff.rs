@@ -22,7 +22,7 @@ struct Report<'a> {
 
 pub fn run(ctx: &Ctx, from: String, to: String) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
-    let diff = set.git.diff_refs(&from, &to, &set.root)?;
+    let diff = set.git().diff_refs(&from, &to, set.requirements_dir())?;
     let modified: Vec<Modified> = diff
         .modified
         .iter()

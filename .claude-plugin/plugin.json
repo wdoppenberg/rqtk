@@ -2,6 +2,7 @@
   "name": "rqtk-skills",
   "version": "0.1.0",
   "description": "Agent skills for requirements tracked with rqtk: read and write requirements, prove them with tests, turn specs into requirements, and review diffs against them.",
+  "license": "MIT OR Apache-2.0",
   "keywords": [
     "requirements",
     "traceability",

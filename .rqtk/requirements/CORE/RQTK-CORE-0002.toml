@@ -1,0 +1,25 @@
+id = "RQTK-CORE-0002"
+title = "Link integrity"
+category = "CORE"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk-core shall report every reference to an unknown item and every derivation cycle."
+rationale = "A trace is only as good as its weakest link."
+
+[trace]
+parents = ["RQTK-SYS-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Release"
+success_criteria = "Each lint rule fires on its violation and on nothing else."
+
+[[verification.activities]]
+id = "VA-CORE-002-01"
+name = "Cycle detection"
+
+[[verification.activities]]
+id = "VA-CORE-002-02"
+name = "Lint rule matrix"

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Lint, test and verify requirements
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+      # Test once, writing JUnit for `rqtk verify`. libtest's JUnit formatter is unstable,
+      # hence RUSTC_BOOTSTRAP; cargo-nextest is the stable alternative.
+      - name: Test
+        run: |
+          RUSTC_BOOTSTRAP=1 cargo test --workspace --exclude rqtk-py --tests \
+            -- -Z unstable-options --format junit > junit.xml
+      - run: cargo test --workspace --exclude rqtk-py --doc
+      - run: cargo check -p rqtk-py
+
+      # rqtk tracks its own requirements: every file lints, the committed evidence matches
+      # this test run, and every requirement is verified against its current wording.
+      - run: cargo build -p rqtk
+      - run: ./target/debug/rqtk lint
+      - run: ./target/debug/rqtk verify --check --results junit.xml
+      - run: ./target/debug/rqtk coverage --strict
+
+      - name: Schemas are up to date
+        run: |
+          cargo run -p rqtk-core --bin generate_schemas
+          git diff --exit-code -- schema/
+
+  msrv:
+    name: Minimum supported Rust version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --workspace --exclude rqtk-py --all-targets

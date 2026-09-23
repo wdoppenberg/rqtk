@@ -1,0 +1,21 @@
+id = "RQTK-CORE-0005"
+title = "Configurable policy"
+category = "CORE"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk-core shall check categories, types, states, priorities and verification values against the project configuration."
+rationale = "Each project has its own vocabulary; hard-coded values would not fit most of them."
+
+[trace]
+parents = ["RQTK-SYS-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Release"
+success_criteria = "Values outside the configuration are reported; configured values are accepted."
+
+[[verification.activities]]
+id = "VA-CORE-005-01"
+name = "Configured values"

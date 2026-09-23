@@ -24,6 +24,6 @@ pub fn run(ctx: &Ctx, args: AddNeedArgs) -> Result<Exit, Box<dyn Error>> {
         .collect();
     need.content_hash = Some(need.compute_content_hash());
 
-    let path = set.needs_root.join(format!("{id}.toml"));
+    let path = set.needs_dir().join(format!("{id}.toml"));
     super::add::finish(ctx, "Need", &id.0, path, &need, args.dry_run)
 }

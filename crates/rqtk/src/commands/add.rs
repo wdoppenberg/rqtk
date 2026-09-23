@@ -61,7 +61,7 @@ pub fn finish<T: Serialize>(
 
 pub fn run(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
-    let cfg = &set.config;
+    let cfg = set.config();
     if !cfg.categories.contains_key(&args.category) {
         let known: Vec<&str> = cfg.categories.keys().map(String::as_str).collect();
         return Err(Box::new(Usage(format!(

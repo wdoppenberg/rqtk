@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0004"
+title = "Non-interactive authoring"
+category = "CLI"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall create requirements, needs and stakeholders from command-line flags alone, assigning the next free ID."
+rationale = "Prompts block agents and scripts; hand-picked IDs collide."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Created files lint clean and carry sequential IDs."
+
+[[verification.activities]]
+id = "VA-CLI-004-01"
+name = "Create items from flags"

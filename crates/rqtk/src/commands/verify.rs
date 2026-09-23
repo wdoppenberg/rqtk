@@ -27,19 +27,19 @@ struct Report<'a> {
 /// Exits 1 if a linked test failed, or with `--check` if the evidence file is out of date.
 pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let links = scan::scan(&set.repo_root, &set.config.scan)?;
+    let links = scan::scan(set.repo_root(), &set.config().scan)?;
     let mut results = Vec::new();
     for path in &args.results {
         results.extend(evidence::read_junit(path)?);
     }
 
     let runs = evidence::match_results(&links, &results);
-    let mut recorded = Evidence::load(&set.repo_root)?;
-    let commit = set.git.head_commit().map(|c| c.full().to_owned());
-    let changes = recorded.apply(&set.requirements, &runs, commit.as_deref());
+    let mut recorded = Evidence::load(set.repo_root())?;
+    let commit = set.git().head_commit().map(|c| c.full().to_owned());
+    let changes = recorded.apply(set.requirements(), &runs, commit.as_deref());
     let write = !changes.is_empty() && !args.check && !args.dry_run;
     if write {
-        recorded.save(&set.repo_root)?;
+        recorded.save(set.repo_root())?;
     }
 
     let any_failed = runs.values().any(|r| r.outcome() == Some(Outcome::Failed));

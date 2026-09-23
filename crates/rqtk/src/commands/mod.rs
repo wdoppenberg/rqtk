@@ -29,8 +29,8 @@ use rqtk_core::{Evidence, RequirementSet, RqtkError, SourceLink, Validated};
 pub fn load_links_and_evidence(
     set: &RequirementSet<Validated>,
 ) -> Result<(Vec<SourceLink>, Evidence), RqtkError> {
-    let links = rqtk_core::scan::scan(&set.repo_root, &set.config.scan)?;
-    let evidence = Evidence::load(&set.repo_root)?;
+    let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
+    let evidence = Evidence::load(set.repo_root())?;
     Ok((links, evidence))
 }
 

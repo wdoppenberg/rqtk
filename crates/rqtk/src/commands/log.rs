@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use rqtk_core::{RequirementId, RequirementSet, RqtkError};
+use rqtk_core::{EntityRef, RequirementId, RequirementSet, RqtkError};
 use serde::Serialize;
 
 use crate::output::{self, Ctx, Exit};
@@ -23,10 +23,9 @@ pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let req_id = RequirementId(id);
     let path = set
-        .files_by_id
-        .get(&req_id)
+        .path_of(&EntityRef::Requirement(req_id.clone()))
         .ok_or_else(|| RqtkError::RequirementNotFound(req_id.clone()))?;
-    let commits = set.git.requirement_history(path)?;
+    let commits = set.git().requirement_history(path)?;
 
     if ctx.json() {
         output::json(&Report {

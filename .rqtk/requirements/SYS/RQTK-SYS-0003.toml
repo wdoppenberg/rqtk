@@ -1,0 +1,25 @@
+id = "RQTK-SYS-0003"
+title = "Operable by coding agents"
+category = "SYS"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall let a coding agent find, change and verify requirements without interactive input or human interpretation of its output."
+rationale = "Agents do most of the implementation work; they need a precise, stable interface rather than prose."
+
+[trace]
+satisfies = ["NEED-0003"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "An agent can obtain an item's full context and a change's impact as JSON."
+
+[[verification.activities]]
+id = "VA-SYS-003-01"
+name = "Context briefing for any item"
+
+[[verification.activities]]
+id = "VA-SYS-003-02"
+name = "Impact of a change"

@@ -1,0 +1,25 @@
+id = "RQTK-SYS-0004"
+title = "End-to-end traceability"
+category = "SYS"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall trace every requirement to the requirements it derives from, the needs it satisfies and the tests that verify it."
+rationale = "Traceability is what lets a reviewer answer why a requirement exists and whether it is met."
+
+[trace]
+satisfies = ["NEED-0001", "NEED-0002"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Trace shows ancestors and descendants; coverage reports every requirement's verification state."
+
+[[verification.activities]]
+id = "VA-SYS-004-01"
+name = "Trace up and down the hierarchy"
+
+[[verification.activities]]
+id = "VA-SYS-004-02"
+name = "Coverage reports verification state"

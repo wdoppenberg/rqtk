@@ -15,9 +15,9 @@ struct Report<'a> {
 
 pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
-    let checked = set.requirements.len() + set.needs.len() + set.stakeholders.len();
+    let checked = set.requirements().len() + set.needs().len() + set.stakeholders().len();
     let (set, mut issues) = set.validate();
-    let links = rqtk_core::scan::scan(&set.repo_root, &set.config.scan)?;
+    let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
     issues.extend(set.link_diagnostics(&links));
     for issue in &mut issues {
         if let Some(loc) = issue.location.as_mut() {

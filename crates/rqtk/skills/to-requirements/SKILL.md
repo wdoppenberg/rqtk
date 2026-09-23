@@ -2,6 +2,7 @@
 name: to-requirements
 description: "Turn the current conversation, a spec or a set of tickets into stakeholder needs and verifiable requirements in `.rqtk/`. Run only when the user asks for it by name."
 disable-model-invocation: true
+license: MIT OR Apache-2.0
 compatibility: Requires the rqtk CLI and a repository set up with rqtk init.
 ---
 

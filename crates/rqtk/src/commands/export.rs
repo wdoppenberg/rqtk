@@ -15,12 +15,12 @@ struct Report<'a> {
 
 pub fn run(ctx: &Ctx, format: ExportFormat, out: Option<PathBuf>) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let out = out.unwrap_or_else(|| default_export_path(&set.root, &format));
+    let out = out.unwrap_or_else(|| default_export_path(set.requirements_dir(), &format));
     export_set(&set, &format, &out)?;
     let report = Report {
         format: &format,
         path: output::relative(&out, &ctx.root),
-        requirements: set.requirements.len(),
+        requirements: set.requirements().len(),
     };
     if ctx.json() {
         output::json(&report)?;
