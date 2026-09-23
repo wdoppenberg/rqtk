@@ -19,3 +19,5 @@ hosting = "github"
 install-updater = false
 # Publish the crates to crates.io after the binaries are uploaded
 publish-jobs = ["./publish-crates"]
+# release.yml carries hand-added job permissions (host, announce); keep dist from reverting them
+allow-dirty = ["ci"]

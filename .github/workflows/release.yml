@@ -213,6 +213,9 @@ jobs:
             ${{ env.BUILD_MANIFEST_NAME }}
   # Determines if we should publish/announce
   host:
+    # Creates/updates the GitHub Release; explicit in case the repository default is read-only.
+    permissions:
+      "contents": "write"
     needs:
       - plan
       - build-local-artifacts
@@ -293,6 +296,9 @@ jobs:
       "packages": "write"
 
   announce:
+    # Creates/updates the GitHub Release; explicit in case the repository default is read-only.
+    permissions:
+      "contents": "write"
     needs:
       - plan
       - host
