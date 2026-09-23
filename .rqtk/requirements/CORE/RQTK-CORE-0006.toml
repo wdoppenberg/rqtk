@@ -1,0 +1,25 @@
+id = "RQTK-CORE-0006"
+title = "Test link discovery and results"
+category = "CORE"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk-core shall discover `verifies` links in source code in any language and match them to test results read from JUnit XML."
+rationale = "Evidence can only be recorded for tests rqtk can associate with activities."
+
+[trace]
+parents = ["RQTK-SYS-0002"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Release"
+success_criteria = "Attributes, decorators and comment tags are found; JUnit outcomes are matched to linked functions."
+
+[[verification.activities]]
+id = "VA-CORE-006-01"
+name = "Link discovery"
+
+[[verification.activities]]
+id = "VA-CORE-006-02"
+name = "JUnit results"

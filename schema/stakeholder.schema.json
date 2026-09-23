@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "StakeholderAuthority": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sign_off_required": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "StakeholderConcerns": {
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "secondary": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority": {
+      "$ref": "#/$defs/StakeholderAuthority"
+    },
+    "concerns": {
+      "$ref": "#/$defs/StakeholderConcerns"
+    },
+    "id": {
+      "$ref": "#/$defs/StakeholderId"
+    },
+    "name": {
+      "type": "string"
+    },
+    "organization": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "role": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "name"
+  ],
+  "title": "Stakeholder",
+  "type": "object"
+}

@@ -1,27 +1,52 @@
-use std::{error::Error, path::Path};
+use std::{error::Error, path::PathBuf};
 
-use rqtk_core::{RequirementSet, io::write_requirement_file};
+use rqtk_core::{EntityRef, RequirementSet};
+use serde::Serialize;
 
-use crate::output;
+use crate::output::{self, Ctx, Exit};
 
-pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
-    let mut set = RequirementSet::load_from_repo_root(repo_root)?;
-    let mut updated = 0usize;
+#[derive(Serialize)]
+struct Updated {
+    subject: EntityRef,
+    path: PathBuf,
+    hash: String,
+}
 
-    for (id, req_file) in &mut set.requirements {
-        let computed = req_file.requirement.compute_content_hash();
-        if req_file.requirement.content_hash.as_deref() != Some(computed.as_str()) {
-            req_file.requirement.content_hash = Some(computed);
-            let path = set.files_by_id[id].clone();
-            write_requirement_file(&path, req_file)?;
-            updated += 1;
-        }
-    }
+#[derive(Serialize)]
+struct Report {
+    updated: Vec<Updated>,
+    dry_run: bool,
+}
 
-    if updated == 0 {
+pub fn run(ctx: &Ctx, dry_run: bool) -> Result<Exit, Box<dyn Error>> {
+    let mut set = RequirementSet::load_from_repo_root(&ctx.root)?;
+    let stale = if dry_run {
+        set.stale_hashes()
+    } else {
+        set.rehash()?
+    };
+    let updated: Vec<Updated> = stale
+        .into_iter()
+        .map(|s| Updated {
+            path: output::relative(&s.path, &ctx.root),
+            subject: s.subject,
+            hash: s.hash,
+        })
+        .collect();
+
+    if ctx.json() {
+        output::json(&Report { updated, dry_run })?;
+    } else if updated.is_empty() {
         output::success("All content hashes are current", &[]);
     } else {
-        output::success("Content hashes updated", &[("count", &updated.to_string())]);
+        let label = if dry_run {
+            "Content hashes would be updated"
+        } else {
+            "Content hashes updated"
+        };
+        let ids: Vec<String> = updated.iter().map(|u| u.subject.to_string()).collect();
+        let pairs: Vec<(&str, &str)> = ids.iter().map(|id| ("id", id.as_str())).collect();
+        output::success(label, &pairs);
     }
-    Ok(())
+    Ok(Exit::Ok)
 }

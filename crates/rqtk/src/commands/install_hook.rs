@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use crate::output;
+use crate::output::{self, Ctx, Exit};
 
 const REGION_BEGIN: &str = "# BEGIN rqtk-managed";
 const REGION_END: &str = "# END rqtk-managed";
@@ -9,37 +9,18 @@ const REGION_BODY: &str = "set -e\nrqtk rehash\nrqtk lint";
 
 const DEFAULT_SHEBANG: &str = "#!/bin/sh";
 
+#[cfg(test)]
 fn managed_region() -> String {
     format!("{REGION_BEGIN}\n{REGION_BODY}\n{REGION_END}\n")
 }
 
 /// Insert or replace the rqtk-managed region in `existing`, returning the new content.
 fn splice_region(existing: &str) -> String {
-    let region = managed_region();
-    if let (Some(begin), Some(end)) = (existing.find(REGION_BEGIN), existing.find(REGION_END)) {
-        let end_of_line = existing[end..]
-            .find('\n')
-            .map(|i| end + i + 1)
-            .unwrap_or(existing.len());
-        format!(
-            "{}{}{}",
-            &existing[..begin],
-            region,
-            &existing[end_of_line..]
-        )
-    } else {
-        // Append region, ensuring a single blank line separator.
-        let trimmed = existing.trim_end_matches('\n');
-        if trimmed.is_empty() {
-            region
-        } else {
-            format!("{trimmed}\n\n{region}")
-        }
-    }
+    super::splice_managed(existing, REGION_BEGIN, REGION_END, REGION_BODY)
 }
 
-pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
-    let git_dir = find_git_dir(repo_root)?;
+pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+    let git_dir = find_git_dir(&ctx.root)?;
     let hooks_dir = git_dir.join("hooks");
     std::fs::create_dir_all(&hooks_dir)?;
 
@@ -67,11 +48,15 @@ pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
     } else {
         "installed"
     };
-    output::success(
-        &format!("Pre-commit hook region {action}"),
-        &[("hook", &hook_path.display().to_string())],
-    );
-    Ok(())
+    if ctx.json() {
+        output::json(&serde_json::json!({ "hook": hook_path, "action": action }))?;
+    } else {
+        output::success(
+            &format!("Pre-commit hook region {action}"),
+            &[("hook", &hook_path.display().to_string())],
+        );
+    }
+    Ok(Exit::Ok)
 }
 
 fn find_git_dir(start: &Path) -> Result<std::path::PathBuf, Box<dyn Error>> {

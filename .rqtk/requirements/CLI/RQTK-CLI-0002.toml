@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0002"
+title = "Exit codes"
+category = "CLI"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall exit with 0 on success, 1 on findings, 2 on usage errors and 3 on any other error."
+rationale = "Callers branch on the exit code before reading any output."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Each class of outcome yields its documented exit code."
+
+[[verification.activities]]
+id = "VA-CLI-002-01"
+name = "Exit code per outcome"

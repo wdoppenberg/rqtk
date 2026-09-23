@@ -1,0 +1,67 @@
+schema_version = 1
+
+[repository]
+requirements_dir = ".rqtk/requirements"
+stakeholders_dir = ".rqtk/stakeholders"
+needs_dir = ".rqtk/needs"
+required_files = []
+required_dirs = []
+
+[project]
+name = "rqtk"
+version = "1.0.0"
+
+[identification]
+id_pattern = "^RQTK-(SYS|CLI|CORE)-\\d{4}$"
+id_separator = "-"
+prefix = "RQTK"
+zero_padding = 4
+
+[categories.SYS]
+name = "System"
+level = 1
+is_root = true
+
+[categories.CLI]
+name = "CLI"
+level = 2
+
+[categories.CORE]
+name = "Core Library"
+level = 2
+
+[types]
+allowed = ["Functional", "Constraint", "Interface"]
+
+[verification]
+methods = ["Test", "Analysis", "Inspection", "Demonstration"]
+levels = ["Unit", "Integration", "System", "Acceptance"]
+phases = ["Development", "Pre-release", "Release"]
+
+[lifecycle]
+states = ["Draft", "Review", "Approved", "Implemented", "Verified", "Deprecated"]
+default_state = "Draft"
+
+[priority]
+levels = ["Critical", "High", "Medium", "Low"]
+
+[criticality]
+levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
+
+[validation]
+require_rationale = true
+require_verification_method = true
+require_parent_for_levels = ["CLI", "CORE"]
+forbid_orphans = true
+forbid_circular_traces = true
+allow_tbd = false
+allow_tbr = false
+shall_keywords = ["shall"]
+forbidden_keywords = []
+
+[scan]
+# Tests of the annotations themselves, not verifications of requirements.
+exclude = [
+    "crates/rqtk-macros/tests/compile_fail/**",
+    "crates/rqtk-py/tests/**",
+]

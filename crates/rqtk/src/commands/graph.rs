@@ -1,13 +1,20 @@
-use std::{error::Error, path::Path};
+use std::error::Error;
 
-use rqtk_core::{RequirementSet, RqtkError};
+use rqtk_core::RequirementSet;
 
-pub fn run(repo_root: &Path, format: String) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
-    if format != "dot" {
-        return Err(Box::new(RqtkError::UnsupportedExportFormat(format)));
+use crate::output::{Ctx, Exit};
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum GraphFormat {
+    /// Graphviz DOT.
+    Dot,
+}
+
+pub fn run(ctx: &Ctx, format: GraphFormat) -> Result<Exit, Box<dyn Error>> {
+    ctx.require_text("graph")?;
+    let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
+    match format {
+        GraphFormat::Dot => print!("{}", set.to_dot()),
     }
-    let (set, _) = set.validate();
-    println!("{}", set.to_dot());
-    Ok(())
+    Ok(Exit::Ok)
 }

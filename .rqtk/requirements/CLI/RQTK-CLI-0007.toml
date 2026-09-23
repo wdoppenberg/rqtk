@@ -1,0 +1,25 @@
+id = "RQTK-CLI-0007"
+title = "Exports and reports"
+category = "CLI"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall export requirement sets as JSON, CSV, Markdown and Graphviz DOT, and render a Markdown report."
+rationale = "Requirements must reach people who do not read TOML."
+
+[trace]
+parents = ["RQTK-SYS-0001"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Each export and the report contain every requirement."
+
+[[verification.activities]]
+id = "VA-CLI-007-01"
+name = "Exports"
+
+[[verification.activities]]
+id = "VA-CLI-007-02"
+name = "Graph and report"

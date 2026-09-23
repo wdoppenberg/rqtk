@@ -11,7 +11,7 @@ use syn::{LitStr, parse_macro_input};
 ///
 /// Apply to a `#[test]` function or a `mod` block to link it to a specific
 /// `VerificationActivity` in any requirement TOML file under the configured requirements
-/// directory from the nearest `rqtk.toml` found by walking up from `CARGO_MANIFEST_DIR`.
+/// directory from the nearest `.rqtk/config.toml` found by walking up from `CARGO_MANIFEST_DIR`.
 ///
 /// ```rust,ignore
 /// #[verifies("VA-SYS-001-01")]
@@ -29,11 +29,28 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
     match find_activity_from_manifest_dir(&id_value) {
         Ok(Some(info)) => {
             let doc = build_verification_doc(&id_value, &info);
-            let item_ts: proc_macro2::TokenStream = item.into();
-            TokenStream::from(quote! {
-                #[doc = #doc]
-                #item_ts
-            })
+            // `include_bytes!` makes Cargo rebuild when the requirement file changes, so the
+            // check and the injected docs never go stale.
+            let path = info.path.display().to_string();
+            let track = quote! { const _: &[u8] = include_bytes!(#path); };
+            match syn::parse::<syn::ItemFn>(item.clone()) {
+                Ok(mut func) => {
+                    let stmt: syn::Stmt = syn::parse_quote! { #track };
+                    func.block.stmts.insert(0, stmt);
+                    TokenStream::from(quote! {
+                        #[doc = #doc]
+                        #func
+                    })
+                }
+                Err(_) => {
+                    let item_ts: proc_macro2::TokenStream = item.into();
+                    TokenStream::from(quote! {
+                        #track
+                        #[doc = #doc]
+                        #item_ts
+                    })
+                }
+            }
         }
         Ok(None) => {
             let msg = format!(
@@ -62,7 +79,7 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 ///
 /// The macro loads and validates requirements by walking up from `CARGO_MANIFEST_DIR`
-/// until `rqtk.toml` is found. Generation fails with a compile error if requirements
+/// until `.rqtk/config.toml` is found. Generation fails with a compile error if requirements
 /// are missing or invalid.
 #[proc_macro_attribute]
 pub fn requirements_docs(attr: TokenStream, item: TokenStream) -> TokenStream {

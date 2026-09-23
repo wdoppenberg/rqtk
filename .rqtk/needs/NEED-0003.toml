@@ -1,0 +1,5 @@
+id = "NEED-0003"
+title = "Operable by coding agents"
+state = "Approved"
+stakeholders = ["STK-002"]
+statement = "Coding agents need to find, change and verify requirements through a stable, machine-readable interface."

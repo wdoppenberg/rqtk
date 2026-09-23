@@ -1,0 +1,23 @@
+id = "FOBC-SW-0002"
+title = "Telemetry Downlink Scheduling"
+category = "SW"
+type = "Functional"
+state = "Implemented"
+priority = "High"
+statement = "The OBC software shall schedule telemetry downlink frames at a rate of no less than 1 Hz during ground-station contact windows."
+rationale = "A 1 Hz downlink rate ensures sufficient telemetry throughput for nominal housekeeping monitoring."
+
+[trace]
+parents = ["FOBC-SYS-0001"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "Downlink frame rate of at least 1 Hz sustained over a 10-minute contact window."
+
+[[verification.activities]]
+id = "FOBC-VA-SW-002-01"
+name = "Downlink throughput test"
+status = "Passed"
+expected_result = "Frame rate >= 1 Hz"

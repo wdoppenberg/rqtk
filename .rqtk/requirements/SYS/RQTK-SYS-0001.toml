@@ -1,0 +1,33 @@
+id = "RQTK-SYS-0001"
+title = "Repository-native storage and history"
+category = "SYS"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall store every requirement, need and stakeholder as a TOML file under `.rqtk/` and derive baselines and history from git."
+rationale = "Keeping requirements next to the code makes a requirement change a reviewed commit and a baseline a tag."
+
+[trace]
+satisfies = ["NEED-0001"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Files round-trip unchanged, baselines are git tags, and diffs between baselines list added, removed and changed requirements."
+
+[[verification.activities]]
+id = "VA-SYS-001-01"
+name = "Files round-trip with their lifecycle state"
+
+[[verification.activities]]
+id = "VA-SYS-001-02"
+name = "The project's own files load"
+
+[[verification.activities]]
+id = "VA-SYS-001-03"
+name = "Baselines are git tags"
+
+[[verification.activities]]
+id = "VA-SYS-001-04"
+name = "Diffs between baselines"

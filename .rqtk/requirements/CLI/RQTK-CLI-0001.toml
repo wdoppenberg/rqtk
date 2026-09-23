@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0001"
+title = "JSON output"
+category = "CLI"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "Every rqtk command that reports data shall print a single JSON document when given `--json` and only add fields within a major version."
+rationale = "Agents and scripts parse the output; removing or retyping a field breaks them."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Every command's JSON parses and keeps every field and type of the recorded snapshot."
+
+[[verification.activities]]
+id = "VA-CLI-001-01"
+name = "JSON contract"

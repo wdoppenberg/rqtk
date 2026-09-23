@@ -15,9 +15,9 @@ cargo run -p rqtk -- --repo-root . lint
 
 cargo run -p rqtk-core --bin generate_schemas
 
-if ! git diff --quiet -- schema/rqtk.schema.json schema/requirements.schema.json; then
+if ! git diff --quiet -- schema/; then
   echo "Schema files are outdated. Regenerate with:"
   echo "  cargo run -p rqtk-core --bin generate_schemas"
-  git --no-pager diff -- schema/rqtk.schema.json schema/requirements.schema.json
+  git --no-pager diff -- schema/
   exit 1
 fi

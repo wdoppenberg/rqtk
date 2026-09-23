@@ -1,0 +1,25 @@
+id = "RQTK-CLI-0006"
+title = "Self-describing interface"
+category = "CLI"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall describe its file formats and lint rules itself, and every command and flag its documentation names shall exist."
+rationale = "Agents look things up instead of guessing; documentation that drifts from the binary misleads them."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Schemas and rule explanations are available from the CLI; the README and skills name only real commands and flags."
+
+[[verification.activities]]
+id = "VA-CLI-006-01"
+name = "Schemas and rule explanations"
+
+[[verification.activities]]
+id = "VA-CLI-006-02"
+name = "Documentation matches the CLI"

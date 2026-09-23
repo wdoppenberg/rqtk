@@ -1,6 +1,10 @@
 use console::style;
-use rqtk_core::{RequirementBody, RequirementSet};
-use std::{error::Error, path::Path};
+use regex::{Regex, RegexBuilder};
+use rqtk_core::{EntityRef, RequirementSet};
+use serde::Serialize;
+use std::{error::Error, path::Path, path::PathBuf};
+
+use crate::output::{self, Ctx, Exit};
 
 pub struct SearchArgs {
     pub pattern: String,
@@ -8,32 +12,22 @@ pub struct SearchArgs {
     pub field: Option<Vec<String>>,
 }
 
-struct FieldMatch {
-    label: &'static str,
-    value: String,
-    match_ranges: Vec<(usize, usize)>,
+#[derive(Serialize)]
+struct FieldMatch<'a> {
+    field: &'static str,
+    value: &'a str,
+    /// Byte ranges of each match within `value`.
+    ranges: Vec<(usize, usize)>,
 }
 
-fn find_matches(haystack: &str, needle: &str, ignore_case: bool) -> Vec<(usize, usize)> {
-    let mut ranges = Vec::new();
-    let (h, n) = if ignore_case {
-        (haystack.to_lowercase(), needle.to_lowercase())
-    } else {
-        (haystack.to_owned(), needle.to_owned())
-    };
-    let mut start = 0;
-    while let Some(pos) = h[start..].find(&n) {
-        let abs = start + pos;
-        ranges.push((abs, abs + needle.len()));
-        start = abs + needle.len();
-    }
-    ranges
+#[derive(Serialize)]
+struct Hit<'a> {
+    subject: EntityRef,
+    path: PathBuf,
+    matches: Vec<FieldMatch<'a>>,
 }
 
 fn highlight(text: &str, ranges: &[(usize, usize)]) -> String {
-    if ranges.is_empty() {
-        return text.to_owned();
-    }
     let mut out = String::new();
     let mut cursor = 0;
     for &(start, end) in ranges {
@@ -45,138 +39,117 @@ fn highlight(text: &str, ranges: &[(usize, usize)]) -> String {
     out
 }
 
-fn search_req(
-    req: &RequirementBody,
-    pattern: &str,
-    ignore_case: bool,
+/// Match `re` against each wanted field; offsets always index the original text.
+fn search_fields<'a>(
+    re: &Regex,
     fields: Option<&[String]>,
-) -> Vec<FieldMatch> {
-    let want = |name: &str| match fields {
-        None => true,
-        Some(fs) => fs.iter().any(|f| f.eq_ignore_ascii_case(name)),
-    };
-
-    let mut matches = Vec::new();
-
-    if want("id") {
-        let ranges = find_matches(&req.id.0, pattern, ignore_case);
-        if !ranges.is_empty() {
-            matches.push(FieldMatch {
-                label: "id",
-                value: req.id.0.clone(),
-                match_ranges: ranges,
-            });
-        }
-    }
-
-    if want("title") {
-        let ranges = find_matches(&req.title, pattern, ignore_case);
-        if !ranges.is_empty() {
-            matches.push(FieldMatch {
-                label: "title",
-                value: req.title.clone(),
-                match_ranges: ranges,
-            });
-        }
-    }
-
-    if want("statement") {
-        let ranges = find_matches(&req.statement.text, pattern, ignore_case);
-        if !ranges.is_empty() {
-            matches.push(FieldMatch {
-                label: "statement",
-                value: req.statement.text.clone(),
-                match_ranges: ranges,
-            });
-        }
-    }
-
-    if want("rationale")
-        && let Some(rat) = &req.statement.rationale
-    {
-        let ranges = find_matches(rat, pattern, ignore_case);
-        if !ranges.is_empty() {
-            matches.push(FieldMatch {
-                label: "rationale",
-                value: rat.clone(),
-                match_ranges: ranges,
-            });
-        }
-    }
-
-    if want("notes")
-        && let Some(notes) = &req.statement.notes
-    {
-        let ranges = find_matches(notes, pattern, ignore_case);
-        if !ranges.is_empty() {
-            matches.push(FieldMatch {
-                label: "notes",
-                value: notes.clone(),
-                match_ranges: ranges,
-            });
-        }
-    }
-
-    if want("keywords") {
-        for kw in &req.keywords {
-            let ranges = find_matches(kw, pattern, ignore_case);
-            if !ranges.is_empty() {
-                matches.push(FieldMatch {
-                    label: "keywords",
-                    value: kw.clone(),
-                    match_ranges: ranges,
-                });
-            }
-        }
-    }
-
-    matches
+    candidates: impl IntoIterator<Item = (&'static str, &'a str)>,
+) -> Vec<FieldMatch<'a>> {
+    let want = |name: &str| fields.is_none_or(|fs| fs.iter().any(|f| f.eq_ignore_ascii_case(name)));
+    candidates
+        .into_iter()
+        .filter(|(field, _)| want(field))
+        .filter_map(|(field, value)| {
+            let ranges: Vec<_> = re.find_iter(value).map(|m| (m.start(), m.end())).collect();
+            (!ranges.is_empty()).then_some(FieldMatch {
+                field,
+                value,
+                ranges,
+            })
+        })
+        .collect()
 }
 
-pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
+fn push_hit<'a>(
+    hits: &mut Vec<Hit<'a>>,
+    root: &Path,
+    subject: EntityRef,
+    path: &Path,
+    matches: Vec<FieldMatch<'a>>,
+) {
+    if !matches.is_empty() {
+        hits.push(Hit {
+            subject,
+            path: output::relative(path, root),
+            matches,
+        });
+    }
+}
+
+/// Every loaded item has a file; `path_of` only fails for IDs not in the set.
+fn file_of<'a, S>(set: &'a RequirementSet<S>, subject: &EntityRef) -> &'a Path {
+    set.path_of(subject)
+        .expect("item listed by the set has a file")
+}
+
+pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
+    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
+    let re = RegexBuilder::new(&regex::escape(&args.pattern))
+        .case_insensitive(args.ignore_case)
+        .build()?;
     let fields = args.field.as_deref();
-    let mut total_matches = 0usize;
+    let mut hits = Vec::new();
+    let mut push = |subject, path, matches| push_hit(&mut hits, &ctx.root, subject, path, matches);
 
-    for (id, req_file) in &set.requirements {
-        let req = &req_file.requirement;
-        let field_matches = search_req(req, &args.pattern, args.ignore_case, fields);
-        if field_matches.is_empty() {
-            continue;
-        }
-
-        total_matches += field_matches.len();
-
-        let path = set
-            .files_by_id
-            .get(id)
-            .map(|p| {
-                p.strip_prefix(&set.repo_root)
-                    .unwrap_or(p)
-                    .display()
-                    .to_string()
-            })
-            .unwrap_or_else(|| id.to_string());
-
-        println!("\n{}", style(&path).bold().underlined());
-
-        for fm in &field_matches {
-            let highlighted = highlight(&fm.value, &fm.match_ranges);
-            println!("  {:<12} {}", style(fm.label).cyan(), highlighted,);
-        }
+    for (id, req) in set.requirements() {
+        let mut candidates = vec![
+            ("id", id.0.as_str()),
+            ("title", req.title.as_str()),
+            ("statement", req.statement.as_str()),
+        ];
+        candidates.extend(req.rationale.as_deref().map(|r| ("rationale", r)));
+        candidates.extend(req.notes.as_deref().map(|n| ("notes", n)));
+        candidates.extend(req.keywords.iter().map(|k| ("keywords", k.as_str())));
+        let subject = EntityRef::Requirement(id.clone());
+        let path = file_of(&set, &subject);
+        push(subject, path, search_fields(&re, fields, candidates));
+    }
+    for (id, need) in set.needs() {
+        let mut candidates = vec![
+            ("id", id.0.as_str()),
+            ("title", need.title.as_str()),
+            ("statement", need.statement.as_str()),
+        ];
+        candidates.extend(need.rationale.as_deref().map(|r| ("rationale", r)));
+        candidates.extend(need.keywords.iter().map(|k| ("keywords", k.as_str())));
+        let subject = EntityRef::Need(id.clone());
+        let path = file_of(&set, &subject);
+        push(subject, path, search_fields(&re, fields, candidates));
+    }
+    for (id, stk) in set.stakeholders() {
+        let mut candidates = vec![("id", id.0.as_str()), ("name", stk.name.as_str())];
+        candidates.extend(stk.role.as_deref().map(|r| ("role", r)));
+        candidates.extend(stk.organization.as_deref().map(|o| ("organization", o)));
+        let subject = EntityRef::Stakeholder(id.clone());
+        let path = file_of(&set, &subject);
+        push(subject, path, search_fields(&re, fields, candidates));
     }
 
-    if total_matches == 0 {
+    if ctx.json() {
+        output::json(&serde_json::json!({ "hits": hits }))?;
+        return Ok(Exit::Ok);
+    }
+    for hit in &hits {
+        println!("\n{}", style(hit.path.display()).bold().underlined());
+        for m in &hit.matches {
+            println!(
+                "  {:<12} {}",
+                style(m.field).cyan(),
+                highlight(m.value, &m.ranges)
+            );
+        }
+    }
+    let total: usize = hits.iter().map(|h| h.matches.len()).sum();
+    if total == 0 {
         eprintln!("  {} no matches for {:?}", style("·").dim(), args.pattern);
     } else {
         println!(
             "\n  {} {} match{} for {:?}",
             style("·").dim(),
-            style(total_matches).bold(),
-            if total_matches == 1 { "" } else { "es" },
+            style(total).bold(),
+            if total == 1 { "" } else { "es" },
             args.pattern,
         );
     }
-
-    Ok(())
+    Ok(Exit::Ok)
 }

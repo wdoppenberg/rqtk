@@ -1,31 +1,44 @@
-use std::{error::Error, path::Path};
+use std::error::Error;
 
 use rqtk_core::{RequirementId, RequirementSet};
+use serde::Serialize;
 
-use crate::output;
+use crate::output::{self, Ctx, Exit};
 
-pub fn run(repo_root: &Path, id: String) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
+#[derive(Serialize)]
+struct Report<'a> {
+    id: &'a RequirementId,
+    ancestors: &'a [RequirementId],
+    descendants: &'a [RequirementId],
+}
+
+pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
+    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let req_id = RequirementId(id);
     let view = set.trace_view(&req_id)?;
-    output::section("Traceability", &req_id.to_string());
+    if ctx.json() {
+        output::json(&Report {
+            id: &req_id,
+            ancestors: &view.upward,
+            descendants: &view.downward,
+        })?;
+        return Ok(Exit::Ok);
+    }
+    output::section("Traceability", req_id.as_ref());
     output::subsection("▲", &format!("Parents ({})", view.upward.len()));
     if view.upward.is_empty() {
         output::item("—  no parents");
-    } else {
-        for id in &view.upward {
-            output::item(&id.to_string());
-        }
+    }
+    for id in &view.upward {
+        output::item(id.as_ref());
     }
     output::subsection("▼", &format!("Children ({})", view.downward.len()));
-    output::item(&req_id.to_string());
     if view.downward.is_empty() {
         output::item("—  no children");
-    } else {
-        for id in &view.downward {
-            output::item(&id.to_string());
-        }
+    }
+    for id in &view.downward {
+        output::item(id.as_ref());
     }
     println!();
-    Ok(())
+    Ok(Exit::Ok)
 }

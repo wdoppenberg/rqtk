@@ -1,0 +1,3 @@
+interface:
+  display_name: "rqtk: Requirements"
+  short_description: "Read and write requirements, needs and stakeholders in .rqtk/"

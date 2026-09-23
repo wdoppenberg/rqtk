@@ -1,0 +1,21 @@
+id = "RQTK-CORE-0004"
+title = "Format-preserving writes"
+category = "CORE"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall preserve the comments and layout of every file it edits."
+rationale = "Requirement files are written by people; rewriting them wholesale destroys their notes and review diffs."
+
+[trace]
+parents = ["RQTK-SYS-0001"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Release"
+success_criteria = "Rehash and baseline change only the keys they own."
+
+[[verification.activities]]
+id = "VA-CORE-004-01"
+name = "Rehash keeps comments"

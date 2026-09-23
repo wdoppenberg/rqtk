@@ -1,0 +1,5 @@
+id = "NEED-0002"
+title = "Proof instead of claims"
+state = "Approved"
+stakeholders = ["STK-001", "STK-003"]
+statement = "Reviewers need proof that each requirement is verified against its current wording, not a status someone typed."

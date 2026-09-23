@@ -1,19 +1,56 @@
-use std::{error::Error, path::Path};
+use std::error::Error;
 
-use rqtk_core::{ChangeKind, RequirementSet};
+use rqtk_core::{ChangeKind, RequirementId, RequirementSet};
+use serde::Serialize;
 
-use crate::output;
+use crate::output::{self, Ctx, Exit};
 
-pub fn run(repo_root: &Path, from: String, to: String) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
-    let diff = set.git.diff_refs(&from, &to, &set.root)?;
+#[derive(Serialize)]
+struct Modified<'a> {
+    id: &'a RequirementId,
+    change: &'static str,
+}
 
-    let total = diff.added.len() + diff.removed.len() + diff.modified.len();
-    if total == 0 {
-        output::success(&format!("No changes between {from} and {to}"), &[]);
-        return Ok(());
+#[derive(Serialize)]
+struct Report<'a> {
+    from: &'a str,
+    to: &'a str,
+    added: &'a [RequirementId],
+    removed: &'a [RequirementId],
+    modified: Vec<Modified<'a>>,
+}
+
+pub fn run(ctx: &Ctx, from: String, to: String) -> Result<Exit, Box<dyn Error>> {
+    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
+    let diff = set.git().diff_refs(&from, &to, set.requirements_dir())?;
+    let modified: Vec<Modified> = diff
+        .modified
+        .iter()
+        .map(|m| Modified {
+            id: &m.id,
+            change: match m.change_kind {
+                ChangeKind::Semantic => "semantic",
+                _ => "cosmetic",
+            },
+        })
+        .collect();
+
+    if ctx.json() {
+        output::json(&Report {
+            from: &from,
+            to: &to,
+            added: &diff.added,
+            removed: &diff.removed,
+            modified,
+        })?;
+        return Ok(Exit::Ok);
     }
 
+    let total = diff.added.len() + diff.removed.len() + modified.len();
+    if total == 0 {
+        output::success(&format!("No changes between {from} and {to}"), &[]);
+        return Ok(Exit::Ok);
+    }
     output::section(
         "Diff",
         &format!(
@@ -22,33 +59,28 @@ pub fn run(repo_root: &Path, from: String, to: String) -> Result<(), Box<dyn Err
             diff.to,
             diff.added.len(),
             diff.removed.len(),
-            diff.modified.len()
+            modified.len()
         ),
     );
-
-    if !diff.added.is_empty() {
-        output::subsection("+", "Added");
-        for id in &diff.added {
-            output::item(&id.to_string());
+    for (icon, title, ids) in [("+", "Added", &diff.added), ("-", "Removed", &diff.removed)] {
+        if !ids.is_empty() {
+            output::subsection(icon, title);
+            for id in ids {
+                output::item(id.as_ref());
+            }
         }
     }
-    if !diff.removed.is_empty() {
-        output::subsection("-", "Removed");
-        for id in &diff.removed {
-            output::item(&id.to_string());
-        }
-    }
-    if !diff.modified.is_empty() {
+    if !modified.is_empty() {
         output::subsection("~", "Modified");
-        for m in &diff.modified {
-            let tag = match m.change_kind {
-                ChangeKind::Semantic => "[semantic]",
-                ChangeKind::Cosmetic => "[admin]",
-                _ => "[unknown]",
+        for m in &modified {
+            let tag = if m.change == "semantic" {
+                "[semantic]"
+            } else {
+                "[admin]"
             };
             output::item(&format!("{}  {}", m.id, tag));
         }
     }
     println!();
-    Ok(())
+    Ok(Exit::Ok)
 }

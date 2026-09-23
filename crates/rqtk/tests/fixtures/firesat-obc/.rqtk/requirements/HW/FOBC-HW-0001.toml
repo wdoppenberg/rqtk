@@ -1,0 +1,23 @@
+id = "FOBC-HW-0001"
+title = "Operating Temperature Range"
+category = "HW"
+type = "Constraint"
+state = "Approved"
+priority = "Critical"
+statement = "The OBC hardware shall operate within specification across a temperature range of -40 to +85 degrees Celsius."
+rationale = "The selected orbit profile exposes the OBC to thermal cycles requiring operation across a wide temperature range."
+
+[trace]
+parents = ["FOBC-SYS-0001"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Pre-release"
+success_criteria = "OBC meets all functional requirements at both temperature extremes with no failures."
+
+[[verification.activities]]
+id = "FOBC-VA-HW-001-01"
+name = "Thermal vacuum qualification test"
+status = "Passed"
+expected_result = "Full functionality at temperature extremes"

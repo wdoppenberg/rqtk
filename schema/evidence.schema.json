@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "ActivityEvidence": {
+      "additionalProperties": false,
+      "description": "The latest recorded result for one verification activity.",
+      "properties": {
+        "commit": {
+          "description": "Commit checked out when the evidence was recorded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Verification activity ID.",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "requirement": {
+          "$ref": "#/$defs/RequirementId",
+          "description": "Requirement that owned the activity when the evidence was recorded."
+        },
+        "requirement_hash": {
+          "description": "The requirement's content hash when the evidence was recorded. If the requirement's\ncurrent hash differs, the evidence is stale and the activity is Suspect.",
+          "type": "string"
+        },
+        "tests": {
+          "description": "Test cases that produced the outcome, as `classname::name`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "requirement",
+        "requirement_hash",
+        "outcome",
+        "tests"
+      ],
+      "type": "object"
+    },
+    "Outcome": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "activity": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ActivityEvidence"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version"
+  ],
+  "title": "EvidenceFile",
+  "type": "object"
+}

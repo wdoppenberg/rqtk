@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0005"
+title = "Agent skills"
+category = "CLI"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk shall install its agent skills for Claude Code and for every agent that reads `.agents/skills`."
+rationale = "Skills tell agents how to use rqtk inside their normal workflow."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "Skills install into both locations, upgrade cleanly and keep local edits."
+
+[[verification.activities]]
+id = "VA-CLI-005-01"
+name = "Install and upgrade skills"

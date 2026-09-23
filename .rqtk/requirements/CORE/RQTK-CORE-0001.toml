@@ -1,0 +1,25 @@
+id = "RQTK-CORE-0001"
+title = "Complete, located diagnostics"
+category = "CORE"
+type = "Functional"
+state = "Approved"
+priority = "Critical"
+statement = "rqtk-core shall report every invalid file in a single load, each with its path and line."
+rationale = "Stopping at the first error forces one fix per run; locations let agents fix findings without searching."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Release"
+success_criteria = "A run with several broken files reports each of them with its line."
+
+[[verification.activities]]
+id = "VA-CORE-001-01"
+name = "Every broken file in one run"
+
+[[verification.activities]]
+id = "VA-CORE-001-02"
+name = "Strict, versioned schema"
