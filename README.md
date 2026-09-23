@@ -86,10 +86,10 @@ rqtk open FOBC-SYS-0001           # open requirement in $EDITOR
 rqtk search "telemetry"           # full-text search across requirement fields
 rqtk search "telemetry" -i \
           --field title,statement  # case-insensitive search in specific fields
-rqtk graph --format dot           # export traceability graph
+rqtk graph                         # traceability graph as Graphviz DOT
 rqtk export --format json|csv|markdown
 rqtk rehash                        # recompute and write content hashes
-rqtk report                        # generate PDF report via Typst
+rqtk report [-o report.md]         # Markdown requirements report (stdout by default)
 ```
 
 ## Data model

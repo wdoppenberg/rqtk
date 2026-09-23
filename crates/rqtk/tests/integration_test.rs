@@ -1790,8 +1790,12 @@ text = "The system shall satisfy this need."
 [need.status]
 state = "Draft"
 "#;
-    let (_dir, repo_root) =
-        write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[("NEED-0001.toml", need_toml)]);
+    let (_dir, repo_root) = write_fixture_full(
+        BASE_CONFIG_WITH_STAKEHOLDERS,
+        &[],
+        &[],
+        &[("NEED-0001.toml", need_toml)],
+    );
     let output = rqtk(&repo_root).arg("lint").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(
@@ -1891,4 +1895,35 @@ fn add_need_creates_file() {
     let content = fs::read_to_string(&need_path).unwrap();
     assert!(content.contains("NEED-0001"), "ID not in file");
     assert!(content.contains("Operator visibility"), "title not in file");
+}
+
+// ── report / graph ───────────────────────────────────────────────────────────
+
+#[test]
+fn report_prints_markdown_to_stdout() {
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
+        .arg("report")
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with(
+            "# FireSat OBC — Requirements Specification",
+        ))
+        .stdout(predicate::str::contains("## Traceability matrix"))
+        .stdout(predicate::str::contains("#### `FOBC-SYS-0001`"));
+}
+
+#[test]
+fn graph_rejects_graphml() {
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
+        .args(["graph", "--format", "graphml"])
+        .assert()
+        .failure();
+}
+
+#[test]
+fn add_requires_flags() {
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root).arg("add").assert().failure();
 }

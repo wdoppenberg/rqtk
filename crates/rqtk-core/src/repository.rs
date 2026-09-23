@@ -669,118 +669,10 @@ impl RequirementSet<Validated> {
         out.push_str("}\n");
         out
     }
-
-    pub fn to_graphml(&self) -> String {
-        let mut out = String::new();
-        out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        out.push_str("<graphml xmlns=\"http://graphml.graphdrawing.org/graphml\"\n");
-        out.push_str("         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
-        out.push_str("         xsi:schemaLocation=\"http://graphml.graphdrawing.org/graphml http://graphml.graphdrawing.org/graphml/graphml-attributes.xsd\">\n");
-
-        let node_keys = [
-            ("d_title", "title", "string"),
-            ("d_cat", "category", "string"),
-            ("d_type", "req_type", "string"),
-            ("d_state", "state", "string"),
-            ("d_priority", "priority", "string"),
-            ("d_crit", "criticality", "string"),
-            ("d_vmethod", "verification_method", "string"),
-            ("d_vlevel", "verification_level", "string"),
-            ("d_tbd", "tbd", "boolean"),
-            ("d_tbr", "tbr", "boolean"),
-            ("d_stmt", "statement", "string"),
-        ];
-        for (key_id, name, typ) in &node_keys {
-            out.push_str(&format!(
-                "  <key id=\"{}\" for=\"node\" attr.name=\"{}\" attr.type=\"{}\"/>\n",
-                key_id, name, typ
-            ));
-        }
-        out.push_str(
-            "  <key id=\"d_etype\" for=\"edge\" attr.name=\"type\" attr.type=\"string\"/>\n",
-        );
-
-        out.push_str("  <graph id=\"G\" edgedefault=\"directed\">\n");
-
-        for (id, req_file) in &self.requirements {
-            let req = &req_file.requirement;
-            out.push_str(&format!("    <node id=\"{}\">\n", xml_escape(&id.0)));
-            out.push_str(&gml_data("d_title", &xml_escape(&req.title)));
-            out.push_str(&gml_data("d_cat", &xml_escape(&req.category)));
-            out.push_str(&gml_data("d_type", &xml_escape(&req.req_type)));
-            out.push_str(&gml_data("d_state", &xml_escape(&req.status.state)));
-            out.push_str(&gml_data("d_priority", &xml_escape(&req.status.priority)));
-            out.push_str(&gml_data(
-                "d_crit",
-                &xml_escape(req.status.criticality.as_deref().unwrap_or("")),
-            ));
-            out.push_str(&gml_data(
-                "d_vmethod",
-                &xml_escape(&req.verification.method),
-            ));
-            out.push_str(&gml_data("d_vlevel", &xml_escape(&req.verification.level)));
-            out.push_str(&gml_data(
-                "d_tbd",
-                if req.status.tbd { "true" } else { "false" },
-            ));
-            out.push_str(&gml_data(
-                "d_tbr",
-                if req.status.tbr { "true" } else { "false" },
-            ));
-            out.push_str(&gml_data("d_stmt", &xml_escape(&req.statement.text)));
-            out.push_str("    </node>\n");
-        }
-
-        let mut edge_id = 0usize;
-        for (id, req_file) in &self.requirements {
-            let t = &req_file.requirement.traceability;
-            let emit = |out: &mut String, eid: &mut usize, src: &str, tgt: &str, etype: &str| {
-                out.push_str(&format!(
-                    "    <edge id=\"e{}\" source=\"{}\" target=\"{}\">\n",
-                    eid,
-                    xml_escape(src),
-                    xml_escape(tgt)
-                ));
-                out.push_str(&gml_data("d_etype", etype));
-                out.push_str("    </edge>\n");
-                *eid += 1;
-            };
-            for p in &t.parents {
-                emit(&mut out, &mut edge_id, &id.0, &p.0, "parent");
-            }
-            for d in &t.depends_on {
-                emit(&mut out, &mut edge_id, &id.0, &d.0, "depends_on");
-            }
-            for d in &t.derived_from {
-                emit(&mut out, &mut edge_id, &id.0, &d.0, "derived_from");
-            }
-            for r in &t.refines {
-                emit(&mut out, &mut edge_id, &id.0, &r.0, "refines");
-            }
-            for c in &t.conflicts_with {
-                emit(&mut out, &mut edge_id, &id.0, &c.0, "conflicts_with");
-            }
-        }
-
-        out.push_str("  </graph>\n");
-        out.push_str("</graphml>\n");
-        out
-    }
 }
 
 fn dot_escape(s: &str) -> String {
     s.replace('\\', "\\\\").replace('"', "\\\"")
-}
-
-fn xml_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-}
-
-fn gml_data(key: &str, value: &str) -> String {
-    format!("      <data key=\"{}\">{}</data>\n", key, value)
 }
 
 impl<S> RequirementSet<S> {
@@ -932,7 +824,10 @@ impl<S> RequirementSet<S> {
         let max = self
             .stakeholders
             .keys()
-            .filter_map(|id| id.strip_prefix("STK-").and_then(|n| n.parse::<usize>().ok()))
+            .filter_map(|id| {
+                id.strip_prefix("STK-")
+                    .and_then(|n| n.parse::<usize>().ok())
+            })
             .max()
             .unwrap_or(0);
         format!("STK-{:03}", max + 1)
@@ -955,7 +850,10 @@ impl<S> RequirementSet<S> {
         let max = self
             .needs
             .keys()
-            .filter_map(|id| id.0.strip_prefix("NEED-").and_then(|n| n.parse::<usize>().ok()))
+            .filter_map(|id| {
+                id.0.strip_prefix("NEED-")
+                    .and_then(|n| n.parse::<usize>().ok())
+            })
             .max()
             .unwrap_or(0);
         NeedId(format!("NEED-{:04}", max + 1))

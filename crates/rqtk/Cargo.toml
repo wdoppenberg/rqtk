@@ -6,29 +6,25 @@ edition = "2024"
 [dependencies]
 rqtk-core = { path = "../rqtk-core" }
 rqtk-export = { path = "../rqtk-export", features = ["clap"] }
-rqtk-cpp = { path = "../rqtk-cpp", optional = true }
 rqtk-macros = { path = "../rqtk-macros", optional = true }
-rqtk-report = { path = "../rqtk-report", optional = true }
+rqtk-report = { path = "../rqtk-report" }
 serde = { workspace = true }
 serde_json = "1.0.145"
 clap = { version = "4.5.53", features = ["derive"], optional = true }
 semver = "1.0.27"
 console = "0.16"
 comfy-table = "7.2"
-dialoguer = "0.12"
 chrono = "0.4.44"
 
 [features]
-default = ["cli", "report"]
+default = ["cli"]
 macros = ["dep:rqtk-macros"]
-cpp = ["dep:rqtk-cpp"]
-report = ["dep:rqtk-report"]
 cli = ["dep:clap"]
 
 [[bin]]
 name = "rqtk"
 path = "src/main.rs"
-required-features = ["cli", "report"]
+required-features = ["cli"]
 
 [dev-dependencies]
 assert_cmd = "2.0"

@@ -2,9 +2,8 @@
 name = "rqtk-report"
 version = "0.1.0"
 edition = "2024"
-description = "PDF report generation for rqtk requirement sets via Typst"
+description = "Markdown report generation for rqtk requirement sets"
 
 [dependencies]
 rqtk-core = { path = "../rqtk-core" }
 chrono = "0.4"
-thiserror = "2"

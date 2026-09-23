@@ -24,25 +24,29 @@ enum Command {
         #[arg(long)]
         force: bool,
     },
-    /// Add a new requirement to the requirement set.
+    /// Add a new requirement with the next free ID in its category.
     Add {
+        /// Category key from `.rqtk/config.toml`, e.g. SYS.
         #[arg(long)]
-        category: Option<String>,
+        category: String,
+        /// Requirement type from `types.allowed`.
         #[arg(long = "type")]
-        req_type: Option<String>,
+        req_type: String,
         #[arg(long)]
-        title: Option<String>,
+        title: String,
+        /// A single normative sentence, e.g. "The system shall …".
         #[arg(long)]
-        statement: Option<String>,
+        statement: String,
         #[arg(long)]
         rationale: Option<String>,
     },
     /// Add a new stakeholder definition.
     AddStakeholder {
+        /// Defaults to the next free STK-NNN.
         #[arg(long)]
         id: Option<String>,
         #[arg(long)]
-        name: Option<String>,
+        name: String,
         #[arg(long)]
         role: Option<String>,
         #[arg(long)]
@@ -50,12 +54,13 @@ enum Command {
     },
     /// Add a new stakeholder need.
     AddNeed {
+        /// Defaults to the next free NEED-NNNN.
         #[arg(long)]
         id: Option<String>,
         #[arg(long)]
-        title: Option<String>,
+        title: String,
         #[arg(long)]
-        statement: Option<String>,
+        statement: String,
         /// Stakeholder IDs associated with this need (comma-separated).
         #[arg(long, value_delimiter = ',')]
         stakeholders: Option<Vec<String>>,
@@ -73,10 +78,10 @@ enum Command {
         #[arg(short, long)]
         short: bool,
     },
-    /// Export the requirement traceability graph (formats: dot, graphml).
+    /// Print the requirement traceability graph.
     Graph {
-        #[arg(long, default_value = "dot")]
-        format: String,
+        #[arg(long, value_enum, default_value_t = commands::graph::GraphFormat::Dot)]
+        format: commands::graph::GraphFormat,
     },
     /// Create a git tag baseline for the current HEAD.
     Baseline { version: String },
@@ -108,20 +113,11 @@ enum Command {
     InstallHook,
     /// Recompute and write content hashes for all requirements.
     Rehash,
-    /// Generate a PDF requirements report via the Typst typesetting system.
-    #[cfg(feature = "report")]
+    /// Generate a Markdown requirements report.
     Report {
-        /// Output path: .pdf compiles via typst CLI, .typ writes the source.
-        #[arg(short, long, default_value = "requirements-report.pdf")]
-        output: PathBuf,
-    },
-    /// Generate a C++ header with compile-time verification activity checks.
-    #[cfg(feature = "cpp")]
-    CodegenCppVerifies {
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value = "VERIFIES")]
-        macro_name: String,
+        /// Write to this file instead of stdout.
+        #[arg(short, long)]
+        output: Option<PathBuf>,
     },
 }
 
@@ -239,13 +235,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         Command::Rehash => {
             commands::rehash::run(root)?;
         }
-        #[cfg(feature = "report")]
         Command::Report { output } => {
             commands::report::run(root, output)?;
-        }
-        #[cfg(feature = "cpp")]
-        Command::CodegenCppVerifies { output, macro_name } => {
-            commands::codegen_cpp::run(root, output, macro_name)?;
         }
     }
     Ok(())

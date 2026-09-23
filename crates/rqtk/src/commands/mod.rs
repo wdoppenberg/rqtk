@@ -12,11 +12,6 @@ pub mod lint;
 pub mod log;
 pub mod open;
 pub mod rehash;
+pub mod report;
 pub mod search;
 pub mod trace;
-
-#[cfg(feature = "report")]
-pub mod report;
-
-#[cfg(feature = "cpp")]
-pub mod codegen_cpp;
