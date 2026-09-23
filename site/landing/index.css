@@ -68,6 +68,18 @@ a:focus-visible {
 #t { --glyph: '✓'; }
 #k { --glyph: '~'; }
 
+/* The name, spelled out, tucked right under the letters. */
+#name {
+  color: var(--dim);
+  font-size: max(0.75rem, calc(var(--size) / 12));
+  letter-spacing: 0.08em;
+  margin-top: calc(var(--size) / -8);
+}
+
+#name q {
+  quotes: '“' '”';
+}
+
 #pitch {
   color: var(--dim);
   font-size: max(0.9rem, calc(var(--size) / 9));

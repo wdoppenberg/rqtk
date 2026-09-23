@@ -1,5 +1,7 @@
 # rqtk
 
+> **rqtk**: requirements toolkit
+
 Requirements engineering that lives in your repository. Documentation: **[rqtk.dev](https://rqtk.dev)**.
 
 Requirements are TOML files, checked in alongside code. Baselines are git tags. History is `git log`. There is no separate tool, database, or export step standing between your requirements and your version control.
