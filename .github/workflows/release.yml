@@ -290,8 +290,10 @@ jobs:
     with:
       plan: ${{ needs.plan.outputs.val }}
     secrets: inherit
-    # publish jobs get escalated permissions
+    # publish jobs get escalated permissions. A reusable workflow may not request more than
+    # its caller grants, and publish-crates.yml checks out the repository: contents: read.
     permissions:
+      "contents": "read"
       "id-token": "write"
       "packages": "write"
 
