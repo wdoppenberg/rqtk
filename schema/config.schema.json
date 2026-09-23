@@ -1,106 +1,7 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Config",
-  "type": "object",
-  "properties": {
-    "categories": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/$defs/Category"
-      }
-    },
-    "criticality": {
-      "$ref": "#/$defs/CriticalityPolicy"
-    },
-    "identification": {
-      "$ref": "#/$defs/IdentificationScheme"
-    },
-    "lifecycle": {
-      "$ref": "#/$defs/LifecyclePolicy"
-    },
-    "priority": {
-      "$ref": "#/$defs/PriorityPolicy"
-    },
-    "project": {
-      "$ref": "#/$defs/ProjectMeta"
-    },
-    "repository": {
-      "$ref": "#/$defs/RepositoryLayout",
-      "default": {
-        "needs_dir": ".rqtk/needs",
-        "required_dirs": [],
-        "required_files": [],
-        "requirements_dir": ".rqtk/requirements",
-        "stakeholders_dir": ".rqtk/stakeholders"
-      }
-    },
-    "scan": {
-      "$ref": "#/$defs/ScanConfig",
-      "default": {
-        "exclude": [],
-        "extensions": [
-          "rs",
-          "py",
-          "go",
-          "ts",
-          "tsx",
-          "js",
-          "jsx",
-          "java",
-          "kt",
-          "c",
-          "cc",
-          "cpp",
-          "h",
-          "hpp",
-          "cs",
-          "swift",
-          "rb"
-        ],
-        "paths": [
-          "."
-        ]
-      }
-    },
-    "schema_version": {
-      "description": "File format version; must equal the version supported by this build of rqtk.",
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0
-    },
-    "standards": {
-      "type": "array",
-      "default": [],
-      "items": {
-        "$ref": "#/$defs/Standard"
-      }
-    },
-    "types": {
-      "$ref": "#/$defs/TypePolicy"
-    },
-    "validation": {
-      "$ref": "#/$defs/ValidationRules"
-    },
-    "verification": {
-      "$ref": "#/$defs/VerificationPolicy"
-    }
-  },
-  "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "project",
-    "identification",
-    "categories",
-    "types",
-    "verification",
-    "lifecycle",
-    "priority",
-    "criticality",
-    "validation"
-  ],
   "$defs": {
     "Category": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": [
@@ -109,103 +10,103 @@
           ]
         },
         "is_root": {
+          "default": false,
           "description": "Marks this category as a traceability root. At least one category should set this\nto `true` for orphan detection to work.",
-          "type": "boolean",
-          "default": false
+          "type": "boolean"
         },
         "level": {
-          "type": "integer",
           "format": "uint8",
           "maximum": 255,
-          "minimum": 0
+          "minimum": 0,
+          "type": "integer"
         },
         "name": {
           "type": "string"
         }
       },
-      "additionalProperties": false,
       "required": [
         "name",
         "level"
-      ]
+      ],
+      "type": "object"
     },
     "CriticalityPolicy": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "levels": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false,
       "required": [
         "levels"
-      ]
+      ],
+      "type": "object"
     },
     "IdentificationScheme": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "id_pattern": {
           "type": "string"
         },
         "id_separator": {
-          "type": "string",
-          "default": "-"
+          "default": "-",
+          "type": "string"
         },
         "prefix": {
-          "type": "string",
-          "default": "REQ"
+          "default": "REQ",
+          "type": "string"
         },
         "zero_padding": {
-          "type": "integer",
-          "format": "uint",
           "default": 4,
-          "minimum": 0
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
         }
       },
-      "additionalProperties": false,
       "required": [
         "id_pattern"
-      ]
+      ],
+      "type": "object"
     },
     "LifecyclePolicy": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "default_state": {
           "type": "string"
         },
         "states": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false,
       "required": [
         "states",
         "default_state"
-      ]
+      ],
+      "type": "object"
     },
     "PriorityPolicy": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "levels": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false,
       "required": [
         "levels"
-      ]
+      ],
+      "type": "object"
     },
     "ProjectMeta": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "classification": {
           "type": [
@@ -266,14 +167,14 @@
           "type": "string"
         }
       },
-      "additionalProperties": false,
       "required": [
         "name",
         "version"
-      ]
+      ],
+      "type": "object"
     },
     "ProjectOrganization": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "center": {
           "type": [
@@ -300,55 +201,53 @@
           ]
         }
       },
-      "additionalProperties": false
+      "type": "object"
     },
     "RepositoryLayout": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "needs_dir": {
-          "type": "string",
-          "default": ".rqtk/needs"
+          "default": ".rqtk/needs",
+          "type": "string"
         },
         "required_dirs": {
-          "type": "array",
           "default": [],
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "required_files": {
-          "type": "array",
           "default": [],
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "requirements_dir": {
-          "type": "string",
-          "default": ".rqtk/requirements"
+          "default": ".rqtk/requirements",
+          "type": "string"
         },
         "stakeholders_dir": {
-          "type": "string",
-          "default": ".rqtk/stakeholders"
+          "default": ".rqtk/stakeholders",
+          "type": "string"
         }
       },
-      "additionalProperties": false
+      "type": "object"
     },
     "ScanConfig": {
+      "additionalProperties": false,
       "description": "Where `rqtk scan` looks for `verifies` annotations in source code.",
-      "type": "object",
       "properties": {
         "exclude": {
-          "description": "Glob patterns (gitignore syntax) to skip, e.g. `\"tests/fixtures/**\"`.",
-          "type": "array",
           "default": [],
+          "description": "Glob patterns (gitignore syntax) to skip, e.g. `\"tests/fixtures/**\"`.",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "extensions": {
-          "description": "File extensions to read.",
-          "type": "array",
           "default": [
             "rs",
             "py",
@@ -368,25 +267,27 @@
             "swift",
             "rb"
           ],
+          "description": "File extensions to read.",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "paths": {
-          "description": "Directories to scan, relative to the repository root. `.gitignore` is honoured.",
-          "type": "array",
           "default": [
             "."
           ],
+          "description": "Directories to scan, relative to the repository root. `.gitignore` is honoured.",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false
+      "type": "object"
     },
     "Standard": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "id": {
           "type": "string"
@@ -401,29 +302,29 @@
           "type": "string"
         }
       },
-      "additionalProperties": false,
       "required": [
         "id",
         "title"
-      ]
+      ],
+      "type": "object"
     },
     "TypePolicy": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "allowed": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false,
       "required": [
         "allowed"
-      ]
+      ],
+      "type": "object"
     },
     "ValidationRules": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "allow_tbd": {
           "type": "boolean"
@@ -438,18 +339,18 @@
           "type": "boolean"
         },
         "forbidden_keywords": {
-          "type": "array",
           "default": [],
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "require_parent_for_levels": {
-          "type": "array",
           "default": [],
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "require_rationale": {
           "type": "boolean"
@@ -458,14 +359,13 @@
           "type": "boolean"
         },
         "shall_keywords": {
-          "type": "array",
           "default": [],
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false,
       "required": [
         "require_rationale",
         "require_verification_method",
@@ -473,36 +373,136 @@
         "forbid_circular_traces",
         "allow_tbd",
         "allow_tbr"
-      ]
+      ],
+      "type": "object"
     },
     "VerificationPolicy": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "levels": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "methods": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         },
         "phases": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "type": "array"
         }
       },
-      "additionalProperties": false,
       "required": [
         "methods",
         "levels",
         "phases"
-      ]
+      ],
+      "type": "object"
     }
-  }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "categories": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Category"
+      },
+      "type": "object"
+    },
+    "criticality": {
+      "$ref": "#/$defs/CriticalityPolicy"
+    },
+    "identification": {
+      "$ref": "#/$defs/IdentificationScheme"
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/LifecyclePolicy"
+    },
+    "priority": {
+      "$ref": "#/$defs/PriorityPolicy"
+    },
+    "project": {
+      "$ref": "#/$defs/ProjectMeta"
+    },
+    "repository": {
+      "$ref": "#/$defs/RepositoryLayout",
+      "default": {
+        "needs_dir": ".rqtk/needs",
+        "required_dirs": [],
+        "required_files": [],
+        "requirements_dir": ".rqtk/requirements",
+        "stakeholders_dir": ".rqtk/stakeholders"
+      }
+    },
+    "scan": {
+      "$ref": "#/$defs/ScanConfig",
+      "default": {
+        "exclude": [],
+        "extensions": [
+          "rs",
+          "py",
+          "go",
+          "ts",
+          "tsx",
+          "js",
+          "jsx",
+          "java",
+          "kt",
+          "c",
+          "cc",
+          "cpp",
+          "h",
+          "hpp",
+          "cs",
+          "swift",
+          "rb"
+        ],
+        "paths": [
+          "."
+        ]
+      }
+    },
+    "schema_version": {
+      "description": "File format version; must equal the version supported by this build of rqtk.",
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "standards": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Standard"
+      },
+      "type": "array"
+    },
+    "types": {
+      "$ref": "#/$defs/TypePolicy"
+    },
+    "validation": {
+      "$ref": "#/$defs/ValidationRules"
+    },
+    "verification": {
+      "$ref": "#/$defs/VerificationPolicy"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "identification",
+    "categories",
+    "types",
+    "verification",
+    "lifecycle",
+    "priority",
+    "criticality",
+    "validation"
+  ],
+  "title": "Config",
+  "type": "object"
 }

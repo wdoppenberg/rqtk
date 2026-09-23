@@ -4,9 +4,11 @@ pub mod evidence;
 pub mod git;
 pub mod io;
 pub mod model;
+pub mod query;
 pub mod repository;
 pub mod rules;
 pub mod scan;
+pub mod schema;
 pub mod status;
 pub mod validation;
 #[cfg(feature = "verification-lookup")]
@@ -28,7 +30,7 @@ pub use model::{
     ValidationSpec, Verification, VerificationActivity, VerificationPolicy,
 };
 pub use repository::{
-    Loaded, RequirementSet, SatisfactionStatus, TraceView, Validated, load_config,
+    Loaded, RequirementSet, SatisfactionStatus, StaleHash, TraceView, Validated, load_config,
 };
 pub use scan::SourceLink;
 pub use status::{ActivityState, ClosureStatus, RequirementVerification};

@@ -1,7 +1,40 @@
 {
+  "$defs": {
+    "Acceptance": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Need",
-  "type": "object",
+  "additionalProperties": false,
   "properties": {
     "acceptance": {
       "anyOf": [
@@ -23,10 +56,10 @@
       "$ref": "#/$defs/NeedId"
     },
     "keywords": {
-      "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "type": "array"
     },
     "priority": {
       "type": [
@@ -41,10 +74,10 @@
       ]
     },
     "stakeholders": {
-      "type": "array",
       "items": {
         "$ref": "#/$defs/StakeholderId"
-      }
+      },
+      "type": "array"
     },
     "state": {
       "type": "string"
@@ -56,45 +89,12 @@
       "type": "string"
     }
   },
-  "additionalProperties": false,
   "required": [
     "id",
     "title",
     "state",
     "statement"
   ],
-  "$defs": {
-    "Acceptance": {
-      "type": "object",
-      "properties": {
-        "criteria": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "validated_at": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "validated_by": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
-    "NeedId": {
-      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
-      "type": "string"
-    },
-    "StakeholderId": {
-      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
-      "type": "string"
-    }
-  }
+  "title": "Need",
+  "type": "object"
 }

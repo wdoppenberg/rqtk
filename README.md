@@ -75,6 +75,8 @@ rqtk add --category SYS \
 rqtk add-need --title "..." --statement "..." --stakeholders STK-001
 rqtk add-stakeholder --name "..." [--role "..."]
 rqtk lint                          # validate all requirements against config
+rqtk context FOBC-SW-0001         # everything about one item: links, tests, status, findings
+rqtk impact main                   # what changed since a revision and what to re-verify
 rqtk trace FOBC-SYS-0001          # show full traceability chain up and down
 rqtk scan                          # list `verifies` links between tests and activities
 rqtk verify --results junit.xml    # record test results as evidence in .rqtk/evidence.toml
@@ -92,6 +94,47 @@ rqtk graph                         # traceability graph as Graphviz DOT
 rqtk export --format json|csv|markdown
 rqtk rehash                        # recompute and write content hashes (keeps comments)
 rqtk report [-o report.md]         # Markdown requirements report (stdout by default)
+rqtk schema requirement            # JSON Schema of a file kind (config, need, evidence, …)
+rqtk explain RQ010                 # what a lint rule checks and how to fix it
+```
+
+Every command accepts `--json`. Every command that writes files (`init`, `add*`, `rehash`, `baseline`, `verify`) accepts `--dry-run`.
+
+## Scripting and agents
+
+rqtk is built to be driven by scripts and coding agents as well as people.
+
+- **`--json`** prints one JSON document on stdout. Paths in it are relative to the repository root, and diagnostics carry `code`, `severity`, `subject` and `location.line`. With `--json`, errors are written to stderr as `{"error": {"kind": "usage" | "error", "message": …}}`.
+- **Exit codes are fixed:**
+
+  | Code | Meaning |
+  |---|---|
+  | 0 | success, nothing to report |
+  | 1 | findings: lint errors, Failed/Suspect/Gap under `coverage --strict`, failed tests in `verify`, stale evidence under `verify --check` |
+  | 2 | usage error: bad arguments, unknown category/type/rule/kind, or `--json` on a command that prints a document (`report`, `graph`, `open`) |
+  | 3 | error: missing or invalid configuration, I/O or git failure |
+
+- **Nothing prompts.** Every input is a flag, and `--dry-run` shows exactly what would be written. For `add*` that is the full TOML, or the item under `--json`.
+- **`rqtk schema <kind>`** prints the JSON Schema for each file kind, and **`rqtk explain <code>`** gives a rule's meaning and fix. An agent can look both up instead of guessing.
+- **`rqtk context <ID>`** is the briefing for working on one item:
+  - for a requirement: its ancestors, children and other links, the needs it satisfies, the test functions linked to each activity, their verification status and evidence, and its lint findings;
+  - for a need: its stakeholders and the requirements that satisfy it;
+  - for a stakeholder: their needs.
+- **`rqtk impact <rev>`** compares the working tree with a branch, tag, SHA or baseline. It lists:
+  - requirements and needs that were added, removed or changed (semantic or cosmetic);
+  - requirements downstream of a semantic change, via parents, depends_on, derived_from, refines or satisfies;
+  - every activity to re-verify, because its requirement changed or a file containing its linked test changed.
+
+  Use it in code review to check that a change matches the requirements it touches.
+
+A typical loop for an agent implementing a requirement:
+
+```bash
+rqtk context FOBC-SW-0003 --json           # what is asked, what verifies it, what it's linked to
+# write a failing test annotated with #[verifies("VA-SW-003-01")], implement, make it pass
+cargo nextest run --profile ci
+rqtk verify --results target/nextest/ci/junit.xml
+rqtk lint && rqtk coverage --strict        # exit 0 means done
 ```
 
 ## Data model

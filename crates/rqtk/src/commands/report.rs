@@ -1,12 +1,12 @@
-use std::{error::Error, path::Path, path::PathBuf};
+use std::{error::Error, path::PathBuf};
 
 use rqtk_core::RequirementSet;
 
-use crate::output;
+use crate::output::{self, Ctx, Exit};
 
-pub fn run(repo_root: &Path, out: Option<PathBuf>) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
-    let (set, _) = set.validate();
+pub fn run(ctx: &Ctx, out: Option<PathBuf>) -> Result<Exit, Box<dyn Error>> {
+    ctx.require_text("report")?;
+    let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let (links, evidence) = super::load_links_and_evidence(&set)?;
     let verification = set.verification_status(&links, &evidence);
     let markdown =
@@ -18,5 +18,5 @@ pub fn run(repo_root: &Path, out: Option<PathBuf>) -> Result<(), Box<dyn Error>>
         }
         None => print!("{markdown}"),
     }
-    Ok(())
+    Ok(Exit::Ok)
 }

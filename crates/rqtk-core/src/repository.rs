@@ -21,7 +21,15 @@ use std::path::{Path, PathBuf};
 pub struct Loaded;
 pub struct Validated;
 
-#[derive(Debug, Clone)]
+/// An item whose stored content hash differs from its computed one.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct StaleHash {
+    pub subject: EntityRef,
+    pub path: PathBuf,
+    pub hash: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct TraceView {
     pub upward: Vec<RequirementId>,
     pub downward: Vec<RequirementId>,
@@ -269,40 +277,38 @@ impl RequirementSet<Loaded> {
         for (req_id, req) in &self.requirements {
             let path = &self.files_by_id[req_id];
             let diag = |d: Diagnostic| d.subject(EntityRef::Requirement(req_id.clone())).file(path);
-            let error = |code, field, msg: String| diag(Diagnostic::error(code, msg).field(field));
-            let warning =
-                |code, field, msg: String| diag(Diagnostic::warning(code, msg).field(field));
+            let finding = |code, field, msg: String| diag(Diagnostic::new(code, msg).field(field));
 
             if !self.id_regex.is_match(&req_id.0) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ001",
                     "id",
                     format!("ID `{req_id}` does not match configured id_pattern"),
                 ));
             }
             if !cfg.categories.contains_key(&req.category) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ002",
                     "category",
                     format!("unknown category `{}`", req.category),
                 ));
             }
             if !types.contains(req.req_type.as_str()) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ003",
                     "type",
                     format!("unknown requirement type `{}`", req.req_type),
                 ));
             }
             if !states.contains(req.state.as_str()) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ004",
                     "state",
                     format!("invalid lifecycle state `{}`", req.state),
                 ));
             }
             if !priorities.contains(req.priority.as_str()) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ005",
                     "priority",
                     format!("invalid priority `{}`", req.priority),
@@ -311,14 +317,14 @@ impl RequirementSet<Loaded> {
             if let Some(criticality) = req.criticality.as_deref()
                 && !criticalities.contains(criticality)
             {
-                issues.push(error(
+                issues.push(finding(
                     "RQ006",
                     "criticality",
                     format!("invalid criticality `{criticality}`"),
                 ));
             }
             if cfg.validation.require_rationale && is_blank(req.rationale.as_deref()) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ007",
                     "rationale",
                     "rationale is required but missing".to_owned(),
@@ -327,28 +333,28 @@ impl RequirementSet<Loaded> {
             let method = req.verification.method.trim();
             if method.is_empty() {
                 if cfg.validation.require_verification_method {
-                    issues.push(error(
+                    issues.push(finding(
                         "RQ008",
                         "verification.method",
                         "verification.method is required but missing".to_owned(),
                     ));
                 }
             } else if !methods.contains(method) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ009",
                     "verification.method",
                     format!("invalid verification method `{method}`"),
                 ));
             }
             if !levels.contains(req.verification.level.as_str()) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ024",
                     "verification.level",
                     format!("invalid verification level `{}`", req.verification.level),
                 ));
             }
             if !phases.contains(req.verification.phase.as_str()) {
-                issues.push(error(
+                issues.push(finding(
                     "RQ025",
                     "verification.phase",
                     format!("invalid verification phase `{}`", req.verification.phase),
@@ -360,7 +366,7 @@ impl RequirementSet<Loaded> {
                     &cfg.validation.shall_keywords,
                 )
             {
-                issues.push(error(
+                issues.push(finding(
                     "RQ010",
                     "statement",
                     "statement must contain exactly one normative sentence with a shall keyword"
@@ -369,7 +375,7 @@ impl RequirementSet<Loaded> {
             }
             for (keyword, re) in &forbidden {
                 if re.is_match(&req.statement) {
-                    issues.push(error(
+                    issues.push(finding(
                         "RQ011",
                         "statement",
                         format!("statement uses forbidden keyword `{keyword}`"),
@@ -377,21 +383,21 @@ impl RequirementSet<Loaded> {
                 }
             }
             if parent_required.contains(req.category.as_str()) && req.trace.parents.is_empty() {
-                issues.push(error(
+                issues.push(finding(
                     "RQ012",
                     "trace.parents",
                     format!("category `{}` requires at least one parent", req.category),
                 ));
             }
             if req.tbd && !cfg.validation.allow_tbd {
-                issues.push(error(
+                issues.push(finding(
                     "RQ013",
                     "tbd",
                     "TBD is not allowed by project policy".to_owned(),
                 ));
             }
             if req.tbr && !cfg.validation.allow_tbr {
-                issues.push(error(
+                issues.push(finding(
                     "RQ014",
                     "tbr",
                     "TBR is not allowed by project policy".to_owned(),
@@ -400,7 +406,7 @@ impl RequirementSet<Loaded> {
             if let Some(stored) = &req.content_hash {
                 let computed = req.compute_content_hash();
                 if stored != &computed {
-                    issues.push(warning(
+                    issues.push(finding(
                         "RQ021",
                         "content_hash",
                         stale_hash_message(stored, &computed),
@@ -419,7 +425,7 @@ impl RequirementSet<Loaded> {
                     "conflicts_with" => ("RQ026", "trace.conflicts_with"),
                     _ => ("RQ026", "trace.related"),
                 };
-                issues.push(error(
+                issues.push(finding(
                     code,
                     field,
                     format!("unknown {link} reference `{target}`"),
@@ -427,7 +433,7 @@ impl RequirementSet<Loaded> {
             }
             for need_id in &req.trace.satisfies {
                 if !self.needs.contains_key(need_id) && !self.unloaded_ids.contains(&need_id.0) {
-                    issues.push(error(
+                    issues.push(finding(
                         "RQ022",
                         "trace.satisfies",
                         format!("satisfies references unknown need `{need_id}`"),
@@ -438,7 +444,7 @@ impl RequirementSet<Loaded> {
                 && !self.stakeholders.contains_key(stk_id)
                 && !self.unloaded_ids.contains(&stk_id.0)
             {
-                issues.push(error(
+                issues.push(finding(
                     "RQ023",
                     "validation.stakeholder",
                     format!("validation.stakeholder `{stk_id}` is not a known stakeholder"),
@@ -446,7 +452,7 @@ impl RequirementSet<Loaded> {
             }
             for activity in &req.verification.activities {
                 if let Some(first) = activity_owner.insert(&activity.id, req_id) {
-                    issues.push(error(
+                    issues.push(finding(
                         "RQ027",
                         "verification.activities",
                         format!(
@@ -469,7 +475,7 @@ impl RequirementSet<Loaded> {
                 if !self.stakeholders.contains_key(stk_id) && !self.unloaded_ids.contains(&stk_id.0)
                 {
                     issues.push(diag(
-                        Diagnostic::error(
+                        Diagnostic::new(
                             "RQ023",
                             format!("need references unknown stakeholder `{stk_id}`"),
                         )
@@ -481,7 +487,7 @@ impl RequirementSet<Loaded> {
                 let computed = need.compute_content_hash();
                 if stored != &computed {
                     issues.push(diag(
-                        Diagnostic::warning("RQ021", stale_hash_message(stored, &computed))
+                        Diagnostic::new("RQ021", stale_hash_message(stored, &computed))
                             .field("content_hash"),
                     ));
                 }
@@ -782,27 +788,55 @@ impl<S> RequirementSet<S> {
         need
     }
 
-    /// Recompute stale or missing content hashes and write them back, preserving formatting.
-    /// Returns the number of files updated.
-    pub fn rehash(&mut self) -> Result<usize, RqtkError> {
-        let mut updated = 0;
-        for (id, req) in &mut self.requirements {
-            let computed = req.compute_content_hash();
-            if req.content_hash.as_deref() != Some(computed.as_str()) {
-                write_content_hash(&self.files_by_id[id], &computed)?;
-                req.content_hash = Some(computed);
-                updated += 1;
+    /// Items whose stored content hash is missing or stale, with the file to update and the
+    /// hash it should hold.
+    pub fn stale_hashes(&self) -> Vec<StaleHash> {
+        let reqs = self.requirements.iter().map(|(id, r)| {
+            (
+                EntityRef::Requirement(id.clone()),
+                &self.files_by_id[id],
+                r.content_hash.as_deref(),
+                r.compute_content_hash(),
+            )
+        });
+        let needs = self.needs.iter().map(|(id, n)| {
+            (
+                EntityRef::Need(id.clone()),
+                &self.needs_by_id[id],
+                n.content_hash.as_deref(),
+                n.compute_content_hash(),
+            )
+        });
+        reqs.chain(needs)
+            .filter(|(_, _, stored, computed)| *stored != Some(computed.as_str()))
+            .map(|(subject, path, _, computed)| StaleHash {
+                subject,
+                path: path.clone(),
+                hash: computed,
+            })
+            .collect()
+    }
+
+    /// Write every stale or missing content hash, preserving formatting. Returns what changed.
+    pub fn rehash(&mut self) -> Result<Vec<StaleHash>, RqtkError> {
+        let stale = self.stale_hashes();
+        for item in &stale {
+            write_content_hash(&item.path, &item.hash)?;
+            match &item.subject {
+                EntityRef::Requirement(id) => {
+                    if let Some(r) = self.requirements.get_mut(id) {
+                        r.content_hash = Some(item.hash.clone());
+                    }
+                }
+                EntityRef::Need(id) => {
+                    if let Some(n) = self.needs.get_mut(id) {
+                        n.content_hash = Some(item.hash.clone());
+                    }
+                }
+                EntityRef::Stakeholder(_) => {}
             }
         }
-        for (id, need) in &mut self.needs {
-            let computed = need.compute_content_hash();
-            if need.content_hash.as_deref() != Some(computed.as_str()) {
-                write_content_hash(&self.needs_by_id[id], &computed)?;
-                need.content_hash = Some(computed);
-                updated += 1;
-            }
-        }
-        Ok(updated)
+        Ok(stale)
     }
 
     /// Edges that express derivation or dependency; a cycle among these is a modelling error.
@@ -854,7 +888,7 @@ impl<S> RequirementSet<S> {
                 .join(" ↔ ");
             for id in members {
                 issues.push(
-                    Diagnostic::error("RQ017", format!("traceability cycle: {listing}"))
+                    Diagnostic::new("RQ017", format!("traceability cycle: {listing}"))
                         .subject(EntityRef::Requirement(id.clone()))
                         .file(&self.files_by_id[id])
                         .field("trace"),
@@ -892,7 +926,7 @@ impl<S> RequirementSet<S> {
                 &mut HashSet::new(),
             ) {
                 issues.push(
-                    Diagnostic::warning(
+                    Diagnostic::new(
                         "RQ018",
                         format!("orphan requirement `{id}` has no path to a root category"),
                     )
@@ -912,7 +946,7 @@ impl<S> RequirementSet<S> {
             let path = self.repo_root.join(rel_dir);
             if !path.is_dir() {
                 issues.push(
-                    Diagnostic::error(
+                    Diagnostic::new(
                         "RQ019",
                         format!("repository is missing required directory `{rel_dir}`"),
                     )
@@ -924,7 +958,7 @@ impl<S> RequirementSet<S> {
             let path = self.repo_root.join(rel_file);
             if !path.is_file() {
                 issues.push(
-                    Diagnostic::error(
+                    Diagnostic::new(
                         "RQ020",
                         format!("repository is missing required file `{rel_file}`"),
                     )
@@ -967,7 +1001,7 @@ fn load_items<K: Ord + Clone + AsRef<str>, T: DeserializeOwned>(
             Ok(text) => text,
             Err(e) => {
                 diagnostics
-                    .push(Diagnostic::error("RQ100", format!("cannot read file: {e}")).file(&path));
+                    .push(Diagnostic::new("RQ100", format!("cannot read file: {e}")).file(&path));
                 continue;
             }
         };
@@ -981,7 +1015,7 @@ fn load_items<K: Ord + Clone + AsRef<str>, T: DeserializeOwned>(
                     unloaded_ids.insert(id);
                 }
                 let message = e.message().trim().to_owned();
-                let diag = Diagnostic::error("RQ100", message);
+                let diag = Diagnostic::new("RQ100", message);
                 diagnostics.push(match e.span() {
                     Some(span) => {
                         let (line, col) = line_col(&text, span.start);
@@ -995,7 +1029,7 @@ fn load_items<K: Ord + Clone + AsRef<str>, T: DeserializeOwned>(
         let id = id_of(&item);
         if let Some(first) = seen_ids.get(id.as_ref()) {
             diagnostics.push(
-                Diagnostic::error(
+                Diagnostic::new(
                     "RQ101",
                     format!(
                         "ID `{}` is already defined in {}",
@@ -1011,7 +1045,7 @@ fn load_items<K: Ord + Clone + AsRef<str>, T: DeserializeOwned>(
         }
         if path.file_stem().and_then(|s| s.to_str()) != Some(id.as_ref()) {
             diagnostics.push(
-                Diagnostic::error(
+                Diagnostic::new(
                     "RQ102",
                     format!(
                         "file name does not match ID; expected `{}.toml`",

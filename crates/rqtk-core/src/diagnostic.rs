@@ -34,17 +34,14 @@ pub struct Diagnostic {
 }
 
 impl Diagnostic {
-    pub fn error(code: &'static str, message: impl Into<String>) -> Self {
-        Self::new(Severity::Error, code, message)
-    }
-
-    pub fn warning(code: &'static str, message: impl Into<String>) -> Self {
-        Self::new(Severity::Warning, code, message)
-    }
-
-    fn new(severity: Severity, code: &'static str, message: impl Into<String>) -> Self {
+    /// A finding for rule `code`; its severity comes from [`crate::rules::RULES`].
+    ///
+    /// # Panics
+    /// If `code` is not in the rule table.
+    pub fn new(code: &'static str, message: impl Into<String>) -> Self {
+        let rule = crate::rules::rule(code).unwrap_or_else(|| panic!("unknown rule code {code}"));
         Self {
-            severity,
+            severity: rule.severity,
             code,
             message: message.into(),
             subject: None,

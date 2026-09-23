@@ -111,7 +111,7 @@ impl RequirementSet<Validated> {
         for link in links {
             let at = |d: Diagnostic| d.at(self.repo_root.join(&link.path), link.line, 1);
             if !owners.contains_key(link.activity.as_str()) {
-                issues.push(at(Diagnostic::error(
+                issues.push(at(Diagnostic::new(
                     "RQ028",
                     format!(
                         "`verifies` names unknown verification activity `{}`",
@@ -122,7 +122,7 @@ impl RequirementSet<Validated> {
             }
             linked.insert(link.activity.as_str());
             if link.test_name.is_none() {
-                issues.push(at(Diagnostic::warning(
+                issues.push(at(Diagnostic::new(
                     "RQ030",
                     format!(
                         "`verifies(\"{}\")` is not followed by a function, so no test result can be matched to it",
@@ -136,7 +136,7 @@ impl RequirementSet<Validated> {
             let (req_id, a) = owners[activity];
             if a.status.is_some() {
                 issues.push(
-                    Diagnostic::warning(
+                    Diagnostic::new(
                         "RQ029",
                         format!(
                             "activity `{activity}` is linked to tests, so its status comes from `rqtk verify`; remove the hand-written `status`"

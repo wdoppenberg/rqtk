@@ -64,7 +64,8 @@ pub struct Evidence {
 }
 
 /// How one activity's entry changed when new results were applied.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
 pub enum EvidenceChange {
     Added(ActivityEvidence),
     Updated {
@@ -303,7 +304,7 @@ fn testcase(e: &BytesStart<'_>) -> Result<TestResult, String> {
 // ── Matching results to links ────────────────────────────────────────────────
 
 /// What a test run says about one activity.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ActivityRun {
     /// IDs of the matched test cases, sorted.
     pub tests: Vec<String>,

@@ -1,18 +1,19 @@
-use std::{error::Error, path::Path};
+use std::error::Error;
 
-use rqtk_core::{NeedId, RequirementSet, StakeholderId, io::create_toml_file};
+use rqtk_core::{NeedId, RequirementSet, StakeholderId};
 
-use crate::output;
+use crate::output::{Ctx, Exit};
 
 pub struct AddNeedArgs {
     pub id: Option<String>,
     pub title: String,
     pub statement: String,
     pub stakeholders: Option<Vec<String>>,
+    pub dry_run: bool,
 }
 
-pub fn run(repo_root: &Path, args: AddNeedArgs) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
+pub fn run(ctx: &Ctx, args: AddNeedArgs) -> Result<Exit, Box<dyn Error>> {
+    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let id = args.id.map_or_else(|| set.next_need_id(), NeedId);
     let mut need = set.scaffold_need(id.clone(), &args.title, &args.statement);
     need.stakeholders = args
@@ -24,10 +25,5 @@ pub fn run(repo_root: &Path, args: AddNeedArgs) -> Result<(), Box<dyn Error>> {
     need.content_hash = Some(need.compute_content_hash());
 
     let path = set.needs_root.join(format!("{id}.toml"));
-    create_toml_file(&path, &need)?;
-    output::success(
-        "Need created",
-        &[("id", id.as_ref()), ("file", &path.display().to_string())],
-    );
-    Ok(())
+    super::add::finish(ctx, "Need", &id.0, path, &need, args.dry_run)
 }

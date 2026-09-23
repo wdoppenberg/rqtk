@@ -2,15 +2,28 @@ mod commands;
 mod output;
 
 use clap::{Parser, Subcommand};
+use output::{Ctx, Exit, Format, Usage};
 use rqtk_export::ExportFormat;
 use std::error::Error;
 use std::path::PathBuf;
+use std::process::ExitCode;
+
+const AFTER_HELP: &str = "\
+Exit codes:
+  0  success, nothing to report
+  1  findings: lint errors, failed or suspect verification, stale evidence
+  2  usage error: bad arguments or unsupported option
+  3  error: configuration, I/O or git failure";
 
 #[derive(Debug, Parser)]
-#[command(name = "rqtk", version, about = "Requirements Toolkit")]
+#[command(name = "rqtk", version, about = "Requirements Toolkit", after_help = AFTER_HELP)]
 struct Cli {
-    #[arg(long, default_value = ".")]
+    /// Repository root (the directory containing `.rqtk/`).
+    #[arg(long, global = true, default_value = ".")]
     repo_root: PathBuf,
+    /// Print one JSON document to stdout instead of text. Errors go to stderr as JSON.
+    #[arg(long, global = true)]
+    json: bool,
     #[command(subcommand)]
     command: Command,
 }
@@ -21,8 +34,12 @@ enum Command {
     Init {
         #[arg(long)]
         requirements_dir: Option<String>,
+        /// Overwrite an existing `.rqtk/config.toml`.
         #[arg(long)]
         force: bool,
+        /// Report the files that would be created without writing them.
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Add a new requirement with the next free ID in its category.
     Add {
@@ -39,6 +56,9 @@ enum Command {
         statement: String,
         #[arg(long)]
         rationale: Option<String>,
+        /// Print the file that would be created without writing it.
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Add a new stakeholder definition.
     AddStakeholder {
@@ -51,6 +71,9 @@ enum Command {
         role: Option<String>,
         #[arg(long)]
         organization: Option<String>,
+        /// Print the file that would be created without writing it.
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Add a new stakeholder need.
     AddNeed {
@@ -64,10 +87,21 @@ enum Command {
         /// Stakeholder IDs associated with this need (comma-separated).
         #[arg(long, value_delimiter = ',')]
         stakeholders: Option<Vec<String>>,
+        /// Print the file that would be created without writing it.
+        #[arg(long)]
+        dry_run: bool,
     },
-    /// Lint the requirement set for errors and inconsistencies.
+    /// Check every file against the schema, the config and the `verifies` links in source.
     Lint,
-    /// Trace the lifecycle of a requirement by its ID.
+    /// Everything relevant to one requirement, need or stakeholder: links, tests, status,
+    /// evidence and lint findings. Designed as the briefing for working on an item.
+    Context { id: String },
+    /// What changed since a git revision, and which requirements and activities it affects.
+    Impact {
+        /// Branch, tag, SHA, `HEAD~N` or baseline name to compare the working tree against.
+        base: String,
+    },
+    /// Show the parent/child traceability chain of a requirement.
     Trace { id: String },
     /// Report need satisfaction and verification status (verified / suspect / failed / …).
     Coverage {
@@ -83,8 +117,13 @@ enum Command {
         #[arg(long, value_enum, default_value_t = commands::graph::GraphFormat::Dot)]
         format: commands::graph::GraphFormat,
     },
-    /// Create a git tag baseline for the current HEAD.
-    Baseline { version: String },
+    /// Stamp all requirements and create a git tag baseline for HEAD.
+    Baseline {
+        version: String,
+        /// Report what would be stamped and tagged without changing anything.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Export requirements to a file in the given format.
     Export {
         #[arg(long)]
@@ -92,7 +131,7 @@ enum Command {
         #[arg(long)]
         output: Option<PathBuf>,
     },
-    /// Show requirements that changed between two baseline tags.
+    /// Show requirements that changed between two git revisions or baselines.
     Diff { from: String, to: String },
     /// List `verifies` links between source code and verification activities.
     Scan,
@@ -106,10 +145,13 @@ enum Command {
         #[arg(long = "results", required = true, num_args = 1..)]
         results: Vec<PathBuf>,
         /// Do not write; exit 1 if the evidence file is out of date.
-        #[arg(long)]
+        #[arg(long, conflicts_with = "dry_run")]
         check: bool,
+        /// Report what would be recorded without writing.
+        #[arg(long)]
+        dry_run: bool,
     },
-    /// Search requirements by string matching across fields.
+    /// Search requirements, needs and stakeholders by substring.
     Search {
         /// Pattern to search for.
         pattern: String,
@@ -117,7 +159,7 @@ enum Command {
         #[arg(short = 'i', long)]
         ignore_case: bool,
         /// Restrict search to specific fields: id, title, statement, rationale, notes, keywords.
-        #[arg(short, long, value_delimiter = ',')]
+        #[arg(short = 'f', long, value_delimiter = ',')]
         field: Option<Vec<String>>,
     },
     /// Open a requirement file in $EDITOR.
@@ -126,139 +168,141 @@ enum Command {
     Log { id: String },
     /// Install a git pre-commit hook that runs `rqtk rehash` and `rqtk lint`.
     InstallHook,
-    /// Recompute and write content hashes for all requirements.
-    Rehash,
+    /// Recompute and write content hashes for all requirements and needs.
+    Rehash {
+        /// Report stale hashes without writing.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Generate a Markdown requirements report.
     Report {
         /// Write to this file instead of stdout.
         #[arg(short, long)]
         output: Option<PathBuf>,
     },
+    /// Print the JSON Schema of a file kind, or list the kinds.
+    Schema {
+        /// config, requirement, need, stakeholder or evidence.
+        kind: Option<String>,
+    },
+    /// Explain a lint rule and how to fix it, or list all rules.
+    Explain { code: Option<String> },
 }
 
-fn main() {
-    if let Err(err) = run() {
-        output::failure(&err.to_string());
-        std::process::exit(1);
+fn main() -> ExitCode {
+    let cli = Cli::parse(); // exits 2 on usage errors
+    let ctx = Ctx {
+        root: cli.repo_root.clone(),
+        format: if cli.json { Format::Json } else { Format::Text },
+    };
+    match run(&ctx, cli.command) {
+        Ok(Exit::Ok) => ExitCode::SUCCESS,
+        Ok(Exit::Findings) => ExitCode::from(1),
+        Err(err) => {
+            let usage = err.is::<Usage>();
+            output::error(&ctx, &err.to_string(), usage);
+            ExitCode::from(if usage { 2 } else { 3 })
+        }
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
-    let cli = Cli::parse();
-    let root = &cli.repo_root;
-    match cli.command {
+fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
+    match command {
         Command::Init {
             requirements_dir,
             force,
-        } => {
-            commands::init::run(root, requirements_dir.as_deref(), force)?;
-        }
+            dry_run,
+        } => commands::init::run(ctx, requirements_dir.as_deref(), force, dry_run),
         Command::Add {
             category,
             req_type,
             title,
             statement,
             rationale,
-        } => {
-            commands::add::run(
-                root,
-                commands::add::AddArgs {
-                    category,
-                    req_type,
-                    title,
-                    statement,
-                    rationale,
-                },
-            )?;
-        }
+            dry_run,
+        } => commands::add::run(
+            ctx,
+            commands::add::AddArgs {
+                category,
+                req_type,
+                title,
+                statement,
+                rationale,
+                dry_run,
+            },
+        ),
         Command::AddStakeholder {
             id,
             name,
             role,
             organization,
-        } => {
-            commands::add_stakeholder::run(
-                root,
-                commands::add_stakeholder::AddStakeholderArgs {
-                    id,
-                    name,
-                    role,
-                    organization,
-                },
-            )?;
-        }
+            dry_run,
+        } => commands::add_stakeholder::run(
+            ctx,
+            commands::add_stakeholder::AddStakeholderArgs {
+                id,
+                name,
+                role,
+                organization,
+                dry_run,
+            },
+        ),
         Command::AddNeed {
             id,
             title,
             statement,
             stakeholders,
-        } => {
-            commands::add_need::run(
-                root,
-                commands::add_need::AddNeedArgs {
-                    id,
-                    title,
-                    statement,
-                    stakeholders,
-                },
-            )?;
-        }
-        Command::Lint => {
-            commands::lint::run(root)?;
-        }
-        Command::Trace { id } => {
-            commands::trace::run(root, id)?;
-        }
-        Command::Coverage { strict, short } => {
-            commands::coverage::run(root, strict, short)?;
-        }
-        Command::Graph { format } => {
-            commands::graph::run(root, format)?;
-        }
-        Command::Baseline { version } => {
-            commands::baseline::run(root, version)?;
-        }
-        Command::Export { format, output } => {
-            commands::export::run(root, format, output)?;
-        }
-        Command::Diff { from, to } => {
-            commands::diff::run(root, from, to)?;
-        }
-        Command::Scan => {
-            commands::scan::run(root)?;
-        }
-        Command::Verify { results, check } => {
-            commands::verify::run(root, commands::verify::VerifyArgs { results, check })?;
-        }
+            dry_run,
+        } => commands::add_need::run(
+            ctx,
+            commands::add_need::AddNeedArgs {
+                id,
+                title,
+                statement,
+                stakeholders,
+                dry_run,
+            },
+        ),
+        Command::Lint => commands::lint::run(ctx),
+        Command::Context { id } => commands::context::run(ctx, &id),
+        Command::Impact { base } => commands::impact::run(ctx, &base),
+        Command::Trace { id } => commands::trace::run(ctx, id),
+        Command::Coverage { strict, short } => commands::coverage::run(ctx, strict, short),
+        Command::Graph { format } => commands::graph::run(ctx, format),
+        Command::Baseline { version, dry_run } => commands::baseline::run(ctx, version, dry_run),
+        Command::Export { format, output } => commands::export::run(ctx, format, output),
+        Command::Diff { from, to } => commands::diff::run(ctx, from, to),
+        Command::Scan => commands::scan::run(ctx),
+        Command::Verify {
+            results,
+            check,
+            dry_run,
+        } => commands::verify::run(
+            ctx,
+            commands::verify::VerifyArgs {
+                results,
+                check,
+                dry_run,
+            },
+        ),
         Command::Search {
             pattern,
             ignore_case,
             field,
-        } => {
-            commands::search::run(
-                root,
-                commands::search::SearchArgs {
-                    pattern,
-                    ignore_case,
-                    field,
-                },
-            )?;
-        }
-        Command::Open { id } => {
-            commands::open::run(root, id)?;
-        }
-        Command::Log { id } => {
-            commands::log::run(root, id)?;
-        }
-        Command::InstallHook => {
-            commands::install_hook::run(root)?;
-        }
-        Command::Rehash => {
-            commands::rehash::run(root)?;
-        }
-        Command::Report { output } => {
-            commands::report::run(root, output)?;
-        }
+        } => commands::search::run(
+            ctx,
+            commands::search::SearchArgs {
+                pattern,
+                ignore_case,
+                field,
+            },
+        ),
+        Command::Open { id } => commands::open::run(ctx, id),
+        Command::Log { id } => commands::log::run(ctx, id),
+        Command::InstallHook => commands::install_hook::run(ctx),
+        Command::Rehash { dry_run } => commands::rehash::run(ctx, dry_run),
+        Command::Report { output } => commands::report::run(ctx, output),
+        Command::Schema { kind } => commands::schema::run(ctx, kind.as_deref()),
+        Command::Explain { code } => commands::explain::run(ctx, code.as_deref()),
     }
-    Ok(())
 }

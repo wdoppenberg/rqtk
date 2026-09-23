@@ -2,6 +2,7 @@ use crate::error::RqtkError;
 use crate::model::{Requirement, RequirementId};
 use chrono::{DateTime, Utc};
 use gix::refs::transaction::PreviousValue;
+use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -132,6 +133,35 @@ impl GitContext {
             .ok_or_else(|| RqtkError::Git("bare repositories are not supported".into()))?
             .to_path_buf();
         Ok(Self { repo, workdir })
+    }
+
+    /// Repository-relative paths that differ between revision `base` and the working tree,
+    /// including uncommitted and untracked (non-ignored) files. Uses the `git` executable.
+    pub fn changed_files_since(&self, base: &str) -> Result<Vec<PathBuf>, RqtkError> {
+        let git = |args: &[&str]| -> Result<String, RqtkError> {
+            let out = std::process::Command::new("git")
+                .args(args)
+                .current_dir(&self.workdir)
+                .output()
+                .map_err(|e| RqtkError::Git(format!("cannot run git: {e}")))?;
+            if !out.status.success() {
+                return Err(RqtkError::Git(
+                    String::from_utf8_lossy(&out.stderr).trim().to_owned(),
+                ));
+            }
+            Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+        };
+        let diffed = git(&["diff", "--name-only", base, "--"])?;
+        let untracked = git(&["ls-files", "--others", "--exclude-standard"])?;
+        let mut files: Vec<PathBuf> = diffed
+            .lines()
+            .chain(untracked.lines())
+            .filter(|l| !l.is_empty())
+            .map(PathBuf::from)
+            .collect();
+        files.sort();
+        files.dedup();
+        Ok(files)
     }
 
     /// Full SHA of the commit HEAD points to, or `None` in a repository without commits.
@@ -544,6 +574,18 @@ impl GitContext {
             }
         }
 
+        // Anything else git understands: SHAs, `HEAD~2`, `main^`, …
+        if let Ok(id) = self.repo.rev_parse_single(spec) {
+            let git_err = |e: &dyn std::fmt::Display| RqtkError::Git(e.to_string());
+            let commit_id = id
+                .object()
+                .map_err(|e| git_err(&e))?
+                .peel_to_commit()
+                .map_err(|e| git_err(&e))?
+                .id;
+            return self.commit_oid_to_tree_id(commit_id);
+        }
+
         Err(RqtkError::Git(format!(
             "could not resolve '{spec}' as a git ref or rqtk baseline"
         )))
@@ -560,6 +602,21 @@ impl GitContext {
             .tree_id()
             .map(|id| id.detach())
             .map_err(|e| RqtkError::Git(e.to_string()))
+    }
+
+    /// Parse every `.toml` file below `dir` as a `T`, as it exists at `spec` (a branch, tag,
+    /// `HEAD`, or bare baseline name). A directory absent at that ref yields nothing.
+    pub fn items_at_ref<T: DeserializeOwned>(
+        &self,
+        spec: &str,
+        dir: &Path,
+    ) -> Result<Vec<T>, RqtkError> {
+        let tree = self
+            .repo
+            .find_object(self.resolve_ref_tree_id(spec)?)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        read_items_from_tree(&self.repo, &tree, dir, &self.workdir)
     }
 
     /// Return the parsed requirement file as it existed at a given baseline.
@@ -640,41 +697,50 @@ fn read_requirements_from_tree(
     req_dir: &Path,
     repo_root: &Path,
 ) -> Result<BTreeMap<RequirementId, Requirement>, RqtkError> {
-    let req_dir_c = req_dir
-        .canonicalize()
-        .unwrap_or_else(|_| req_dir.to_path_buf());
+    Ok(
+        read_items_from_tree::<Requirement>(repo, tree, req_dir, repo_root)?
+            .into_iter()
+            .map(|r| (r.id.clone(), r))
+            .collect(),
+    )
+}
+
+/// Parse every `.toml` file below `dir` in `tree` as a `T`. A directory missing from the
+/// tree yields nothing; files that do not parse are skipped.
+fn read_items_from_tree<T: DeserializeOwned>(
+    repo: &gix::Repository,
+    tree: &gix::Tree<'_>,
+    dir: &Path,
+    repo_root: &Path,
+) -> Result<Vec<T>, RqtkError> {
+    let dir_c = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
     let repo_root_c = repo_root
         .canonicalize()
         .unwrap_or_else(|_| repo_root.to_path_buf());
-    let rel = req_dir_c
+    let rel = dir_c
         .strip_prefix(&repo_root_c)
-        .unwrap_or(req_dir)
+        .unwrap_or(dir)
         .to_path_buf();
 
-    let subtree_entry = tree
+    let Some(subtree_entry) = tree
         .lookup_entry_by_path(&rel)
-        .map_err(|e| RqtkError::Git(format!("requirements dir not found in tree: {e}")))?
-        .ok_or_else(|| RqtkError::Git("requirements dir not found in tree".into()))?;
-
-    let subtree_oid = subtree_entry.oid().to_owned();
+        .map_err(|e| RqtkError::Git(e.to_string()))?
+    else {
+        return Ok(Vec::new());
+    };
     let subtree = repo
-        .find_object(subtree_oid)
+        .find_object(subtree_entry.oid().to_owned())
         .map_err(|e| RqtkError::Git(e.to_string()))?
         .into_tree();
-
     let files = subtree
         .traverse()
         .breadthfirst
         .files()
         .map_err(|e| RqtkError::Git(e.to_string()))?;
 
-    let mut requirements = BTreeMap::new();
+    let mut items = Vec::new();
     for file in files {
-        if file.mode.is_tree() {
-            continue;
-        }
-        let name = file.filepath.to_string();
-        if !name.ends_with(".toml") {
+        if file.mode.is_tree() || !file.filepath.to_string().ends_with(".toml") {
             continue;
         }
         let obj = repo
@@ -683,10 +749,9 @@ fn read_requirements_from_tree(
         let Ok(content) = std::str::from_utf8(&obj.data) else {
             continue;
         };
-        if let Ok(req) = toml::from_str::<Requirement>(content) {
-            requirements.insert(req.id.clone(), req);
+        if let Ok(item) = toml::from_str::<T>(content) {
+            items.push(item);
         }
     }
-
-    Ok(requirements)
+    Ok(items)
 }

@@ -1,7 +1,84 @@
 use comfy_table::{Attribute, Cell, Color, ContentArrangement, Table, presets};
 use console::style;
 use rqtk_core::{Diagnostic, Severity};
-use std::path::Path;
+use serde::Serialize;
+use std::error::Error;
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Format {
+    Text,
+    Json,
+}
+
+/// What every command gets: where the repository is and how to print.
+pub struct Ctx {
+    pub root: PathBuf,
+    pub format: Format,
+}
+
+impl Ctx {
+    pub fn json(&self) -> bool {
+        self.format == Format::Json
+    }
+
+    /// Reject `--json` for commands whose output is a document in another format.
+    pub fn require_text(&self, command: &str) -> Result<(), Usage> {
+        if self.json() {
+            return Err(Usage(format!("`rqtk {command}` does not support --json")));
+        }
+        Ok(())
+    }
+}
+
+/// How a command that ran to completion wants the process to exit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Exit {
+    /// Exit 0.
+    Ok,
+    /// Exit 1: the command worked and found problems (lint errors, failed verification, …).
+    Findings,
+}
+
+impl Exit {
+    pub fn findings_if(condition: bool) -> Self {
+        if condition { Exit::Findings } else { Exit::Ok }
+    }
+}
+
+/// An error in how the command was invoked; exits 2.
+#[derive(Debug)]
+pub struct Usage(pub String);
+
+impl std::fmt::Display for Usage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl Error for Usage {}
+
+/// Print `value` as pretty JSON on stdout.
+pub fn json<T: Serialize + ?Sized>(value: &T) -> Result<(), Box<dyn Error>> {
+    println!("{}", serde_json::to_string_pretty(value)?);
+    Ok(())
+}
+
+/// Report a failed command on stderr, as JSON with `--json`.
+pub fn error(ctx: &Ctx, message: &str, usage: bool) {
+    if ctx.json() {
+        let kind = if usage { "usage" } else { "error" };
+        let body = serde_json::json!({ "error": { "kind": kind, "message": message } });
+        eprintln!("{body}");
+    } else {
+        failure(message);
+    }
+}
+
+/// `path` relative to `root` when it lies inside it.
+pub fn relative(path: &Path, root: &Path) -> PathBuf {
+    path.strip_prefix(root).unwrap_or(path).to_path_buf()
+}
 
 const INDENT: &str = "  ";
 const SUB: &str = "     ";

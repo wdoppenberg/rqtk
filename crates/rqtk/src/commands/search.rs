@@ -1,7 +1,10 @@
 use console::style;
 use regex::{Regex, RegexBuilder};
-use rqtk_core::RequirementSet;
-use std::{error::Error, path::Path};
+use rqtk_core::{EntityRef, RequirementSet};
+use serde::Serialize;
+use std::{error::Error, path::Path, path::PathBuf};
+
+use crate::output::{self, Ctx, Exit};
 
 pub struct SearchArgs {
     pub pattern: String,
@@ -9,10 +12,19 @@ pub struct SearchArgs {
     pub field: Option<Vec<String>>,
 }
 
+#[derive(Serialize)]
 struct FieldMatch<'a> {
-    label: &'static str,
+    field: &'static str,
     value: &'a str,
+    /// Byte ranges of each match within `value`.
     ranges: Vec<(usize, usize)>,
+}
+
+#[derive(Serialize)]
+struct Hit<'a> {
+    subject: EntityRef,
+    path: PathBuf,
+    matches: Vec<FieldMatch<'a>>,
 }
 
 fn highlight(text: &str, ranges: &[(usize, usize)]) -> String {
@@ -36,11 +48,11 @@ fn search_fields<'a>(
     let want = |name: &str| fields.is_none_or(|fs| fs.iter().any(|f| f.eq_ignore_ascii_case(name)));
     candidates
         .into_iter()
-        .filter(|(label, _)| want(label))
-        .filter_map(|(label, value)| {
+        .filter(|(field, _)| want(field))
+        .filter_map(|(field, value)| {
             let ranges: Vec<_> = re.find_iter(value).map(|m| (m.start(), m.end())).collect();
             (!ranges.is_empty()).then_some(FieldMatch {
-                label,
+                field,
                 value,
                 ranges,
             })
@@ -48,31 +60,30 @@ fn search_fields<'a>(
         .collect()
 }
 
-fn print_matches(path: &Path, repo_root: &Path, matches: &[FieldMatch<'_>]) {
-    let shown = path.strip_prefix(repo_root).unwrap_or(path);
-    println!("\n{}", style(shown.display()).bold().underlined());
-    for m in matches {
-        println!(
-            "  {:<12} {}",
-            style(m.label).cyan(),
-            highlight(m.value, &m.ranges)
-        );
+fn push_hit<'a>(
+    hits: &mut Vec<Hit<'a>>,
+    root: &Path,
+    subject: EntityRef,
+    path: &Path,
+    matches: Vec<FieldMatch<'a>>,
+) {
+    if !matches.is_empty() {
+        hits.push(Hit {
+            subject,
+            path: output::relative(path, root),
+            matches,
+        });
     }
 }
 
-pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(repo_root)?;
+pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
+    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let re = RegexBuilder::new(&regex::escape(&args.pattern))
         .case_insensitive(args.ignore_case)
         .build()?;
     let fields = args.field.as_deref();
-    let mut total = 0usize;
-    let mut report = |path: &Path, matches: Vec<FieldMatch<'_>>| {
-        if !matches.is_empty() {
-            total += matches.len();
-            print_matches(path, &set.repo_root, &matches);
-        }
-    };
+    let mut hits = Vec::new();
+    let mut push = |subject, path, matches| push_hit(&mut hits, &ctx.root, subject, path, matches);
 
     for (id, req) in &set.requirements {
         let mut candidates = vec![
@@ -83,9 +94,12 @@ pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
         candidates.extend(req.rationale.as_deref().map(|r| ("rationale", r)));
         candidates.extend(req.notes.as_deref().map(|n| ("notes", n)));
         candidates.extend(req.keywords.iter().map(|k| ("keywords", k.as_str())));
-        report(&set.files_by_id[id], search_fields(&re, fields, candidates));
+        push(
+            EntityRef::Requirement(id.clone()),
+            &set.files_by_id[id],
+            search_fields(&re, fields, candidates),
+        );
     }
-
     for (id, need) in &set.needs {
         let mut candidates = vec![
             ("id", id.0.as_str()),
@@ -94,19 +108,38 @@ pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
         ];
         candidates.extend(need.rationale.as_deref().map(|r| ("rationale", r)));
         candidates.extend(need.keywords.iter().map(|k| ("keywords", k.as_str())));
-        report(&set.needs_by_id[id], search_fields(&re, fields, candidates));
+        push(
+            EntityRef::Need(id.clone()),
+            &set.needs_by_id[id],
+            search_fields(&re, fields, candidates),
+        );
     }
-
     for (id, stk) in &set.stakeholders {
         let mut candidates = vec![("id", id.0.as_str()), ("name", stk.name.as_str())];
         candidates.extend(stk.role.as_deref().map(|r| ("role", r)));
         candidates.extend(stk.organization.as_deref().map(|o| ("organization", o)));
-        report(
+        push(
+            EntityRef::Stakeholder(id.clone()),
             &set.stakeholders_by_id[id],
             search_fields(&re, fields, candidates),
         );
     }
 
+    if ctx.json() {
+        output::json(&serde_json::json!({ "hits": hits }))?;
+        return Ok(Exit::Ok);
+    }
+    for hit in &hits {
+        println!("\n{}", style(hit.path.display()).bold().underlined());
+        for m in &hit.matches {
+            println!(
+                "  {:<12} {}",
+                style(m.field).cyan(),
+                highlight(m.value, &m.ranges)
+            );
+        }
+    }
+    let total: usize = hits.iter().map(|h| h.matches.len()).sum();
     if total == 0 {
         eprintln!("  {} no matches for {:?}", style("·").dim(), args.pattern);
     } else {
@@ -118,6 +151,5 @@ pub fn run(repo_root: &Path, args: SearchArgs) -> Result<(), Box<dyn Error>> {
             args.pattern,
         );
     }
-
-    Ok(())
+    Ok(Exit::Ok)
 }

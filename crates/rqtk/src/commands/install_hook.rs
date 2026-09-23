@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use crate::output;
+use crate::output::{self, Ctx, Exit};
 
 const REGION_BEGIN: &str = "# BEGIN rqtk-managed";
 const REGION_END: &str = "# END rqtk-managed";
@@ -38,8 +38,8 @@ fn splice_region(existing: &str) -> String {
     }
 }
 
-pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
-    let git_dir = find_git_dir(repo_root)?;
+pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+    let git_dir = find_git_dir(&ctx.root)?;
     let hooks_dir = git_dir.join("hooks");
     std::fs::create_dir_all(&hooks_dir)?;
 
@@ -67,11 +67,15 @@ pub fn run(repo_root: &Path) -> Result<(), Box<dyn Error>> {
     } else {
         "installed"
     };
-    output::success(
-        &format!("Pre-commit hook region {action}"),
-        &[("hook", &hook_path.display().to_string())],
-    );
-    Ok(())
+    if ctx.json() {
+        output::json(&serde_json::json!({ "hook": hook_path, "action": action }))?;
+    } else {
+        output::success(
+            &format!("Pre-commit hook region {action}"),
+            &[("hook", &hook_path.display().to_string())],
+        );
+    }
+    Ok(Exit::Ok)
 }
 
 fn find_git_dir(start: &Path) -> Result<std::path::PathBuf, Box<dyn Error>> {

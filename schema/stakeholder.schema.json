@@ -1,7 +1,45 @@
 {
+  "$defs": {
+    "StakeholderAuthority": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sign_off_required": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "StakeholderConcerns": {
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "secondary": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Stakeholder",
-  "type": "object",
+  "additionalProperties": false,
   "properties": {
     "authority": {
       "$ref": "#/$defs/StakeholderAuthority"
@@ -28,48 +66,10 @@
       ]
     }
   },
-  "additionalProperties": false,
   "required": [
     "id",
     "name"
   ],
-  "$defs": {
-    "StakeholderAuthority": {
-      "type": "object",
-      "properties": {
-        "approval_scope": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "sign_off_required": {
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
-    },
-    "StakeholderConcerns": {
-      "type": "object",
-      "properties": {
-        "primary": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "secondary": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    "StakeholderId": {
-      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
-      "type": "string"
-    }
-  }
+  "title": "Stakeholder",
+  "type": "object"
 }

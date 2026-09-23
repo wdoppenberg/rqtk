@@ -245,7 +245,7 @@ fn lint_prints_all_requirement_ids_in_issues_when_present() {
 /// VA-CLI-002-01 (negative): missing rationale should exit 2 and report RQ007.
 #[verifies("VA-CLI-002-01")]
 #[test]
-fn lint_exits_2_when_rationale_missing() {
+fn lint_exits_1_when_rationale_missing() {
     let req_toml = r#"id = "TEST-SYS-0001"
 title = "No rationale"
 category = "SYS"
@@ -264,7 +264,7 @@ phase = "Development"
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .code(2)
+        .code(1)
         .stdout(predicate::str::contains("RQ007"));
 }
 
@@ -324,11 +324,9 @@ fn trace_leaf_has_empty_downward_section() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    // "Children" section exists but contains only the root ID itself
-    let downward_start = text.find("Children").unwrap();
-    let downward_section = &text[downward_start..];
-    assert!(downward_section.contains("FOBC-ICD-0001"));
-    assert!(!downward_section.contains("FOBC-SW-0001"));
+    let downward_section = &text[text.find("Children").unwrap()..];
+    assert!(downward_section.contains("no children"), "{text}");
+    assert!(!downward_section.contains("FOBC-SW-0001"), "{text}");
 }
 
 #[test]
@@ -696,7 +694,7 @@ fn baseline_rejects_invalid_semver() {
 
 #[verifies("VA-SYS-003-01")]
 #[test]
-fn lint_cycle_exits_2_and_reports_rq017() {
+fn lint_cycle_exits_1_and_reports_rq017() {
     // A→B→A circular parent chain
     let req_a = r#"id = "TEST-SYS-0001"
 title = "A"
@@ -745,7 +743,7 @@ phase = "Development"
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .code(2)
+        .code(1)
         .stdout(predicate::str::contains("RQ017"));
 }
 
@@ -753,7 +751,7 @@ phase = "Development"
 
 // #[verifies("VA-SYS-003-02")]
 #[test]
-fn lint_broken_parent_exits_2_and_reports_rq015() {
+fn lint_broken_parent_exits_1_and_reports_rq015() {
     let req_toml = r#"id = "TEST-SYS-0001"
 title = "Broken parent"
 category = "SYS"
@@ -777,7 +775,7 @@ phase = "Development"
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .code(2)
+        .code(1)
         .stdout(predicate::str::contains("RQ015"));
 }
 
@@ -1499,7 +1497,7 @@ forbidden_keywords = []
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .code(2)
+        .code(1)
         .stdout(predicate::str::contains("RQ019"))
         .stdout(predicate::str::contains("RQ020"));
 }
@@ -1733,7 +1731,7 @@ fn lint_output(files: &[(&str, &str)]) -> (i32, String) {
 fn lint_reports_unknown_field_with_line_number() {
     let req = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
     let (code, out) = lint_output(&[("SYS/TEST-SYS-0001.toml", &req)]);
-    assert_eq!(code, 2, "{out}");
+    assert_eq!(code, 1, "{out}");
     assert!(out.contains("RQ100"), "{out}");
     assert!(out.contains("unknown field `ratoinale`"), "{out}");
     assert!(out.contains("TEST-SYS-0001.toml:8"), "{out}");
@@ -2162,7 +2160,7 @@ fn lint_cross_checks_source_links() {
 
     let output = rqtk(&repo_root).arg("lint").output().unwrap();
     let out = String::from_utf8(output.stdout).unwrap();
-    assert_eq!(output.status.code(), Some(2), "{out}");
+    assert_eq!(output.status.code(), Some(1), "{out}");
     assert!(out.contains("RQ028") && out.contains("VA-TYPO"), "{out}");
     assert!(out.contains("tests/boot.rs:4"), "{out}");
     assert!(out.contains("RQ029"), "{out}");
@@ -2180,4 +2178,315 @@ fn scan_honours_exclude_patterns() {
     )
     .unwrap();
     rqtk(&repo_root).arg("lint").assert().code(0);
+}
+
+// ── 0.4: agent-facing CLI ────────────────────────────────────────────────────
+
+fn json_stdout(repo_root: &Path, args: &[&str]) -> (i32, serde_json::Value) {
+    let output = rqtk(repo_root).arg("--json").args(args).output().unwrap();
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let value = serde_json::from_str(&stdout)
+        .unwrap_or_else(|e| panic!("stdout is not JSON ({e}):\n{stdout}"));
+    (output.status.code().unwrap(), value)
+}
+
+#[test]
+fn exit_codes_distinguish_findings_usage_and_errors() {
+    let bad = valid_req("TEST-SYS-0001").replace("rationale = \"Because.\"\n", "");
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &bad)]);
+    rqtk(&repo_root).arg("lint").assert().code(1);
+    rqtk(&repo_root)
+        .args(["lint", "--no-such-flag"])
+        .assert()
+        .code(2);
+    rqtk(&repo_root)
+        .args(["add", "--category", "NOPE", "--type", "Functional"])
+        .args(["--title", "T", "--statement", "The system shall work."])
+        .assert()
+        .code(2);
+    rqtk(&repo_root).args(["--json", "report"]).assert().code(2);
+
+    let empty = tempfile::tempdir().unwrap();
+    git_init(empty.path());
+    rqtk(empty.path()).arg("lint").assert().code(3);
+}
+
+#[test]
+fn json_errors_go_to_stderr() {
+    let empty = tempfile::tempdir().unwrap();
+    git_init(empty.path());
+    let output = rqtk(empty.path())
+        .args(["--json", "lint"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(3));
+    assert!(output.stdout.is_empty());
+    let err: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
+    assert_eq!(err["error"]["kind"], "error");
+    assert!(
+        err["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("config.toml")
+    );
+}
+
+#[test]
+fn lint_json_reports_located_diagnostics() {
+    let bad = valid_req("TEST-SYS-0001").replace("rationale =", "ratoinale =");
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &bad)]);
+    let (code, report) = json_stdout(&repo_root, &["lint"]);
+    assert_eq!(code, 1);
+    assert_eq!(report["errors"], 1);
+    let diag = &report["diagnostics"][0];
+    assert_eq!(diag["code"], "RQ100");
+    assert_eq!(diag["severity"], "error");
+    assert_eq!(
+        diag["location"]["path"],
+        ".rqtk/requirements/SYS/TEST-SYS-0001.toml"
+    );
+    assert_eq!(diag["location"]["line"], 8);
+}
+
+#[test]
+fn coverage_and_search_json() {
+    let repo_root = fixture_root("firesat-obc");
+    let (code, coverage) = json_stdout(&repo_root, &["coverage"]);
+    assert_eq!(code, 0);
+    let reqs = coverage["requirements"].as_array().unwrap();
+    assert_eq!(reqs.len(), 7);
+    assert!(reqs[0]["status"].is_string());
+    assert!(coverage["summary"].is_object());
+
+    let (_, search) = json_stdout(&repo_root, &["search", "telemetry", "-i"]);
+    let hit = &search["hits"][0];
+    assert_eq!(hit["subject"]["kind"], "requirement");
+    assert!(hit["matches"][0]["ranges"].is_array());
+}
+
+#[test]
+fn dry_runs_write_nothing() {
+    let (_dir, repo_root) = write_fixture(
+        BASE_CONFIG,
+        &[("SYS/TEST-SYS-0001.toml", &valid_req("TEST-SYS-0001"))],
+    );
+    git_set_identity(&repo_root);
+    git_commit_all(&repo_root, "initial");
+    let snapshot = || {
+        let mut files = Vec::new();
+        for entry in fs::read_dir(repo_root.join(".rqtk/requirements/SYS")).unwrap() {
+            let p = entry.unwrap().path();
+            files.push((p.clone(), fs::read_to_string(p).unwrap()));
+        }
+        files.sort();
+        files
+    };
+    let before = snapshot();
+
+    let (_, added) = json_stdout(
+        &repo_root,
+        &[
+            "add",
+            "--category",
+            "SYS",
+            "--type",
+            "Functional",
+            "--title",
+            "T",
+            "--statement",
+            "The system shall work.",
+            "--dry-run",
+        ],
+    );
+    assert_eq!(added["id"], "TEST-SYS-0002");
+    assert_eq!(added["dry_run"], true);
+    assert_eq!(added["item"]["statement"], "The system shall work.");
+
+    let (_, rehash) = json_stdout(&repo_root, &["rehash", "--dry-run"]);
+    assert_eq!(rehash["updated"].as_array().unwrap().len(), 1);
+
+    let (_, baseline) = json_stdout(&repo_root, &["baseline", "1.0.0", "--dry-run"]);
+    assert_eq!(baseline["tag"], "rqtk/1.0.0");
+    assert!(!git_tag_exists(&repo_root, "rqtk/1.0.0"));
+
+    assert_eq!(snapshot(), before);
+
+    let fresh = tempfile::tempdir().unwrap();
+    let (_, init) = json_stdout(fresh.path(), &["init", "--dry-run"]);
+    assert!(init["created"].as_array().unwrap().len() >= 3);
+    assert!(!fresh.path().join(".rqtk").exists());
+}
+
+#[test]
+fn verify_dry_run_does_not_write_evidence() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("boots", true)]);
+    let (code, report) = json_stdout(
+        &repo_root,
+        &[
+            "verify",
+            "--dry-run",
+            "--results",
+            results.to_str().unwrap(),
+        ],
+    );
+    assert_eq!(code, 0);
+    assert_eq!(report["written"], false);
+    assert_eq!(report["changes"][0]["kind"], "added");
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+}
+
+#[test]
+fn schema_prints_json_schema_per_kind() {
+    let repo_root = fixture_root("firesat-obc");
+    let (code, schema) = json_stdout(&repo_root, &["schema", "requirement"]);
+    assert_eq!(code, 0);
+    assert!(schema["properties"]["statement"].is_object());
+    assert_eq!(schema["additionalProperties"], false);
+    rqtk(&repo_root).args(["schema", "nope"]).assert().code(2);
+    rqtk(&repo_root)
+        .arg("schema")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("evidence"));
+}
+
+#[test]
+fn explain_describes_rules_and_fixes() {
+    let repo_root = fixture_root("firesat-obc");
+    rqtk(&repo_root)
+        .args(["explain", "rq010"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("shall"))
+        .stdout(predicate::str::contains("Fix:"));
+    let (_, one) = json_stdout(&repo_root, &["explain", "RQ021"]);
+    assert_eq!(one["severity"], "warning");
+    let (_, all) = json_stdout(&repo_root, &["explain"]);
+    assert!(all.as_array().unwrap().len() >= 30);
+    rqtk(&repo_root).args(["explain", "RQ999"]).assert().code(2);
+}
+
+#[test]
+fn context_briefs_a_requirement_need_and_stakeholder() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(
+        &path,
+        format!("{text}\n[trace]\nsatisfies = [\"NEED-0001\"]\n"),
+    )
+    .unwrap();
+    let need = "id = \"NEED-0001\"\ntitle = \"Boot fast\"\nstate = \"Draft\"\nstakeholders = [\"STK-001\"]\nstatement = \"Operators need fast boot.\"\n";
+    let stk = "id = \"STK-001\"\nname = \"Ops\"\n";
+    fs::create_dir_all(repo_root.join(".rqtk/needs")).unwrap();
+    fs::create_dir_all(repo_root.join(".rqtk/stakeholders")).unwrap();
+    fs::write(repo_root.join(".rqtk/needs/NEED-0001.toml"), need).unwrap();
+    fs::write(repo_root.join(".rqtk/stakeholders/STK-001.toml"), stk).unwrap();
+
+    let (code, ctx) = json_stdout(&repo_root, &["context", "TEST-SYS-0001"]);
+    assert_eq!(code, 0);
+    assert_eq!(ctx["kind"], "requirement");
+    assert_eq!(ctx["path"], ".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    assert_eq!(ctx["needs"][0]["id"], "NEED-0001");
+    assert_eq!(ctx["tests"][0]["test_name"], "boots");
+    assert_eq!(ctx["verification"]["status"], "planned");
+
+    let (_, need_ctx) = json_stdout(&repo_root, &["context", "NEED-0001"]);
+    assert_eq!(need_ctx["kind"], "need");
+    assert_eq!(need_ctx["satisfied_by"][0]["id"], "TEST-SYS-0001");
+    assert_eq!(need_ctx["stakeholders"][0]["name"], "Ops");
+
+    let (_, stk_ctx) = json_stdout(&repo_root, &["context", "STK-001"]);
+    assert_eq!(stk_ctx["needs"][0]["id"], "NEED-0001");
+
+    rqtk(&repo_root)
+        .args(["context", "TEST-SYS-0001"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("boots"));
+    rqtk(&repo_root)
+        .args(["context", "NOPE-1"])
+        .assert()
+        .code(2);
+}
+
+#[test]
+fn impact_reports_changes_downstream_and_reverification() {
+    let parent = req_with_activities("TEST-SYS-0001", &["VA-1"]);
+    let child = format!(
+        "{}\n[trace]\nparents = [\"TEST-SYS-0001\"]\n",
+        req_with_activities("TEST-SUB-0001", &["VA-2"])
+    );
+    let (_dir, repo_root) = write_fixture(
+        BASE_CONFIG,
+        &[
+            ("SYS/TEST-SYS-0001.toml", &parent),
+            ("SUB/TEST-SUB-0001.toml", &child),
+        ],
+    );
+    fs::create_dir_all(repo_root.join("tests")).unwrap();
+    fs::write(
+        repo_root.join("tests/boot.rs"),
+        test_source(&[("VA-1", "boots"), ("VA-2", "halts")]),
+    )
+    .unwrap();
+    // Commit through the git CLI so the index matches HEAD, as in a real checkout.
+    for args in [
+        &["add", "-A"][..],
+        &[
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "-qm",
+            "initial",
+        ][..],
+    ] {
+        let status = std::process::Command::new("git")
+            .args(args)
+            .current_dir(&repo_root)
+            .status()
+            .unwrap();
+        assert!(status.success());
+    }
+
+    let (_, none) = json_stdout(&repo_root, &["impact", "HEAD"]);
+    assert_eq!(none["reverify"].as_array().unwrap().len(), 0, "{none}");
+    assert_eq!(none["requirements"].as_array().unwrap().len(), 0);
+
+    let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(&path, text.replace("shall do", "shall always do")).unwrap();
+
+    let (code, impact) = json_stdout(&repo_root, &["impact", "HEAD"]);
+    assert_eq!(code, 0);
+    assert_eq!(impact["requirements"][0]["id"], "TEST-SYS-0001");
+    assert_eq!(impact["requirements"][0]["change"], "semantic");
+    assert_eq!(impact["downstream"][0]["id"], "TEST-SUB-0001");
+    assert_eq!(impact["downstream"][0]["via"][0], "TEST-SYS-0001");
+    assert_eq!(impact["reverify"][0]["activity"], "VA-1");
+    assert_eq!(
+        impact["reverify"][0]["reasons"][0]["reason"],
+        "requirement_changed"
+    );
+
+    // Touch the test file: VA-2's test changed, so it needs re-running too.
+    let src = fs::read_to_string(repo_root.join("tests/boot.rs")).unwrap();
+    fs::write(repo_root.join("tests/boot.rs"), format!("{src}// edited\n")).unwrap();
+    let (_, impact) = json_stdout(&repo_root, &["impact", "HEAD"]);
+    let reverify = impact["reverify"].as_array().unwrap();
+    assert_eq!(reverify.len(), 2, "{impact}");
+    let va2 = reverify.iter().find(|r| r["activity"] == "VA-2").unwrap();
+    assert_eq!(va2["reasons"][0]["reason"], "test_changed");
+    assert_eq!(va2["reasons"][0]["path"], "tests/boot.rs");
+    let va1 = reverify.iter().find(|r| r["activity"] == "VA-1").unwrap();
+    assert_eq!(va1["reasons"].as_array().unwrap().len(), 2, "{va1}");
+
+    rqtk(&repo_root)
+        .args(["impact", "HEAD"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Re-verify"));
 }

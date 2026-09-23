@@ -1,65 +1,75 @@
-use std::{error::Error, path::Path};
+use std::{error::Error, path::PathBuf};
 
-use crate::output;
+use serde::Serialize;
 
-pub fn run(
-    repo_root: &Path,
-    requirements_dir: Option<&str>,
-    force: bool,
-) -> Result<(), Box<dyn Error>> {
-    let req_dir = requirements_dir.unwrap_or(".rqtk/requirements");
-    scaffold_repository(repo_root, req_dir, force)?;
-    let config_path = repo_root.join(".rqtk/config.toml");
-    let req_path = repo_root.join(req_dir);
-    output::success(
-        "Repository initialized",
-        &[
-            ("config", &config_path.display().to_string()),
-            ("requirements", &req_path.display().to_string()),
-            (
-                "stakeholders",
-                &repo_root.join(".rqtk/stakeholders").display().to_string(),
-            ),
-            (
-                "needs",
-                &repo_root.join(".rqtk/needs").display().to_string(),
-            ),
-        ],
-    );
-    Ok(())
+use crate::output::{self, Ctx, Exit, Usage};
+
+#[derive(Serialize)]
+struct Report {
+    created: Vec<PathBuf>,
+    dry_run: bool,
 }
 
-fn scaffold_repository(
-    repo_root: &Path,
-    requirements_dir: &str,
+pub fn run(
+    ctx: &Ctx,
+    requirements_dir: Option<&str>,
     force: bool,
-) -> Result<(), Box<dyn Error>> {
-    std::fs::create_dir_all(repo_root)?;
-
-    let rqtk_dir = repo_root.join(".rqtk");
-    std::fs::create_dir_all(&rqtk_dir)?;
-
-    let config_path = rqtk_dir.join("config.toml");
+    dry_run: bool,
+) -> Result<Exit, Box<dyn Error>> {
+    let root = &ctx.root;
+    let req_dir = requirements_dir.unwrap_or(".rqtk/requirements");
+    let config_path = root.join(".rqtk/config.toml");
     if config_path.exists() && !force {
-        return Err(format!(
+        return Err(Box::new(Usage(format!(
             "refusing to overwrite {}; pass --force to replace it",
             config_path.display()
-        )
-        .into());
+        ))));
     }
 
-    std::fs::write(&config_path, default_config_toml(requirements_dir))?;
-    std::fs::create_dir_all(repo_root.join(requirements_dir).join("SYS"))?;
-    let stakeholders_dir = rqtk_dir.join("stakeholders");
-    let needs_dir = rqtk_dir.join("needs");
-    std::fs::create_dir_all(&stakeholders_dir)?;
-    std::fs::create_dir_all(&needs_dir)?;
-    std::fs::write(
-        stakeholders_dir.join("STK-001.toml"),
-        EXAMPLE_STAKEHOLDER_TOML,
-    )?;
-    std::fs::write(needs_dir.join("NEED-0001.toml"), EXAMPLE_NEED_TOML)?;
-    Ok(())
+    let files: Vec<(PathBuf, String)> = vec![
+        (config_path, default_config_toml(req_dir)),
+        (
+            root.join(".rqtk/stakeholders/STK-001.toml"),
+            EXAMPLE_STAKEHOLDER_TOML.to_owned(),
+        ),
+        (
+            root.join(".rqtk/needs/NEED-0001.toml"),
+            EXAMPLE_NEED_TOML.to_owned(),
+        ),
+    ];
+    let dirs = [root.join(req_dir).join("SYS")];
+
+    if !dry_run {
+        for dir in &dirs {
+            std::fs::create_dir_all(dir)?;
+        }
+        for (path, content) in &files {
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(path, content)?;
+        }
+    }
+
+    let created: Vec<PathBuf> = files
+        .iter()
+        .map(|(p, _)| p)
+        .chain(&dirs)
+        .map(|p| output::relative(p, root))
+        .collect();
+    if ctx.json() {
+        output::json(&Report { created, dry_run })?;
+    } else {
+        let label = if dry_run {
+            "Would initialize repository"
+        } else {
+            "Repository initialized"
+        };
+        let shown: Vec<String> = created.iter().map(|p| p.display().to_string()).collect();
+        let pairs: Vec<(&str, &str)> = shown.iter().map(|p| ("create", p.as_str())).collect();
+        output::success(label, &pairs);
+    }
+    Ok(Exit::Ok)
 }
 
 const EXAMPLE_STAKEHOLDER_TOML: &str = r#"id = "STK-001"
