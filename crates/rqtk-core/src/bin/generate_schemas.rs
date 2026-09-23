@@ -1,3 +1,4 @@
+use rqtk_core::evidence::EvidenceFile;
 use rqtk_core::model::{Config, Need, Requirement, Stakeholder};
 use schemars::schema_for;
 use serde::Serialize;
@@ -19,6 +20,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &schema_for!(Stakeholder),
     )?;
     write_schema(&schema_dir.join("need.schema.json"), &schema_for!(Need))?;
+
+    write_schema(
+        &schema_dir.join("evidence.schema.json"),
+        &schema_for!(EvidenceFile),
+    )?;
 
     Ok(())
 }

@@ -17,29 +17,24 @@ success_criteria = "All lifecycle, format, cycle-detection, lint, and export cap
 [[verification.activities]]
 id = "VA-SYS-001-01"
 name = "Lifecycle state round-trip"
-status = "Passed"
 expected_result = "Requirements persist and reload with correct lifecycle state"
 
 [[verification.activities]]
 id = "VA-SYS-002-01"
 name = "Project requirement file load"
-status = "Passed"
 expected_result = "All project requirement files load without parse errors"
 
 [[verification.activities]]
 id = "VA-SYS-003-01"
 name = "Circular traceability detection via CLI"
-status = "Passed"
 expected_result = "lint exits 2 and reports RQ017 when a cycle exists"
 
 [[verification.activities]]
 id = "VA-SYS-004-01"
 name = "Lint rule coverage matrix"
-status = "Passed"
 expected_result = "Each lint rule fires for its corresponding violation"
 
 [[verification.activities]]
 id = "VA-SYS-005-01"
 name = "Export format coverage"
-status = "Passed"
 expected_result = "JSON export contains all requirement IDs"

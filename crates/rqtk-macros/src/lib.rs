@@ -29,11 +29,28 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
     match find_activity_from_manifest_dir(&id_value) {
         Ok(Some(info)) => {
             let doc = build_verification_doc(&id_value, &info);
-            let item_ts: proc_macro2::TokenStream = item.into();
-            TokenStream::from(quote! {
-                #[doc = #doc]
-                #item_ts
-            })
+            // `include_bytes!` makes Cargo rebuild when the requirement file changes, so the
+            // check and the injected docs never go stale.
+            let path = info.path.display().to_string();
+            let track = quote! { const _: &[u8] = include_bytes!(#path); };
+            match syn::parse::<syn::ItemFn>(item.clone()) {
+                Ok(mut func) => {
+                    let stmt: syn::Stmt = syn::parse_quote! { #track };
+                    func.block.stmts.insert(0, stmt);
+                    TokenStream::from(quote! {
+                        #[doc = #doc]
+                        #func
+                    })
+                }
+                Err(_) => {
+                    let item_ts: proc_macro2::TokenStream = item.into();
+                    TokenStream::from(quote! {
+                        #track
+                        #[doc = #doc]
+                        #item_ts
+                    })
+                }
+            }
         }
         Ok(None) => {
             let msg = format!(

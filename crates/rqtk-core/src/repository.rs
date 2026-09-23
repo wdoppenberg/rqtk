@@ -21,43 +21,6 @@ use std::path::{Path, PathBuf};
 pub struct Loaded;
 pub struct Validated;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ClosureStatus {
-    /// All activities have a terminal status (Passed or Waived).
-    Verified,
-    /// Activities defined and at least one has been started, but not all are terminal.
-    InProgress,
-    /// Activities and success criteria defined, but none have been executed yet.
-    Planned,
-    /// No activities defined, or success criteria missing.
-    Gap,
-}
-
-fn closure_status_for(ver: &Verification) -> ClosureStatus {
-    if ver.activities.is_empty() || is_blank(ver.success_criteria.as_deref()) {
-        return ClosureStatus::Gap;
-    }
-
-    const TERMINAL: &[&str] = &["Passed", "Waived"];
-
-    let any_started = ver
-        .activities
-        .iter()
-        .any(|a| a.executed_at.is_some() || a.status.as_deref().is_some_and(|s| !s.is_empty()));
-    let all_terminal = ver
-        .activities
-        .iter()
-        .all(|a| a.status.as_deref().is_some_and(|s| TERMINAL.contains(&s)));
-
-    if all_terminal {
-        ClosureStatus::Verified
-    } else if any_started {
-        ClosureStatus::InProgress
-    } else {
-        ClosureStatus::Planned
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct TraceView {
     pub upward: Vec<RequirementId>,
@@ -538,13 +501,6 @@ fn stale_hash_message(stored: &str, computed: &str) -> String {
 }
 
 impl RequirementSet<Validated> {
-    pub fn verification_closure(&self) -> BTreeMap<RequirementId, ClosureStatus> {
-        self.requirements
-            .iter()
-            .map(|(id, req)| (id.clone(), closure_status_for(&req.verification)))
-            .collect()
-    }
-
     pub fn satisfaction_closure(&self) -> BTreeMap<NeedId, SatisfactionStatus> {
         let mut result: BTreeMap<NeedId, SatisfactionStatus> = self
             .needs

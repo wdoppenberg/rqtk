@@ -36,6 +36,10 @@ pub enum RqtkError {
         #[source]
         source: regex::Error,
     },
+    #[error("invalid scan exclude pattern `{0}`: {1}")]
+    InvalidScanPattern(String, String),
+    #[error("failed to parse test results {path}: {message}")]
+    TestResults { path: PathBuf, message: String },
     #[error("requirement `{0}` not found")]
     RequirementNotFound(RequirementId),
     #[error("git error: {0}")]

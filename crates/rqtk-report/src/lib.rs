@@ -2,18 +2,27 @@
 
 use chrono::NaiveDate;
 use rqtk_core::{
-    ClosureStatus, Requirement, RequirementId, RequirementSet, SatisfactionStatus, Validated,
+    ActivityState, ClosureStatus, Requirement, RequirementId, RequirementSet,
+    RequirementVerification, SatisfactionStatus, Validated,
 };
 use std::collections::BTreeMap;
 use std::fmt::Write;
 
-/// Render the full requirements report. `date` is printed in the document header.
-pub fn render_report(set: &RequirementSet<Validated>, date: NaiveDate) -> String {
-    let closure = set.verification_closure();
+/// Render the full requirements report. `verification` comes from
+/// [`RequirementSet::verification_status`]; `date` is printed in the document header.
+pub fn render_report(
+    set: &RequirementSet<Validated>,
+    verification: &BTreeMap<RequirementId, RequirementVerification>,
+    date: NaiveDate,
+) -> String {
+    let closure: BTreeMap<RequirementId, ClosureStatus> = verification
+        .iter()
+        .map(|(id, v)| (id.clone(), v.status))
+        .collect();
     let mut out = String::with_capacity(64 * 1024);
     write_header(&mut out, set, date);
     write_summary(&mut out, set, &closure);
-    write_categories(&mut out, set, &closure);
+    write_categories(&mut out, set, verification);
     write_needs(&mut out, set);
     write_trace_matrix(&mut out, set);
     write_verification_summary(&mut out, set, &closure);
@@ -82,6 +91,8 @@ fn write_summary(
     out.push_str("### Verification\n\n| Status | Count |\n|---|---:|\n");
     for (label, status) in [
         ("Verified", ClosureStatus::Verified),
+        ("Suspect", ClosureStatus::Suspect),
+        ("Failed", ClosureStatus::Failed),
         ("In progress", ClosureStatus::InProgress),
         ("Planned", ClosureStatus::Planned),
         ("Gap", ClosureStatus::Gap),
@@ -131,7 +142,7 @@ fn write_summary(
 fn write_categories(
     out: &mut String,
     set: &RequirementSet<Validated>,
-    closure: &BTreeMap<RequirementId, ClosureStatus>,
+    verification: &BTreeMap<RequirementId, RequirementVerification>,
 ) {
     out.push_str("## Requirements\n\n");
     for (key, cat) in sorted_categories(set) {
@@ -148,12 +159,16 @@ fn write_categories(
             out.push_str("_No requirements in this category._\n\n");
         }
         for req in reqs {
-            write_requirement(out, req, closure.get(&req.id));
+            write_requirement(out, req, verification.get(&req.id));
         }
     }
 }
 
-fn write_requirement(out: &mut String, req: &Requirement, closure: Option<&ClosureStatus>) {
+fn write_requirement(
+    out: &mut String,
+    req: &Requirement,
+    verification: Option<&RequirementVerification>,
+) {
     let _ = writeln!(out, "#### `{}` — {}\n", req.id, inline(&req.title));
 
     let mut facts = vec![
@@ -164,8 +179,8 @@ fn write_requirement(out: &mut String, req: &Requirement, closure: Option<&Closu
     if let Some(c) = &req.criticality {
         facts.push(format!("**Criticality** {}", inline(c)));
     }
-    if let Some(status) = closure {
-        facts.push(format!("**Verification** {}", closure_label(status)));
+    if let Some(v) = verification {
+        facts.push(format!("**Verification** {}", closure_label(&v.status)));
     }
     if req.tbd {
         facts.push("**TBD**".to_owned());
@@ -232,7 +247,7 @@ fn write_requirement(out: &mut String, req: &Requirement, closure: Option<&Closu
                 "| `{}` | {} | {} | {} |",
                 a.id,
                 cell(&a.name),
-                cell(a.status.as_deref().unwrap_or("Planned")),
+                cell(&activity_label(verification, &a.id)),
                 cell(a.expected_result.as_deref().unwrap_or(""))
             );
         }
@@ -309,9 +324,23 @@ fn sorted_categories(set: &RequirementSet<Validated>) -> Vec<(&String, &rqtk_cor
 fn closure_label(status: &ClosureStatus) -> &'static str {
     match status {
         ClosureStatus::Verified => "Verified",
+        ClosureStatus::Suspect => "**Suspect**",
+        ClosureStatus::Failed => "**Failed**",
         ClosureStatus::InProgress => "In progress",
         ClosureStatus::Planned => "Planned",
         ClosureStatus::Gap => "**Gap**",
+    }
+}
+
+fn activity_label(verification: Option<&RequirementVerification>, activity: &str) -> String {
+    let state = verification.and_then(|v| v.activities.iter().find(|(id, _)| id == activity));
+    match state.map(|(_, s)| s) {
+        Some(ActivityState::Passed) => "Passed (tests)".to_owned(),
+        Some(ActivityState::Failed) => "**Failed** (tests)".to_owned(),
+        Some(ActivityState::Suspect) => "**Suspect** (tests passed on older content)".to_owned(),
+        Some(ActivityState::NotRun) => "Not run".to_owned(),
+        Some(ActivityState::Manual(Some(s))) => s.clone(),
+        Some(ActivityState::Manual(None)) | None => "Planned".to_owned(),
     }
 }
 

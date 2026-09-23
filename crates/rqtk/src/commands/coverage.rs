@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, error::Error, path::Path};
 
-use rqtk_core::{ClosureStatus, RequirementSet, SatisfactionStatus};
+use rqtk_core::{ActivityState, ClosureStatus, RequirementSet, SatisfactionStatus};
 
 use crate::output;
 
@@ -71,56 +71,92 @@ pub fn run(repo_root: &Path, strict: bool, short: bool) -> Result<(), Box<dyn Er
     }
 
     // ── verification closure ──────────────────────────────────────────────────
-    let ver_statuses = set.verification_closure();
-    let mut verified = Vec::new();
-    let mut in_progress = Vec::new();
-    let mut planned = Vec::new();
-    let mut gap = Vec::new();
-
-    for (id, status) in &ver_statuses {
-        match status {
-            ClosureStatus::Verified => verified.push(id),
-            ClosureStatus::InProgress => in_progress.push(id),
-            ClosureStatus::Planned => planned.push(id),
-            ClosureStatus::Gap => gap.push(id),
-        }
+    let (links, evidence) = super::load_links_and_evidence(&set)?;
+    let statuses = set.verification_status(&links, &evidence);
+    let mut by_status: BTreeMap<ClosureStatus, Vec<String>> = BTreeMap::new();
+    for (id, v) in &statuses {
+        // Name the activities behind a Failed or Suspect status.
+        let flagged: Vec<String> = v
+            .activities
+            .iter()
+            .filter_map(|(activity, state)| match state {
+                ActivityState::Failed => Some(format!("{activity} failed")),
+                ActivityState::Manual(Some(s)) if s == "Failed" => {
+                    Some(format!("{activity} failed"))
+                }
+                ActivityState::Suspect => Some(format!("{activity} suspect")),
+                _ => None,
+            })
+            .collect();
+        let entry = if flagged.is_empty()
+            || !matches!(v.status, ClosureStatus::Failed | ClosureStatus::Suspect)
+        {
+            id.to_string()
+        } else {
+            format!("{id}  ({})", flagged.join(", "))
+        };
+        by_status.entry(v.status).or_default().push(entry);
     }
+    let count = |s: ClosureStatus| fmt_count(by_status.get(&s).map_or(0, Vec::len));
 
     let prefix = if has_needs { "  Reqs   " } else { "\n  " };
     println!(
-        "{}Verified {}  ·  In Progress {}  ·  Planned {}  ·  Gap {}  ({} total)",
+        "{}Verified {}  ·  Suspect {}  ·  Failed {}  ·  In Progress {}  ·  Planned {}  ·  Gap {}  ({} total)",
         prefix,
-        fmt_count(verified.len()),
-        fmt_count(in_progress.len()),
-        fmt_count(planned.len()),
-        fmt_count(gap.len()),
+        count(ClosureStatus::Verified),
+        count(ClosureStatus::Suspect),
+        count(ClosureStatus::Failed),
+        count(ClosureStatus::InProgress),
+        count(ClosureStatus::Planned),
+        count(ClosureStatus::Gap),
         fmt_count(req_total),
     );
 
     if !short {
-        if !gap.is_empty() {
-            output::section("Gap", "(no activities or success criteria defined)");
-            for id in &gap {
-                output::item(id.as_ref());
-            }
-        }
-        if !planned.is_empty() {
-            output::section("Planned", "(activities defined, none executed)");
-            for id in &planned {
-                output::item(id.as_ref());
-            }
-        }
-        if !in_progress.is_empty() {
-            output::section("In Progress", "(partially executed, not all terminal)");
-            for id in &in_progress {
-                output::item(id.as_ref());
+        for (status, title, detail) in [
+            (
+                ClosureStatus::Failed,
+                "Failed",
+                "(a verification activity failed)",
+            ),
+            (
+                ClosureStatus::Suspect,
+                "Suspect",
+                "(changed since its tests passed; run the tests and `rqtk verify`)",
+            ),
+            (
+                ClosureStatus::Gap,
+                "Gap",
+                "(no activities or success criteria defined)",
+            ),
+            (
+                ClosureStatus::Planned,
+                "Planned",
+                "(activities defined, none executed)",
+            ),
+            (
+                ClosureStatus::InProgress,
+                "In Progress",
+                "(partially executed, not all terminal)",
+            ),
+        ] {
+            if let Some(ids) = by_status.get(&status) {
+                output::section(title, detail);
+                for id in ids {
+                    output::item(id);
+                }
             }
         }
     }
 
     println!();
 
-    if strict && (!gap.is_empty() || needs_gap) {
+    let blocking = [
+        ClosureStatus::Gap,
+        ClosureStatus::Failed,
+        ClosureStatus::Suspect,
+    ];
+    if strict && (blocking.iter().any(|s| by_status.contains_key(s)) || needs_gap) {
         std::process::exit(1);
     }
 

@@ -13,5 +13,18 @@ pub mod log;
 pub mod open;
 pub mod rehash;
 pub mod report;
+pub mod scan;
 pub mod search;
 pub mod trace;
+pub mod verify;
+
+use rqtk_core::{Evidence, RequirementSet, RqtkError, SourceLink, Validated};
+
+/// Source links and recorded evidence, the inputs to verification status.
+pub fn load_links_and_evidence(
+    set: &RequirementSet<Validated>,
+) -> Result<(Vec<SourceLink>, Evidence), RqtkError> {
+    let links = rqtk_core::scan::scan(&set.repo_root, &set.config.scan)?;
+    let evidence = Evidence::load(&set.repo_root)?;
+    Ok((links, evidence))
+}

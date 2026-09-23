@@ -9,7 +9,9 @@ verification-lookup = []
 [dependencies]
 chrono = { version = "0.4.42", features = ["serde"] }
 gix = "0.83.0"
+ignore = "0.4"
 petgraph = "0.8.3"
+quick-xml = "0.41"
 regex = "1.12.2"
 schemars = { version = "1.0.4", features = ["chrono04"] }
 semver = { version = "1.0.27", features = ["serde"] }

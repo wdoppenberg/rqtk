@@ -34,6 +34,34 @@
         "stakeholders_dir": ".rqtk/stakeholders"
       }
     },
+    "scan": {
+      "$ref": "#/$defs/ScanConfig",
+      "default": {
+        "exclude": [],
+        "extensions": [
+          "rs",
+          "py",
+          "go",
+          "ts",
+          "tsx",
+          "js",
+          "jsx",
+          "java",
+          "kt",
+          "c",
+          "cc",
+          "cpp",
+          "h",
+          "hpp",
+          "cs",
+          "swift",
+          "rb"
+        ],
+        "paths": [
+          "."
+        ]
+      }
+    },
     "schema_version": {
       "description": "File format version; must equal the version supported by this build of rqtk.",
       "type": "integer",
@@ -302,6 +330,57 @@
         "stakeholders_dir": {
           "type": "string",
           "default": ".rqtk/stakeholders"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScanConfig": {
+      "description": "Where `rqtk scan` looks for `verifies` annotations in source code.",
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Glob patterns (gitignore syntax) to skip, e.g. `\"tests/fixtures/**\"`.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "extensions": {
+          "description": "File extensions to read.",
+          "type": "array",
+          "default": [
+            "rs",
+            "py",
+            "go",
+            "ts",
+            "tsx",
+            "js",
+            "jsx",
+            "java",
+            "kt",
+            "c",
+            "cc",
+            "cpp",
+            "h",
+            "hpp",
+            "cs",
+            "swift",
+            "rb"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "paths": {
+          "description": "Directories to scan, relative to the repository root. `.gitignore` is honoured.",
+          "type": "array",
+          "default": [
+            "."
+          ],
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false

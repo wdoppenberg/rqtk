@@ -58,3 +58,10 @@ allow_tbd = false
 allow_tbr = false
 shall_keywords = ["shall"]
 forbidden_keywords = []
+
+[scan]
+# Tests of the annotations themselves, not verifications of requirements.
+exclude = [
+    "crates/rqtk-macros/tests/compile_fail/**",
+    "crates/rqtk-py/tests/**",
+]

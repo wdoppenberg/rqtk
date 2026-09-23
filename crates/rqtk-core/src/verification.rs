@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct ActivityInfo {
+    /// Requirement file that defines the activity.
+    pub path: PathBuf,
     pub req_id: String,
     pub req_title: String,
     pub req_statement: String,
@@ -281,6 +283,7 @@ fn extract_activity_info(path: &Path, activity_id: &str) -> Result<Option<Activi
             .map(str::to_owned);
 
         return Ok(Some(ActivityInfo {
+            path: path.to_path_buf(),
             req_id,
             req_title,
             req_statement,

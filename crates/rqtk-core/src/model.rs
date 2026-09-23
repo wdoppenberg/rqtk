@@ -94,6 +94,33 @@ pub struct Config {
     #[serde(default)]
     pub standards: Vec<Standard>,
     pub validation: ValidationRules,
+    #[serde(default)]
+    pub scan: ScanConfig,
+}
+
+/// Where `rqtk scan` looks for `verifies` annotations in source code.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScanConfig {
+    /// Directories to scan, relative to the repository root. `.gitignore` is honoured.
+    #[serde(default = "default_scan_paths")]
+    pub paths: Vec<String>,
+    /// Glob patterns (gitignore syntax) to skip, e.g. `"tests/fixtures/**"`.
+    #[serde(default)]
+    pub exclude: Vec<String>,
+    /// File extensions to read.
+    #[serde(default = "default_scan_extensions")]
+    pub extensions: Vec<String>,
+}
+
+impl Default for ScanConfig {
+    fn default() -> Self {
+        Self {
+            paths: default_scan_paths(),
+            exclude: Vec::new(),
+            extensions: default_scan_extensions(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -626,6 +653,19 @@ fn default_prefix() -> String {
 
 fn default_padding() -> usize {
     4
+}
+
+fn default_scan_paths() -> Vec<String> {
+    vec![".".to_owned()]
+}
+
+fn default_scan_extensions() -> Vec<String> {
+    [
+        "rs", "py", "go", "ts", "tsx", "js", "jsx", "java", "kt", "c", "cc", "cpp", "h", "hpp",
+        "cs", "swift", "rb",
+    ]
+    .map(str::to_owned)
+    .to_vec()
 }
 
 fn default_requirements_dir() -> String {

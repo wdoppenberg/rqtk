@@ -69,9 +69,9 @@ enum Command {
     Lint,
     /// Trace the lifecycle of a requirement by its ID.
     Trace { id: String },
-    /// Report verification coverage status (gap / planned / in-progress / verified).
+    /// Report need satisfaction and verification status (verified / suspect / failed / …).
     Coverage {
-        /// Exit with a non-zero code if any requirement is not fully verified.
+        /// Exit 1 on any Gap, Failed or Suspect requirement, or unsatisfied need.
         #[arg(long)]
         strict: bool,
         /// Print only the one-line summary.
@@ -94,6 +94,21 @@ enum Command {
     },
     /// Show requirements that changed between two baseline tags.
     Diff { from: String, to: String },
+    /// List `verifies` links between source code and verification activities.
+    Scan,
+    /// Record test results as verification evidence in `.rqtk/evidence.toml`.
+    ///
+    /// Reads JUnit XML (cargo-nextest, pytest --junitxml, go-junit-report, jest-junit, …),
+    /// matches test cases to `verifies` links and records each activity's outcome against the
+    /// requirement's current content hash.
+    Verify {
+        /// JUnit XML result files.
+        #[arg(long = "results", required = true, num_args = 1..)]
+        results: Vec<PathBuf>,
+        /// Do not write; exit 1 if the evidence file is out of date.
+        #[arg(long)]
+        check: bool,
+    },
     /// Search requirements by string matching across fields.
     Search {
         /// Pattern to search for.
@@ -208,6 +223,12 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
         Command::Diff { from, to } => {
             commands::diff::run(root, from, to)?;
+        }
+        Command::Scan => {
+            commands::scan::run(root)?;
+        }
+        Command::Verify { results, check } => {
+            commands::verify::run(root, commands::verify::VerifyArgs { results, check })?;
         }
         Command::Search {
             pattern,

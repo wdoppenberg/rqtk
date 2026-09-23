@@ -134,6 +134,12 @@ impl GitContext {
         Ok(Self { repo, workdir })
     }
 
+    /// Full SHA of the commit HEAD points to, or `None` in a repository without commits.
+    pub fn head_commit(&self) -> Option<CommitHash> {
+        let id = self.repo.head_id().ok()?;
+        Some(CommitHash::from(id.to_string()))
+    }
+
     pub fn committer_name(&self) -> Result<String, RqtkError> {
         self.repo
             .committer()

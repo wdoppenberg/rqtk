@@ -76,8 +76,10 @@ rqtk add-need --title "..." --statement "..." --stakeholders STK-001
 rqtk add-stakeholder --name "..." [--role "..."]
 rqtk lint                          # validate all requirements against config
 rqtk trace FOBC-SYS-0001          # show full traceability chain up and down
-rqtk coverage                      # report need satisfaction and verification status
-rqtk coverage --strict             # same, but fail unless every requirement is verified
+rqtk scan                          # list `verifies` links between tests and activities
+rqtk verify --results junit.xml    # record test results as evidence in .rqtk/evidence.toml
+rqtk coverage                      # need satisfaction and verification status (incl. Suspect)
+rqtk coverage --strict             # same, but exit 1 on Gap, Failed or Suspect
 rqtk baseline 1.0.0               # tag HEAD as rqtk/1.0.0
 rqtk diff 0.9.0 1.0.0             # semantic diff between two baselines
 rqtk log FOBC-SYS-0001            # git history for a single requirement
@@ -143,6 +145,8 @@ executed_at    = 2024-11-15
 evidence       = ["test-report-v1.pdf"]
 ```
 
+`status`, `executed_at` and `evidence` are for activities performed by hand (inspection, analysis, demonstration). An activity linked to a test gets its status from `rqtk verify` instead; see [Verification flow](#verification-flow).
+
 ## Baselines and diffs
 
 Baselines are annotated git tags under `refs/tags/rqtk/<version>`. They require no files, no databases, and no out-of-band state.
@@ -172,42 +176,59 @@ Modifications are classified as **semantic** (statement, structural links, param
 
 ## Verification flow
 
-Two commands address verification:
+Three commands address verification:
 
 | Command | Question |
 |---|---|
-| `rqtk lint` | Is every requirement file structurally valid? |
-| `rqtk coverage` | Have the verification activities actually been planned and completed? |
+| `rqtk lint` | Is every requirement file valid, and does every `verifies` annotation name a real activity? |
+| `rqtk verify` | Which activities did this test run prove, and against which version of each requirement? |
+| `rqtk coverage` | Is every requirement verified against its *current* content? |
 
-`lint` catches form errors and sits in the pre-commit hook. `coverage` is for CI and milestone reviews.
+`lint` catches form errors and sits in the pre-commit hook. `verify` and `coverage` belong in CI.
 
-`rqtk coverage` classifies each requirement into one of four states:
+### Status comes from test results, not from the file
 
-- **Verified** — all activities have `status = "Passed"` or `"Waived"` and an `executed_at` date
-- **In Progress** — at least one activity started, but not all terminal
-- **Planned** — activities and success criteria defined, none executed yet
-- **Gap** — no activities defined, or success criteria missing
+An activity that is linked to a test (see [Linking tests](#linking-tests-to-verification-activities)) gets its status from recorded test results. Its hand-written `status` field is ignored, and `lint` warns about it (RQ029). No one, human or agent, can mark a tested requirement verified by editing a file.
 
-The full status breakdown is always printed. Pass `--strict` to exit with code 1 if any requirement has no activities or success criteria defined (a **Gap**), making it suitable as a CI gate:
+```bash
+cargo nextest run --profile ci              # or: pytest --junitxml=junit.xml, go-junit-report, …
+rqtk verify --results target/nextest/ci/junit.xml
+git add .rqtk/evidence.toml
+```
+
+`rqtk verify` reads JUnit XML and matches each test case to the functions annotated with `verifies`. It records one entry per activity in `.rqtk/evidence.toml`: the outcome, the tests that produced it, the commit, and the **content hash of the requirement at that moment**. An activity passes only when every test linked to it ran and passed. If a run covers only some of an activity's tests, for example Python tests without the Rust ones, that activity's existing evidence is left unchanged. `verify` exits 1 if a linked test failed. `verify --check` writes nothing and exits 1 if the committed evidence is out of date.
+
+Without nextest, stable Rust can emit JUnit directly:
+
+```bash
+RUSTC_BOOTSTRAP=1 cargo test --workspace --tests -- -Z unstable-options --format junit > junit.xml
+```
+
+Activities that are not linked to any test, such as inspections, analyses and demonstrations, keep using their hand-written `status` (`"Passed"`, `"Waived"`, `"Failed"`, …).
+
+### Coverage states
+
+`rqtk coverage` puts each requirement into one of these states:
+
+- **Verified**: every activity passed, meaning linked tests passed against the requirement's current content, or a manual status is `Passed`/`Waived`.
+- **Suspect**: tests passed, but the requirement's statement, links, parameters or verification method changed afterwards. Re-run the tests and `rqtk verify`.
+- **Failed**: a linked test failed, or a manual status is `Failed`.
+- **In Progress**: some activities passed or started, but not all.
+- **Planned**: activities and success criteria are defined, but nothing has been executed.
+- **Gap**: no activities are defined, or success criteria are missing.
 
 ```bash
 rqtk coverage
 #
-#   Verified 8  ·  In Progress 2  ·  Planned 3  ·  Gap 1  (14 total)
+#   Verified 8  ·  Suspect 1  ·  Failed 0  ·  In Progress 2  ·  Planned 2  ·  Gap 1  (14 total)
+#
+#   Suspect  (changed since its tests passed; run the tests and `rqtk verify`)
+#      ·  FOBC-SW-0002  (VA-SW-002-01 suspect)
 #
 #   Gap  (no activities or success criteria defined)
 #      ·  FOBC-HW-0003
-#
-#   Planned  (activities defined, none executed)
-#      ·  FOBC-SW-0004
-#      ·  FOBC-SW-0005
-#      ·  FOBC-HW-0002
-#
-#   In Progress  (partially executed, not all terminal)
-#      ·  FOBC-SYS-0002
-#      ·  FOBC-SW-0001
 
-rqtk coverage --strict   # exits 1 if any Gap is present
+rqtk coverage --strict   # exits 1 on any Gap, Failed or Suspect requirement, or unsatisfied need
 ```
 
 ## Change control
@@ -255,7 +276,32 @@ Every broken file is reported in one run, with its line number. The full list of
 
 ## Linking tests to verification activities
 
-Every requirement can declare verification activities with IDs like `VA-SYS-001-01`. `rqtk` can enforce at build or test time that a function actually exists to cover each activity.
+Every requirement can declare verification activities with IDs like `VA-SYS-001-01`. Tests declare which activity they verify, and `rqtk scan` lists every link it finds:
+
+```bash
+rqtk scan
+#   VA-SYS-001-01
+#      · crates/obc/tests/telemetry.rs:12  telemetry_acquisition_rate
+#
+#   14 links to 9 activities  ·  3 activities not linked to tests
+```
+
+The scanner walks the repository (respecting `.gitignore`) and recognises Rust attributes (`#[verifies("…")]`), Python decorators (`@verifies("…")`), and, in any language, a comment tag placed directly above the test:
+
+```go
+// rqtk: verifies VA-SYS-001-01
+func TestTelemetryRate(t *testing.T) { … }
+```
+
+Configure what is scanned in `.rqtk/config.toml`:
+
+```toml
+[scan]
+paths = ["."]                         # default
+exclude = ["tests/fixtures/**"]       # gitignore-style globs
+```
+
+`rqtk lint` reports annotations that name an unknown activity (RQ028) and annotations that aren't followed by a function (RQ030).
 
 ### Rust
 
@@ -271,7 +317,7 @@ fn telemetry_acquisition_rate() {
 }
 ```
 
-The macro resolves the activity ID at compile time by walking up from `CARGO_MANIFEST_DIR` to find `.rqtk/config.toml`. If the activity does not exist in any requirement file, the build fails with an error pointing to the annotation. When it does exist, the macro injects the requirement context as rustdoc on the function — visible in IDE hover and `cargo doc`.
+The macro resolves the activity ID at compile time by walking up from `CARGO_MANIFEST_DIR` to find `.rqtk/config.toml`. If the activity does not exist in any requirement file, the build fails with an error pointing to the annotation. When it does exist, the macro injects the requirement context as rustdoc on the function — visible in IDE hover and `cargo doc` — and registers the requirement file as a build input, so editing it triggers a rebuild.
 
 ### Python
 

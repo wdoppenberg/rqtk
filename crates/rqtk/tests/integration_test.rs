@@ -1951,3 +1951,233 @@ fn graph_rejects_graphml() {
         .assert()
         .failure();
 }
+
+// ── 0.3: verification from test evidence ─────────────────────────────────────
+
+/// A requirement whose verification has success criteria and the given activities.
+fn req_with_activities(id: &str, activities: &[&str]) -> String {
+    let mut req = format!("{}success_criteria = \"It works.\"\n", valid_req(id));
+    for a in activities {
+        req.push_str(&format!(
+            "\n[[verification.activities]]\nid = \"{a}\"\nname = \"Activity {a}\"\n"
+        ));
+    }
+    req
+}
+
+/// Rust test source linking each `(activity, fn)` pair. Built at runtime so this file
+/// itself contains no annotation for `rqtk scan` to pick up.
+fn test_source(links: &[(&str, &str)]) -> String {
+    links
+        .iter()
+        .map(|(activity, func)| {
+            format!(
+                "#[{}(\"{activity}\")]\n#[test]\nfn {func}() {{}}\n",
+                "verifies"
+            )
+        })
+        .collect()
+}
+
+fn junit(cases: &[(&str, bool)]) -> String {
+    let body: String = cases
+        .iter()
+        .map(|(name, passed)| {
+            if *passed {
+                format!("<testcase classname=\"boot\" name=\"{name}\"/>")
+            } else {
+                format!("<testcase classname=\"boot\" name=\"{name}\"><failure/></testcase>")
+            }
+        })
+        .collect();
+    format!(
+        "<?xml version=\"1.0\"?><testsuites><testsuite name=\"t\">{body}</testsuite></testsuites>"
+    )
+}
+
+fn evidence_fixture(activities: &[&str], links: &[(&str, &str)]) -> (tempfile::TempDir, PathBuf) {
+    let req = req_with_activities("TEST-SYS-0001", activities);
+    let (dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    fs::create_dir_all(repo_root.join("tests")).unwrap();
+    fs::write(repo_root.join("tests/boot.rs"), test_source(links)).unwrap();
+    (dir, repo_root)
+}
+
+fn write_junit(repo_root: &Path, cases: &[(&str, bool)]) -> PathBuf {
+    let path = repo_root.join("junit.xml");
+    fs::write(&path, junit(cases)).unwrap();
+    path
+}
+
+#[test]
+fn scan_lists_links_with_test_names() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    rqtk(&repo_root)
+        .arg("scan")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("VA-1"))
+        .stdout(predicate::str::contains("tests/boot.rs:1"))
+        .stdout(predicate::str::contains("boots"));
+}
+
+#[test]
+fn verify_then_edit_makes_requirement_suspect_until_reverified() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("boots", true)]);
+
+    rqtk(&repo_root)
+        .args(["coverage"])
+        .assert()
+        .stdout(predicate::str::contains("Planned 1"));
+
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("+ VA-1  passed"));
+    let evidence = fs::read_to_string(repo_root.join(".rqtk/evidence.toml")).unwrap();
+    assert!(evidence.contains("id = \"VA-1\""), "{evidence}");
+    assert!(evidence.contains("outcome = \"passed\""), "{evidence}");
+    assert!(evidence.contains("tests = [\"boot::boots\"]"), "{evidence}");
+
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Verified 1"));
+
+    // Change what the requirement demands: the passing result no longer applies.
+    let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(&path, text.replace("shall do", "shall always do")).unwrap();
+
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Suspect 1"))
+        .stdout(predicate::str::contains("VA-1 suspect"));
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--check")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1);
+
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("VA-1  passed (re-verified)"));
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .success();
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--check")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .success();
+}
+
+#[test]
+fn verify_records_failures_and_exits_nonzero() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("boots", false)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1);
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Failed 1"))
+        .stdout(predicate::str::contains("VA-1 failed"));
+}
+
+#[test]
+fn verify_partial_run_keeps_other_evidence() {
+    let (_dir, repo_root) =
+        evidence_fixture(&["VA-1", "VA-2"], &[("VA-1", "boots"), ("VA-2", "halts")]);
+    let both = write_junit(&repo_root, &[("boots", true), ("halts", true)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&both)
+        .assert()
+        .success();
+
+    let only_halts = write_junit(&repo_root, &[("halts", true)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&only_halts)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Evidence is up to date"));
+    let evidence = fs::read_to_string(repo_root.join(".rqtk/evidence.toml")).unwrap();
+    assert!(evidence.contains("\"VA-1\""), "{evidence}");
+    rqtk(&repo_root)
+        .arg("coverage")
+        .assert()
+        .stdout(predicate::str::contains("Verified 1"));
+}
+
+#[test]
+fn verify_leaves_evidence_alone_when_a_linked_test_was_skipped() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots"), ("VA-1", "halts")]);
+    let results = write_junit(&repo_root, &[("boots", true)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("no result for halts"));
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+}
+
+#[test]
+fn lint_cross_checks_source_links() {
+    let req = req_with_activities("TEST-SYS-0001", &["VA-1"]).replace(
+        "name = \"Activity VA-1\"",
+        "name = \"Activity VA-1\"\nstatus = \"Passed\"",
+    );
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    fs::create_dir_all(repo_root.join("tests")).unwrap();
+    let mut src = test_source(&[("VA-1", "boots"), ("VA-TYPO", "halts")]);
+    src.push_str(&format!("#[{}(\"VA-1\")]\nconst X: u8 = 1;\n", "verifies"));
+    fs::write(repo_root.join("tests/boot.rs"), src).unwrap();
+
+    let output = rqtk(&repo_root).arg("lint").output().unwrap();
+    let out = String::from_utf8(output.stdout).unwrap();
+    assert_eq!(output.status.code(), Some(2), "{out}");
+    assert!(out.contains("RQ028") && out.contains("VA-TYPO"), "{out}");
+    assert!(out.contains("tests/boot.rs:4"), "{out}");
+    assert!(out.contains("RQ029"), "{out}");
+    assert!(out.contains("RQ030"), "{out}");
+}
+
+#[test]
+fn scan_honours_exclude_patterns() {
+    let config = format!("{BASE_CONFIG}\n[scan]\nexclude = [\"tests/**\"]\n");
+    let (_dir, repo_root) = write_fixture(&config, &[]);
+    fs::create_dir_all(repo_root.join("tests")).unwrap();
+    fs::write(
+        repo_root.join("tests/x.rs"),
+        test_source(&[("VA-TYPO", "t")]),
+    )
+    .unwrap();
+    rqtk(&repo_root).arg("lint").assert().code(0);
+}

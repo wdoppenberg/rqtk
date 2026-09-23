@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EvidenceFile",
+  "type": "object",
+  "properties": {
+    "activity": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ActivityEvidence"
+      }
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version"
+  ],
+  "$defs": {
+    "ActivityEvidence": {
+      "description": "The latest recorded result for one verification activity.",
+      "type": "object",
+      "properties": {
+        "commit": {
+          "description": "Commit checked out when the evidence was recorded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Verification activity ID.",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "requirement": {
+          "description": "Requirement that owned the activity when the evidence was recorded.",
+          "$ref": "#/$defs/RequirementId"
+        },
+        "requirement_hash": {
+          "description": "The requirement's content hash when the evidence was recorded. If the requirement's\ncurrent hash differs, the evidence is stale and the activity is Suspect.",
+          "type": "string"
+        },
+        "tests": {
+          "description": "Test cases that produced the outcome, as `classname::name`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requirement",
+        "requirement_hash",
+        "outcome",
+        "tests"
+      ]
+    },
+    "Outcome": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    }
+  }
+}
