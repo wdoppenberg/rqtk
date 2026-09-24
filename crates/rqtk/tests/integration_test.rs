@@ -1456,6 +1456,145 @@ fn init_scaffolds_root_config_and_custom_requirements_dir() {
     assert!(repo_root.join("reqs").join("SYS").is_dir());
 }
 
+#[verifies("VA-CLI-004-01")]
+#[test]
+fn init_names_the_project_and_leaves_examples_opt_in() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo_root = dir.path();
+    fs::write(repo_root.join("package.json"), r#"{ "name": "shop" }"#).unwrap();
+    rqtk(repo_root)
+        .arg("init")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("not inside a git repository"));
+    let config = fs::read_to_string(repo_root.join(".rqtk/config.toml")).unwrap();
+    assert!(config.contains("name = \"shop\""), "{config}");
+    assert!(
+        config.contains("require_parent_for_categories = []"),
+        "{config}"
+    );
+    assert!(!repo_root.join(".rqtk/stakeholders").exists());
+    git_init(repo_root);
+    rqtk(repo_root).arg("lint").assert().success();
+
+    rqtk(repo_root)
+        .args(["init", "--force", "--example"])
+        .assert()
+        .success();
+    assert!(repo_root.join(".rqtk/stakeholders/STK-001.toml").exists());
+    assert!(repo_root.join(".rqtk/needs/NEED-0001.toml").exists());
+}
+
+#[verifies("VA-CLI-004-01")]
+#[test]
+fn add_writes_trace_verification_and_activities_that_lint_clean() {
+    let config = BASE_CONFIG.replace(
+        "require_parent_for_levels = []",
+        "require_parent_for_levels = [\"SUB\"]",
+    );
+    let (_dir, repo_root) = write_fixture(
+        &config,
+        &[("SYS/TEST-SYS-0001.toml", &valid_req("TEST-SYS-0001"))],
+    );
+    let add = |extra: &[&str]| {
+        let mut cmd = rqtk(&repo_root);
+        cmd.args([
+            "add",
+            "--category",
+            "SUB",
+            "--type",
+            "Functional",
+            "--title",
+            "Boot",
+            "--statement",
+            "The subsystem shall boot.",
+            "--rationale",
+            "Needed.",
+        ])
+        .args(extra);
+        cmd
+    };
+    // The config requires a parent for SUB: refuse rather than write a file that fails lint.
+    add(&[])
+        .assert()
+        .code(2)
+        .stderr(predicate::str::contains("--parent"));
+    add(&["--parent", "TEST-SYS-9999"]).assert().code(2);
+
+    add(&[
+        "--parent",
+        "TEST-SYS-0001",
+        "--criteria",
+        "Boots in under 5 s.",
+        "--activity",
+        "Boot time",
+        "--activity",
+        "Cold boot",
+    ])
+    .assert()
+    .success();
+    let path = repo_root.join(".rqtk/requirements/SUB/TEST-SUB-0001.toml");
+    let written = fs::read_to_string(&path).unwrap();
+    assert!(
+        written.contains("parents = [\"TEST-SYS-0001\"]"),
+        "{written}"
+    );
+    assert!(
+        written.contains("success_criteria = \"Boots in under 5 s.\""),
+        "{written}"
+    );
+    assert!(written.contains("id = \"VA-SUB-0001-01\""), "{written}");
+    assert!(written.contains("id = \"VA-SUB-0001-02\""), "{written}");
+    assert!(written.contains("priority = \"Medium\""), "{written}");
+    assert!(!written.contains("content_hash"), "{written}");
+    rqtk(&repo_root).arg("lint").assert().success();
+
+    // Editing a fresh requirement leaves no stale-hash warning behind.
+    fs::write(&path, written.replace("shall boot", "shall boot quickly")).unwrap();
+    rqtk(&repo_root)
+        .arg("lint")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("RQ021").not());
+}
+
+#[verifies("VA-CORE-004-01")]
+#[test]
+fn add_activity_appends_and_keeps_layout() {
+    let req = format!(
+        "# Owned by the systems team.\n{}",
+        valid_req("TEST-SYS-0001")
+    );
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    rqtk(&repo_root)
+        .args(["add-activity", "TEST-SYS-0001", "--name", "Boot time"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("VA-SYS-0001-01"));
+    let written =
+        fs::read_to_string(repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml")).unwrap();
+    assert!(
+        written.starts_with("# Owned by the systems team.\n"),
+        "{written}"
+    );
+    assert!(
+        written
+            .contains("[[verification.activities]]\nid = \"VA-SYS-0001-01\"\nname = \"Boot time\""),
+        "{written}"
+    );
+    rqtk(&repo_root)
+        .args([
+            "add-activity",
+            "TEST-SYS-0001",
+            "--name",
+            "Again",
+            "--id",
+            "VA-SYS-0001-01",
+        ])
+        .assert()
+        .code(2);
+}
+
 #[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_reports_missing_required_repository_paths() {
@@ -1928,9 +2067,15 @@ fn rehash_preserves_comments_and_layout() {
         valid_req("TEST-SYS-0001").replace("title =", "# keep this note\ntitle =")
     );
     let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    // Without --all, files that carry no hash are left alone.
     rqtk(&repo_root).arg("rehash").assert().success();
-
     let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    assert_eq!(fs::read_to_string(&path).unwrap(), req);
+    rqtk(&repo_root)
+        .args(["rehash", "--all"])
+        .assert()
+        .success();
+
     let written = fs::read_to_string(&path).unwrap();
     assert!(
         written.starts_with("# Owned by the systems team.\n"),
@@ -2541,7 +2686,7 @@ fn dry_runs_write_nothing() {
     assert_eq!(added["dry_run"], true);
     assert_eq!(added["item"]["statement"], "The system shall work.");
 
-    let (_, rehash) = json_stdout(&repo_root, &["rehash", "--dry-run"]);
+    let (_, rehash) = json_stdout(&repo_root, &["rehash", "--all", "--dry-run"]);
     assert_eq!(rehash["updated"].as_array().unwrap().len(), 1);
 
     let (_, baseline) = json_stdout(&repo_root, &["baseline", "1.0.0", "--dry-run"]);
@@ -2552,7 +2697,7 @@ fn dry_runs_write_nothing() {
 
     let fresh = tempfile::tempdir().unwrap();
     let (_, init) = json_stdout(fresh.path(), &["init", "--dry-run"]);
-    assert!(init["created"].as_array().unwrap().len() >= 3);
+    assert!(init["created"].as_array().unwrap().len() >= 2);
     assert!(!fresh.path().join(".rqtk").exists());
 }
 

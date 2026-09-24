@@ -8,15 +8,23 @@ use crate::cli::output::{self, Ctx, Exit, Usage};
 pub struct Report {
     created: Vec<PathBuf>,
     dry_run: bool,
+    /// The project name written to the config, taken from the project manifest or the
+    /// directory name.
+    project: String,
+    warnings: Vec<String>,
 }
 
-pub fn run(
-    ctx: &Ctx,
-    requirements_dir: Option<&str>,
-    force: bool,
-    dry_run: bool,
-) -> Result<Exit, Box<dyn Error>> {
-    let report = execute(ctx, requirements_dir, force, dry_run)?;
+#[derive(Default)]
+pub struct InitArgs<'a> {
+    pub requirements_dir: Option<&'a str>,
+    pub force: bool,
+    /// Also create an example stakeholder and need.
+    pub example: bool,
+    pub dry_run: bool,
+}
+
+pub fn run(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Exit, Box<dyn Error>> {
+    let report = execute(ctx, args)?;
     if ctx.json() {
         output::json(&report)?;
     } else {
@@ -25,33 +33,38 @@ pub fn run(
     Ok(Exit::Ok)
 }
 
-pub fn execute(
-    ctx: &Ctx,
-    requirements_dir: Option<&str>,
-    force: bool,
-    dry_run: bool,
-) -> Result<Report, Box<dyn Error>> {
+pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, Box<dyn Error>> {
     let root = &ctx.root;
-    let req_dir = requirements_dir.unwrap_or(".rqtk/requirements");
+    let dry_run = args.dry_run;
+    let req_dir = args.requirements_dir.unwrap_or(".rqtk/requirements");
     let config_path = root.join(".rqtk/config.toml");
-    if config_path.exists() && !force {
+    if config_path.exists() && !args.force {
         return Err(Box::new(Usage(format!(
             "refusing to overwrite {}; pass --force to replace it",
             config_path.display()
         ))));
     }
 
-    let files: Vec<(PathBuf, String)> = vec![
-        (config_path, default_config_toml(req_dir)),
-        (
+    let project = project_name(root);
+    let mut files: Vec<(PathBuf, String)> =
+        vec![(config_path, default_config_toml(req_dir, &project))];
+    if args.example {
+        files.push((
             root.join(".rqtk/stakeholders/STK-001.toml"),
             EXAMPLE_STAKEHOLDER_TOML.to_owned(),
-        ),
-        (
+        ));
+        files.push((
             root.join(".rqtk/needs/NEED-0001.toml"),
             EXAMPLE_NEED_TOML.to_owned(),
-        ),
-    ];
+        ));
+    }
+    let mut warnings = Vec::new();
+    if !root.ancestors().any(|dir| dir.join(".git").exists()) {
+        warnings.push(
+            "not inside a git repository: `verify`, `impact`, `diff` and `baseline` need git history"
+                .to_owned(),
+        );
+    }
     let dirs = [root.join(req_dir).join("SYS")];
 
     if !dry_run {
@@ -72,7 +85,49 @@ pub fn execute(
         .chain(&dirs)
         .map(|p| output::relative(p, root))
         .collect();
-    Ok(Report { created, dry_run })
+    Ok(Report {
+        created,
+        dry_run,
+        project,
+        warnings,
+    })
+}
+
+/// The project's name from its manifest (Cargo.toml, pyproject.toml, package.json, go.mod),
+/// or else the directory name.
+fn project_name(root: &std::path::Path) -> String {
+    let read = |file: &str| std::fs::read_to_string(root.join(file)).ok();
+    let from_toml = |file: &str, keys: &[&str]| -> Option<String> {
+        let value: toml::Value = toml::from_str(&read(file)?).ok()?;
+        let mut v = &value;
+        for key in keys {
+            v = v.get(key)?;
+        }
+        v.as_str().map(str::to_owned)
+    };
+    from_toml("Cargo.toml", &["package", "name"])
+        .or_else(|| from_toml("pyproject.toml", &["project", "name"]))
+        .or_else(|| from_toml("pyproject.toml", &["tool", "poetry", "name"]))
+        .or_else(|| {
+            let json: serde_json::Value = serde_json::from_str(&read("package.json")?).ok()?;
+            json.get("name")?.as_str().map(str::to_owned)
+        })
+        .or_else(|| {
+            let module = read("go.mod")?
+                .lines()
+                .find_map(|l| l.strip_prefix("module "))?
+                .trim()
+                .to_owned();
+            Some(module.rsplit('/').next().unwrap_or(&module).to_owned())
+        })
+        .or_else(|| {
+            root.canonicalize()
+                .ok()?
+                .file_name()?
+                .to_str()
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| "Project".to_owned())
 }
 
 pub fn print(report: &Report) {
@@ -86,8 +141,12 @@ pub fn print(report: &Report) {
         .iter()
         .map(|p| p.display().to_string())
         .collect();
-    let pairs: Vec<(&str, &str)> = shown.iter().map(|p| ("create", p.as_str())).collect();
+    let mut pairs: Vec<(&str, &str)> = vec![("project", report.project.as_str())];
+    pairs.extend(shown.iter().map(|p| ("create", p.as_str())));
     output::success(label, &pairs);
+    for warning in &report.warnings {
+        output::warning(warning);
+    }
 }
 
 const EXAMPLE_STAKEHOLDER_TOML: &str = r#"id = "STK-001"
@@ -111,7 +170,8 @@ statement = "The system shall fulfil this example stakeholder need."
 rationale = "Example rationale."
 "#;
 
-fn default_config_toml(requirements_dir: &str) -> String {
+fn default_config_toml(requirements_dir: &str, project: &str) -> String {
+    let project = project.replace('\\', "\\\\").replace('"', "\\\"");
     format!(
         r#"schema_version = 1
 
@@ -123,7 +183,7 @@ required_files = []
 required_dirs = []
 
 [project]
-name = "Example Project"
+name = "{project}"
 version = "0.1.0"
 
 [identification]
@@ -158,7 +218,7 @@ levels = ["Safety-Critical", "Mission-Critical", "Non-Critical"]
 [validation]
 require_rationale = true
 require_verification_method = true
-require_parent_for_levels = []
+require_parent_for_categories = []
 forbid_orphans = false
 forbid_circular_traces = true
 allow_tbd = false

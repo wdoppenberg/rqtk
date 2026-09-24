@@ -47,7 +47,7 @@ tests = [
     "integration::verify_dry_run_does_not_write_evidence",
 ]
 commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "d0362acd49c1a882+ef73972237d0afb0"
+tests_hash = "06053892fd2de113+d0362acd49c1a882"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
@@ -62,13 +62,15 @@ tests = [
     "integration::add_need_creates_file",
     "integration::add_requires_flags_and_rejects_unknown_category",
     "integration::add_stakeholder_creates_file",
+    "integration::add_writes_trace_verification_and_activities_that_lint_clean",
+    "integration::init_names_the_project_and_leaves_examples_opt_in",
     "integration::init_scaffolds_root_config_and_custom_requirements_dir",
     "integration::new_created_file_passes_lint",
     "integration::new_creates_requirement_file_with_correct_id",
     "integration::next_requirement_id_increments_correctly",
 ]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "1a790045a5061308+4b87320c7b62aa28+62dc979b9e1d3bff+6cc060a7549f3507+736fd14772beb2b4+73964912e903538a+9a0469301258b2e0"
+commit = "30d2014b588afe5d5e9cff0916722cfc47a2f6b8"
+tests_hash = "1a790045a5061308+3e3039905f57348c+4b87320c7b62aa28+62dc979b9e1d3bff+6cc060a7549f3507+736fd14772beb2b4+73964912e903538a+9a0469301258b2e0+9c342302a3ce765f"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
@@ -279,9 +281,12 @@ id = "VA-CORE-004-01"
 requirement = "RQTK-CORE-0004"
 requirement_hash = "v1:32f6856143c332184a5243980128da32bbdcb4cf604f36013910460a76e47146"
 outcome = "passed"
-tests = ["integration::rehash_preserves_comments_and_layout"]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "5f02dac864994b61"
+tests = [
+    "integration::add_activity_appends_and_keeps_layout",
+    "integration::rehash_preserves_comments_and_layout",
+]
+commit = "30d2014b588afe5d5e9cff0916722cfc47a2f6b8"
+tests_hash = "0545152b09aea4d3+64ed1a26889f15be"
 
 [activity.upstream]
 NEED-0001 = "v1:2cebce2c1a9ceac05984bb32d65ed028d786d4ed22d87bf7fa8a2180d2c9fe77"
