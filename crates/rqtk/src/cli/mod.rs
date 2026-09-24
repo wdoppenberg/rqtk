@@ -113,9 +113,13 @@ enum Command {
     Trace { id: String },
     /// Report need satisfaction and verification status (verified / suspect / failed / …).
     Coverage {
-        /// Exit 1 on any Gap, Failed or Suspect requirement, or unsatisfied need.
+        /// Exit 1 unless every requirement is Verified and every need is satisfied.
         #[arg(long)]
         strict: bool,
+        /// With --strict, also accept requirements in this state (repeatable), e.g. for
+        /// requirements written ahead of their implementation.
+        #[arg(long, value_enum, requires = "strict")]
+        allow: Vec<commands::coverage::Allow>,
         /// Print only the one-line summary.
         #[arg(short, long)]
         short: bool,
@@ -358,7 +362,11 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Context { id } => commands::context::run(ctx, &id),
         Command::Impact { base } => commands::impact::run(ctx, &base),
         Command::Trace { id } => commands::trace::run(ctx, id),
-        Command::Coverage { strict, short } => commands::coverage::run(ctx, strict, short),
+        Command::Coverage {
+            strict,
+            allow,
+            short,
+        } => commands::coverage::run(ctx, strict, &allow, short),
         Command::Graph { format } => commands::graph::run(ctx, format),
         Command::Baseline { version, dry_run } => commands::baseline::run(ctx, version, dry_run),
         Command::Export { format, output } => commands::export::run(ctx, format, output),

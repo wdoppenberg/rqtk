@@ -230,13 +230,19 @@ tests = [
     "integration::lint_cross_checks_source_links",
     "integration::scan_honours_exclude_patterns",
     "integration::scan_lists_links_with_test_names",
+    "scan::tests::binds_only_to_the_declaration_directly_below",
+    "scan::tests::case_tags_on_table_rows_bind_to_the_enclosing_test",
     "scan::tests::comment_tags_in_other_languages",
+    "scan::tests::googletest_catch2_and_suites",
     "scan::tests::ignores_commented_out_annotations_calls_and_docs",
+    "scan::tests::js_modifiers_each_and_groups",
+    "scan::tests::jvm_dotnet_and_c_family_methods",
     "scan::tests::python_decorators",
     "scan::tests::records_one_based_line_and_missing_function",
     "scan::tests::rust_attributes_including_stacked_and_qualified",
+    "scan::tests::source_hash_covers_the_body_only",
 ]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
+commit = "abd6cc7b02e23c188f1fdfaf386e3cb4e87fecb9"
 
 [[activity]]
 id = "VA-CORE-006-02"
@@ -245,12 +251,22 @@ requirement_hash = "v1:965baab8f745e26bc1442775ebfb6cd936c89d62b3e3062d39c2f1ea3
 outcome = "passed"
 tests = [
     "evidence::tests::activity_outcomes",
+    "evidence::tests::disabled_status_attributes_count_as_skipped",
     "evidence::tests::matches_by_name_suffix_and_parametrisation",
     "evidence::tests::parses_concatenated_documents",
     "evidence::tests::parses_outcomes",
     "evidence::tests::prefers_results_from_the_links_file",
+    "evidence::tests::same_name_in_two_places_is_ambiguous_not_both",
 ]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
+commit = "abd6cc7b02e23c188f1fdfaf386e3cb4e87fecb9"
+
+[[activity]]
+id = "VA-CORE-006-03"
+requirement = "RQTK-CORE-0006"
+requirement_hash = "v1:965baab8f745e26bc1442775ebfb6cd936c89d62b3e3062d39c2f1ea3c3546a4"
+outcome = "passed"
+tests = ["integration::every_ecosystem_matches_its_expected_outcomes"]
+commit = "abd6cc7b02e23c188f1fdfaf386e3cb4e87fecb9"
 
 [[activity]]
 id = "VA-SYS-001-01"
@@ -303,8 +319,12 @@ id = "VA-SYS-002-02"
 requirement = "RQTK-SYS-0002"
 requirement_hash = "v1:d8ba087f281bf257ed210576167c9189e8af1012e9a629a5341620eadef6e191"
 outcome = "passed"
-tests = ["integration::verify_records_failures_and_exits_nonzero"]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
+tests = [
+    "integration::verify_fails_when_no_result_matches_a_linked_test",
+    "integration::verify_records_failures_and_exits_nonzero",
+    "integration::verify_refuses_to_guess_between_same_named_tests",
+]
+commit = "abd6cc7b02e23c188f1fdfaf386e3cb4e87fecb9"
 
 [[activity]]
 id = "VA-SYS-002-03"
@@ -357,5 +377,6 @@ tests = [
     "integration::coverage_exits_nonzero_when_gaps_present_and_strict",
     "integration::coverage_lists_requirement_missing_activities",
     "integration::coverage_lists_requirement_missing_success_criteria",
+    "integration::coverage_strict_requires_every_requirement_verified_unless_allowed",
 ]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
+commit = "abd6cc7b02e23c188f1fdfaf386e3cb4e87fecb9"

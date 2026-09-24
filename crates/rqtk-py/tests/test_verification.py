@@ -21,3 +21,11 @@ def test_verifies_raises_for_unknown_activity():
         match=r"verification activity `VA-DOES-NOT-EXIST` not found",
     ):
         rqtk.verifies("VA-DOES-NOT-EXIST")
+
+
+def test_verifies_accepts_a_case():
+    @rqtk.verifies("VA-SYS-001-01", case="neg")
+    def sample():
+        return 1
+
+    assert sample.__rqtk_case__ == "neg"

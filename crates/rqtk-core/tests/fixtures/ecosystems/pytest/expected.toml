@@ -1,0 +1,13 @@
+# Expected outcome per activity: passed, failed, incomplete (a linked test was skipped),
+# ambiguous (several distinct tests match) or not_run (no linked test in the results).
+results = ["junit.xml"]
+
+[outcomes]
+VA-PY-01 = "passed"
+VA-PY-02 = "passed"
+VA-PY-03 = "passed"
+VA-PY-04 = "failed"
+VA-PY-05 = "passed"
+VA-PY-06 = "incomplete"
+VA-PY-07 = "passed"
+VA-PY-08 = "passed"

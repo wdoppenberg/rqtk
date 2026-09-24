@@ -125,7 +125,7 @@ impl RequirementSet<Validated> {
                 issues.push(at(Diagnostic::new(
                     "RQ030",
                     format!(
-                        "`verifies(\"{}\")` is not followed by a function, so no test result can be matched to it",
+                        "`verifies(\"{}\")` is not followed by a test declaration rqtk recognises, so no test result can be matched to it",
                         link.activity
                     ),
                 )));

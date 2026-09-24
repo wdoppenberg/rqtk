@@ -29,7 +29,16 @@ struct Report<'a> {
     unsatisfied_needs: usize,
 }
 
-pub fn run(ctx: &Ctx, strict: bool, short: bool) -> Result<Exit, Box<dyn Error>> {
+/// Requirement states `coverage --strict --allow` accepts besides Verified.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, clap::ValueEnum)]
+pub enum Allow {
+    /// Activities defined, nothing run yet.
+    Planned,
+    /// Some activities done, not all.
+    InProgress,
+}
+
+pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let (links, evidence) = super::load_links_and_evidence(&set)?;
     let statuses = set.verification_status(&links, &evidence);
@@ -53,12 +62,13 @@ pub fn run(ctx: &Ctx, strict: bool, short: bool) -> Result<Exit, Box<dyn Error>>
         .collect();
     let unsatisfied = needs.iter().filter(|n| n.satisfied_by.is_empty()).count();
 
-    let blocking = [
-        ClosureStatus::Gap,
-        ClosureStatus::Failed,
-        ClosureStatus::Suspect,
-    ];
-    let failing = blocking.iter().any(|s| summary.contains_key(s)) || unsatisfied > 0;
+    let accepted = |status: &ClosureStatus| match status {
+        ClosureStatus::Verified => true,
+        ClosureStatus::Planned => allow.contains(&Allow::Planned),
+        ClosureStatus::InProgress => allow.contains(&Allow::InProgress),
+        ClosureStatus::Suspect | ClosureStatus::Failed | ClosureStatus::Gap => false,
+    };
+    let failing = summary.keys().any(|s| !accepted(s)) || unsatisfied > 0;
     let exit = Exit::findings_if(strict && failing);
 
     if ctx.json() {

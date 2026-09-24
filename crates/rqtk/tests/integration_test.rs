@@ -2142,6 +2142,60 @@ fn verify_records_failures_and_exits_nonzero() {
         .stdout(predicate::str::contains("VA-1 failed"));
 }
 
+#[verifies("VA-SYS-004-02")]
+#[test]
+fn coverage_strict_requires_every_requirement_verified_unless_allowed() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Planned 1"));
+    rqtk(&repo_root)
+        .args(["coverage", "--strict", "--allow", "planned"])
+        .assert()
+        .success();
+}
+
+#[verifies("VA-SYS-002-02")]
+#[test]
+fn verify_fails_when_no_result_matches_a_linked_test() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("something_else", true)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains(
+            "none of the 1 test results matched",
+        ));
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+}
+
+#[verifies("VA-SYS-002-02")]
+#[test]
+fn verify_refuses_to_guess_between_same_named_tests() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = repo_root.join("junit.xml");
+    fs::write(
+        &results,
+        "<testsuite><testcase classname=\"alpha\" name=\"boots\"/>\
+         <testcase classname=\"beta\" name=\"boots\"><failure/></testcase></testsuite>",
+    )
+    .unwrap();
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Ambiguous"))
+        .stdout(predicate::str::contains("alpha::boots, beta::boots"));
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+}
+
 #[verifies("VA-SYS-002-03")]
 #[test]
 fn verify_partial_run_keeps_other_evidence() {

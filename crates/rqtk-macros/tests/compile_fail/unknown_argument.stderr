@@ -1,0 +1,11 @@
+error: expected `case = "…"`
+ --> tests/compile_fail/unknown_argument.rs:3:29
+  |
+3 | #[verifies("VA-SYS-001-01", kase = "typo")]
+  |                             ^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/compile_fail/unknown_argument.rs:5:32
+  |
+5 | fn this_should_not_compile() {}
+  |                                ^ consider adding a `main` function to `$DIR/tests/compile_fail/unknown_argument.rs`
