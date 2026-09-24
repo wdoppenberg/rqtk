@@ -27,7 +27,25 @@ rqtk log SYS-0001          # git history of one requirement
 
 - requirements and needs added, removed or changed;
 - requirements **downstream** of a semantic change, which may need their own review;
-- every verification activity to **re-run**, because its requirement changed or a file containing one of its tests changed.
+- every verification activity to **re-run**, because its requirement changed or a file containing one of its tests changed, with the tests to run. Activities whose evidence already covers the change are listed separately.
+
+## Review debt
+
+Two kinds of change leave a requirement **Suspect** until someone deals with them, however often the tests run:
+
+- **Its tests didn't change with it.** The requirement was reworded and the same tests that passed for the old wording passed again. They may still prove it, or they may test the old behaviour; rqtk can't tell which.
+- **Something upstream changed.** A parent requirement, or a need it or its ancestors satisfy, changed after it was verified. The child may no longer fit.
+
+Each is settled one way:
+
+- update the tests for the new wording and run them, then `rqtk verify`;
+- or confirm the requirement still holds, and record that:
+
+```bash
+rqtk review REQ-SW-0004 --note "Threshold follows the parent; tests check the configured value."
+```
+
+The review lands in `.rqtk/evidence.toml` with the date, the commit and the note, and shows in `rqtk report`. It lasts until the requirement or anything upstream changes again. A review doesn't stand in for running a changed requirement's tests: that Suspect reason stays until they pass.
 
 ## Review and sign-off
 
@@ -58,4 +76,6 @@ ecr_ids      = ["ECR-0042"]
 rqtk install-hook
 ```
 
-This adds a managed block to `.git/hooks/pre-commit` that runs `rqtk rehash` (refresh content hashes) and `rqtk lint` before each commit. Existing hook content is kept.
+This adds a managed block to `.git/hooks/pre-commit` that runs `rqtk rehash` (refresh any stored content hashes) and `rqtk lint` before each commit. Existing hook content is kept.
+
+New files carry no `content_hash`; rqtk computes it when it needs it. Stamp every file with `rqtk rehash --all` if you want the hash visible in the TOML; lint rule RQ021 then reports when it goes stale.

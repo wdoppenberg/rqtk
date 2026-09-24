@@ -5,10 +5,10 @@ Three commands make a complete requirements gate:
 ```bash
 rqtk lint                                   # every file valid, every link resolves
 rqtk verify --check --results junit.xml     # committed evidence matches this test run
-rqtk coverage --strict                      # nothing Suspect, Failed or unverified
+rqtk coverage --strict                      # every requirement Verified
 ```
 
-Each exits 1 when it finds a problem, so any CI system can use them directly.
+Each exits 1 when it finds a problem, so any CI system can use them directly. If you write requirements ahead of their implementation, `rqtk coverage --strict --allow planned` lets those through while still failing on anything Suspect, Failed or half-done.
 
 ## GitHub Actions
 
@@ -47,7 +47,9 @@ path = "junit.xml"
 
 ## Why `verify --check`
 
-Evidence is committed, so it is reviewed like code. `verify --check` makes sure it is honest: it fails when the committed `.rqtk/evidence.toml` doesn't match what this CI run observed. For example, someone may have changed a requirement without re-running its tests, or a test may now fail. To fix it, run the tests and `rqtk verify` locally, then commit the updated evidence.
+Evidence is committed, so it is reviewed like code. `verify --check` makes sure it is honest: it fails when the committed `.rqtk/evidence.toml` doesn't match what this CI run observed. For example, someone may have changed a requirement without re-running its tests, or a test may now fail. To fix it, run the tests and `rqtk verify` locally, then commit the updated evidence. Editing a test that still passes doesn't count as a mismatch.
+
+Reviews recorded with `rqtk review` live in the same file, so they reach the main branch through the same pull request review as the change they settle.
 
 ## Pull request review
 

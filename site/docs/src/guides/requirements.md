@@ -19,20 +19,31 @@ rqtk add-need --title "Fast recovery" \
   --stakeholders STK-001
 rqtk add --category SYS --type Functional --title "Fast boot" \
   --statement "The system shall boot in under 5 seconds." \
-  --rationale "Operators restart the unit during a pass."
+  --rationale "Operators restart the unit during a pass." \
+  --satisfies NEED-0001 \
+  --criteria "Boot completes in under 5 s on reference hardware." \
+  --activity "Boot time test"
 ```
 
 rqtk assigns the next free ID in each case. Pass `--dry-run` to see the file without writing it, and `--json` to get the assigned ID in machine-readable form.
 
+`rqtk add` also takes `--parent` (repeatable) for the requirement it decomposes, `--priority`, and `--method`, `--level` and `--phase` for how it is verified. A category listed in `validation.require_parent_for_categories` needs `--parent`.
+
+Each `--activity` gets an ID derived from the requirement's: `REQ-SYS-0001` gets `VA-SYS-0001-01`, `VA-SYS-0001-02`, and so on. Tests cite these IDs. Add an activity to an existing requirement with:
+
+```bash
+rqtk add-activity REQ-SYS-0001 --name "Cold boot test"
+```
+
 ## Anatomy of a requirement
 
 ```toml
-id = "SYS-0001"
+id = "REQ-SYS-0001"
 title = "Fast boot"
 category = "SYS"
 type = "Functional"
 state = "Approved"
-priority = "Critical"
+priority = "High"
 statement = "The system shall boot in under 5 seconds."
 rationale = "Operators restart the unit during a pass."
 
@@ -47,7 +58,7 @@ phase = "Development"
 success_criteria = "Boot completes in under 5 s on reference hardware."
 
 [[verification.activities]]
-id = "VA-SYS-001-01"
+id = "VA-SYS-0001-01"
 name = "Boot time test"
 ```
 
@@ -66,8 +77,8 @@ The full list of fields is on the [File formats](../reference/file-formats.md) p
 
 ```bash
 rqtk search boot -i            # substring search across requirements, needs and stakeholders
-rqtk trace SYS-0001            # parents and children
-rqtk context SYS-0001          # everything about one item: links, tests, status, findings
+rqtk trace REQ-SYS-0001        # parents and children
+rqtk context REQ-SYS-0001      # everything about one item: links, tests, status, findings
 rqtk graph > trace.dot         # the whole graph, for Graphviz
 ```
 

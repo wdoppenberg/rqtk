@@ -2720,6 +2720,21 @@ fn dry_runs_write_nothing() {
     assert_eq!(baseline["tag"], "rqtk/1.0.0");
     assert!(!git_tag_exists(&repo_root, "rqtk/1.0.0"));
 
+    let (_, activity) = json_stdout(
+        &repo_root,
+        &[
+            "add-activity",
+            "TEST-SYS-0001",
+            "--name",
+            "Boot",
+            "--dry-run",
+        ],
+    );
+    assert_eq!(activity["id"], "VA-SYS-0001-01");
+    let (_, review) = json_stdout(&repo_root, &["review", "TEST-SYS-0001", "--dry-run"]);
+    assert_eq!(review["written"], false);
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+
     assert_eq!(snapshot(), before);
 
     let fresh = tempfile::tempdir().unwrap();

@@ -24,7 +24,7 @@ Call the Skill tool with "rqtk-requirements" for the authoring rules.
 - **Requirements**: one shall-sentence each, measurable, with rationale, category, type, parent and the need it satisfies. Testing decisions and acceptance criteria in a spec map onto requirements and their success criteria.
 - **Verification**: success criteria, plus one activity per independently testable behaviour. Method `Test` unless the behaviour can only be inspected, analysed or demonstrated.
 
-Mark each item **new** or **changed**. A changed requirement makes its passing tests Suspect; say which.
+Mark each item **new** or **changed**. A changed requirement is Suspect until tests updated for it pass, and so are its child requirements until they are reviewed; say which.
 
 ### 3. Quiz
 
@@ -38,7 +38,7 @@ Iterate until the user approves.
 
 ### 4. Write
 
-Create items with `rqtk add-need --json` and `rqtk add --json`, reading the assigned ID from each result. Then edit the files to add `trace` links, success criteria and activities. Change existing requirements by editing their files.
+Create needs with `rqtk add-need --json` and requirements with `rqtk add --json`, parents first, reading the assigned ID from each result. `rqtk add` takes `--parent`, `--satisfies`, `--criteria` and one `--activity "name"` per activity, so each requirement is complete in one command. Change existing requirements by editing their files.
 
 ### 5. Check
 

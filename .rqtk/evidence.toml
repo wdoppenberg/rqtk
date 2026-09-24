@@ -48,7 +48,7 @@ tests = [
     "integration::verify_dry_run_does_not_write_evidence",
 ]
 commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "06053892fd2de113+d0362acd49c1a882"
+tests_hash = "d0362acd49c1a882+fa1b4ebe6ef33c0f"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
