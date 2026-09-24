@@ -557,7 +557,7 @@ pub fn match_results(
 
 /// One hash over the source of every test linked to an activity, or `None` if any of them
 /// couldn't be read.
-fn combined_hash(links: &[&SourceLink]) -> Option<String> {
+pub(crate) fn combined_hash(links: &[&SourceLink]) -> Option<String> {
     let mut hashes: Vec<&str> = links
         .iter()
         .map(|l| l.source_hash.as_deref())

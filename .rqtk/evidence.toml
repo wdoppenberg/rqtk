@@ -158,9 +158,10 @@ tests = [
     "integration::graph_rejects_graphml",
     "integration::graph_unsupported_format_exits_nonzero",
     "integration::report_prints_markdown_to_stdout",
+    "integration::report_shows_the_evidence_behind_each_activity_and_failures_first",
 ]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "57cb8457c1e89dbc+7763f75d08865784+77ef6876f336e065+8361191f8c4718d2+8c8cf4ac678b9d3e"
+commit = "cb84684428787df5f6e07b6f087e928b84c51722"
+tests_hash = "57cb8457c1e89dbc+7763f75d08865784+77ef6876f336e065+8361191f8c4718d2+87c1d6af9408d797+8c8cf4ac678b9d3e"
 
 [activity.upstream]
 NEED-0001 = "v1:2cebce2c1a9ceac05984bb32d65ed028d786d4ed22d87bf7fa8a2180d2c9fe77"
@@ -252,7 +253,7 @@ tests = [
     "integration::lint_rule_rq102_file_name_must_match_id",
 ]
 commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "0064d9bc5c5b2d73+035e88b0fcf2ff69+0e2a93caa2eeb037+1381fd9ea9969a6f+15c0d1618c9a7ed0+216bfcb618aa6a73+2a6126f73f964d75+3db820cce00d503e+4744ba637eb09a58+50722973049338d8+51d2e511e1bca163+52a73d86a5142e6b+5be37d7bc8317766+5e1abe286e92acc1+62236286605a7af8+67881559fff05d83+6beca6dd05f74298+b61419d305dff36f+bacfb762976ed4fb+beccc335f53f6e64+c0f396caa8290071+c6ea84a962943daa+d25fa3863b57d0ff+d6f4f338737d1fa2+e183cb7b44efb3d0+e99b0ffa85252ddb+f2f040f2262307f7"
+tests_hash = "0064d9bc5c5b2d73+035e88b0fcf2ff69+0e2a93caa2eeb037+1381fd9ea9969a6f+15c0d1618c9a7ed0+216bfcb618aa6a73+2a6126f73f964d75+4744ba637eb09a58+50722973049338d8+51d2e511e1bca163+52a73d86a5142e6b+59f834a76505d091+5be37d7bc8317766+5e1abe286e92acc1+62236286605a7af8+67881559fff05d83+6beca6dd05f74298+b61419d305dff36f+bacfb762976ed4fb+beccc335f53f6e64+c0f396caa8290071+c6ea84a962943daa+d25fa3863b57d0ff+d6f4f338737d1fa2+e183cb7b44efb3d0+e99b0ffa85252ddb+f2f040f2262307f7"
 
 [activity.upstream]
 NEED-0001 = "v1:2cebce2c1a9ceac05984bb32d65ed028d786d4ed22d87bf7fa8a2180d2c9fe77"

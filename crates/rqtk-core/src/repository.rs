@@ -474,6 +474,19 @@ impl RequirementSet<Loaded> {
                         ),
                     ));
                 }
+                for evidence in &activity.evidence {
+                    let is_path = !evidence.contains("://") && !evidence.trim().is_empty();
+                    if is_path && !self.repo_root.join(evidence).exists() {
+                        issues.push(finding(
+                            "RQ031",
+                            "verification.activities",
+                            format!(
+                                "evidence `{evidence}` of activity `{}` does not exist",
+                                activity.id
+                            ),
+                        ));
+                    }
+                }
             }
         }
         issues

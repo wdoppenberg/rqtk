@@ -35,4 +35,6 @@ pub use repository::{
     Loaded, RequirementSet, SatisfactionStatus, StaleHash, TraceView, Validated, load_config,
 };
 pub use scan::SourceLink;
-pub use status::{ActivityState, ClosureStatus, RequirementVerification, SuspectReason};
+pub use status::{
+    ActivityState, ActivityStatus, ClosureStatus, RequirementVerification, SuspectReason,
+};

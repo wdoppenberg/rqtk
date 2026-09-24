@@ -15,7 +15,17 @@ struct Report<'a> {
 
 pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
-    let checked = set.requirements().len() + set.needs().len() + set.stakeholders().len();
+    let counts = [
+        (set.requirements().len(), "requirement"),
+        (set.needs().len(), "need"),
+        (set.stakeholders().len(), "stakeholder"),
+    ];
+    let checked: usize = counts.iter().map(|(n, _)| n).sum();
+    let what = counts
+        .iter()
+        .map(|(n, noun)| format!("{n} {noun}{}", if *n == 1 { "" } else { "s" }))
+        .collect::<Vec<_>>()
+        .join(", ");
     let (set, mut issues) = set.validate();
     let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
     issues.extend(set.link_diagnostics(&links));
@@ -37,10 +47,7 @@ pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
             diagnostics: &issues,
         })?;
     } else if issues.is_empty() {
-        output::success(
-            &format!("All requirements passed lint ({checked} checked)"),
-            &[],
-        );
+        output::success(&format!("No lint findings ({what})"), &[]);
     } else {
         let (errors, warnings) = output::lint_table(&issues, &ctx.root);
         output::lint_summary(errors, warnings, checked);

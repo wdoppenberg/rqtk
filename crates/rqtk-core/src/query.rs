@@ -115,6 +115,11 @@ pub struct Reverify {
     pub activity: String,
     pub requirement: RequirementId,
     pub reasons: Vec<ReverifyReason>,
+    /// The linked tests to run, as `path:line name`.
+    pub tests: Vec<String>,
+    /// Recorded evidence already covers the change: the tests passed against the current
+    /// wording, with their current source.
+    pub done: bool,
 }
 
 /// What changed since `base` and what that puts at risk.
@@ -286,6 +291,7 @@ impl RequirementSet<Validated> {
         &self,
         base: &str,
         links: &[SourceLink],
+        evidence: &Evidence,
         changed_files: &[PathBuf],
     ) -> Result<Impact, RqtkError> {
         let base_reqs: BTreeMap<RequirementId, Requirement> = self
@@ -378,10 +384,33 @@ impl RequirementSet<Validated> {
                     path: p.to_path_buf(),
                 }));
                 if !reasons.is_empty() {
+                    let linked: Vec<&SourceLink> =
+                        links.iter().filter(|l| l.activity == activity.id).collect();
+                    let tests = linked
+                        .iter()
+                        .map(|l| {
+                            format!(
+                                "{}:{} {}",
+                                l.path.display(),
+                                l.line,
+                                l.test_name.as_deref().unwrap_or("?")
+                            )
+                        })
+                        .collect();
+                    let current_tests = crate::evidence::combined_hash(&linked);
+                    let done = evidence.activities.get(&activity.id).is_some_and(|e| {
+                        e.requirement == *req_id
+                            && e.outcome == crate::evidence::Outcome::Passed
+                            && e.requirement_hash == req.compute_content_hash()
+                            && !e.unchanged_tests
+                            && (e.tests_hash.is_none() || e.tests_hash == current_tests)
+                    });
                     reverify.push(Reverify {
                         activity: activity.id.clone(),
                         requirement: req_id.clone(),
                         reasons,
+                        tests,
+                        done,
                     });
                 }
             }

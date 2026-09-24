@@ -53,17 +53,16 @@ pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
                 style("·").dim(),
                 link.path.display(),
                 link.line,
-                link.test_name.as_deref().map_or_else(
-                    || style("(no function)".to_owned()).yellow().to_string(),
-                    |t| style(t.to_owned()).cyan().to_string()
-                ),
+                describe_test(link),
             );
         }
     }
+    let unattached = links.iter().filter(|l| l.test_name.is_none()).count();
     println!(
-        "\n  {} links to {} activities  ·  {} activities not linked to tests",
+        "\n  {} links to {} activities  ·  {} not attached to a test  ·  {} activities not linked to tests",
         style(links.len()).bold(),
         style(by_activity.len()).bold(),
+        style(unattached).bold(),
         style(unlinked.len()).bold(),
     );
     if !issues.is_empty() {
@@ -71,4 +70,22 @@ pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
         output::lint_table(&issues, &ctx.root);
     }
     Ok(exit)
+}
+
+/// What a link is attached to: `Suite.Name`, a `describe` group, one case, or nothing.
+fn describe_test(link: &SourceLink) -> String {
+    let Some(name) = &link.test_name else {
+        return style("(no test declaration)").yellow().to_string();
+    };
+    let mut label = match &link.suite {
+        Some(suite) => format!("{suite}.{name}"),
+        None => name.clone(),
+    };
+    if link.group {
+        label = format!("{label} (all tests in the group)");
+    }
+    if let Some(case) = &link.case {
+        label = format!("{label} [case \"{case}\"]");
+    }
+    style(label).cyan().to_string()
 }

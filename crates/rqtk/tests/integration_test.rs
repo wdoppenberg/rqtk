@@ -228,7 +228,7 @@ fn lint_prints_summary_with_zero_errors() {
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .stdout(predicate::str::contains("All requirements passed lint"));
+        .stdout(predicate::str::contains("No lint findings"));
 }
 
 #[verifies("VA-CORE-002-02")]
@@ -240,7 +240,7 @@ fn lint_prints_all_requirement_ids_in_issues_when_present() {
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .stdout(predicate::str::contains("All requirements passed lint"));
+        .stdout(predicate::str::contains("No lint findings"));
 }
 
 /// VA-CLI-002-01 (negative): missing rationale should exit 2 and report RQ007.
@@ -2122,6 +2122,33 @@ fn report_prints_markdown_to_stdout() {
 
 #[verifies("VA-CLI-007-02")]
 #[test]
+fn report_shows_the_evidence_behind_each_activity_and_failures_first() {
+    let (_dir, repo_root) =
+        evidence_fixture(&["VA-1", "VA-2"], &[("VA-1", "boots"), ("VA-2", "halts")]);
+    let results = write_junit(&repo_root, &[("boots", true), ("halts", false)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1);
+    let out = rqtk(&repo_root).arg("report").output().unwrap();
+    let report = String::from_utf8(out.stdout).unwrap();
+    let attention = report.find("## Needs attention").expect(&report);
+    assert!(
+        attention < report.find("## Requirements").unwrap(),
+        "{report}"
+    );
+    assert!(
+        report.contains("| `TEST-SYS-0001` | **Failed** | `VA-2` failed |"),
+        "{report}"
+    );
+    assert!(report.contains("## Verification traceability"), "{report}");
+    assert!(report.contains("`boot::boots`"), "{report}");
+}
+
+#[verifies("VA-CLI-007-02")]
+#[test]
 fn graph_rejects_graphml() {
     let repo_root = fixture_root("firesat-obc");
     rqtk(&repo_root)
@@ -3380,7 +3407,7 @@ const JSON_CONTRACT: &[&[&str]] = &[
     &["search", "telemetry", "-i"],
     &["trace", "FOBC-SW-0001"],
     &["context", "FOBC-SW-0001"],
-    &["rehash", "--dry-run"],
+    &["rehash", "--all", "--dry-run"],
     &[
         "add",
         "--category",
@@ -3391,6 +3418,14 @@ const JSON_CONTRACT: &[&[&str]] = &[
         "T",
         "--statement",
         "The OBC shall work.",
+        "--dry-run",
+    ],
+    &["review", "FOBC-SW-0001", "--dry-run"],
+    &[
+        "add-activity",
+        "FOBC-SW-0001",
+        "--name",
+        "Telemetry frame test",
         "--dry-run",
     ],
     &["explain", "RQ001"],

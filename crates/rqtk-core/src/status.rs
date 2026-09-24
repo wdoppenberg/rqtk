@@ -63,11 +63,22 @@ pub enum ClosureStatus {
 #[derive(Debug, Clone, Serialize)]
 pub struct RequirementVerification {
     pub status: ClosureStatus,
-    /// Each activity's ID and state, in file order.
+    /// Each activity's ID and state, in file order. Serialised as `[id, state]` pairs;
+    /// `activity_states` has the same as objects.
     pub activities: Vec<(String, ActivityState)>,
+    /// Each activity's ID and state as `{"id": …, "state": …}`, in file order.
+    pub activity_states: Vec<ActivityStatus>,
     /// Why the requirement is Suspect, when it is.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub suspect_reasons: Vec<SuspectReason>,
+}
+
+/// One activity's state, as reported in `activity_states`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ActivityStatus {
+    pub id: String,
+    #[serde(flatten)]
+    pub state: ActivityState,
 }
 
 /// Why recorded evidence no longer settles a requirement.
@@ -143,9 +154,17 @@ impl RequirementSet<Validated> {
                 if !suspect_reasons.is_empty() && status != ClosureStatus::Failed {
                     status = ClosureStatus::Suspect;
                 }
+                let activity_states = activities
+                    .iter()
+                    .map(|(id, state)| ActivityStatus {
+                        id: id.clone(),
+                        state: state.clone(),
+                    })
+                    .collect();
                 let verification = RequirementVerification {
                     status,
                     activities,
+                    activity_states,
                     suspect_reasons,
                 };
                 (id.clone(), verification)
