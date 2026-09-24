@@ -1,6 +1,6 @@
 [package]
 name = "rqtk"
-version = "1.1.0"
+version = "1.2.0"
 description = "Requirements that live in your repository: TOML requirements, git baselines, test-backed verification, and skills for coding agents."
 edition.workspace = true
 rust-version.workspace = true

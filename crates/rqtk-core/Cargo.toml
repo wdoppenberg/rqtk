@@ -1,6 +1,6 @@
 [package]
 name = "rqtk-core"
-version = "0.1.0"
+version = "0.2.0"
 description = "Core library of rqtk: requirement model, loading and lint rules, verification evidence, and git integration."
 edition.workspace = true
 rust-version.workspace = true
@@ -9,6 +9,9 @@ homepage.workspace = true
 license.workspace = true
 keywords = ["requirements", "traceability", "verification"]
 categories = ["development-tools"]
+
+# Real test-runner output for the ecosystem tests; not needed to build or use the crate.
+exclude = ["tests/fixtures/ecosystems"]
 
 [features]
 verification-lookup = []

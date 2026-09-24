@@ -2068,7 +2068,7 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
 name = "rqtk"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -2092,7 +2092,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "gix",
@@ -2115,7 +2115,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-export"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clap",
  "rqtk-core",
@@ -2126,7 +2126,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-macros"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2138,7 +2138,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-py"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "pyo3",
  "pyo3-build-config",
@@ -2148,7 +2148,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-report"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "rqtk-core",

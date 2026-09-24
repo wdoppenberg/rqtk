@@ -12,10 +12,10 @@ license = "MIT OR Apache-2.0"
 [workspace.dependencies]
 toml = "1.1.2"
 serde = "1"
-rqtk-core = { path = "crates/rqtk-core", version = "0.1.0" }
-rqtk-export = { path = "crates/rqtk-export", version = "0.1.0" }
-rqtk-macros = { path = "crates/rqtk-macros", version = "0.1.0" }
-rqtk-report = { path = "crates/rqtk-report", version = "0.1.0" }
+rqtk-core = { path = "crates/rqtk-core", version = "0.2.0" }
+rqtk-export = { path = "crates/rqtk-export", version = "0.2.0" }
+rqtk-macros = { path = "crates/rqtk-macros", version = "0.2.0" }
+rqtk-report = { path = "crates/rqtk-report", version = "0.2.0" }
 
 # The profile that 'dist' will build with
 [profile.dist]
