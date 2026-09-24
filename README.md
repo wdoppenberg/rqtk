@@ -45,7 +45,7 @@ owner = "Systems Verification Lead"
 success_criteria = "All channels deliver frames at ≥1 Hz with no frame loss over 10 minutes."
 
 [[verification.activities]]
-id = "VA-SYS-001-01"
+id = "VA-SYS-0001-01"
 name = "End-to-end telemetry acquisition test"
 procedure = "Activate all subsystem simulators and record frame timestamps for 10 minutes."
 expected_result = "Frame arrival rate ≥1 Hz on every channel; zero dropped frames."
@@ -73,11 +73,15 @@ Windows: `powershell -ExecutionPolicy Bypass -c "irm https://rqtk.dev/install.ps
 ## Commands
 
 ```bash
-rqtk init                          # scaffold .rqtk/ with config, requirements, needs, stakeholders
+rqtk init                          # scaffold .rqtk/ (--example for a sample stakeholder and need)
 rqtk add --category SYS \
           --type Functional \
           --title "..." \
-          --statement "..."        # create next requirement in sequence
+          --statement "..." \
+          --parent REQ-SYS-0001 \
+          --criteria "..." \
+          --activity "..."         # create the next requirement, complete with an activity
+rqtk add-activity REQ-SYS-0002 --name "..."   # add a verification activity
 rqtk add-need --title "..." --statement "..." --stakeholders STK-001
 rqtk add-stakeholder --name "..." [--role "..."]
 rqtk lint                          # validate all requirements against config
@@ -87,7 +91,8 @@ rqtk trace FOBC-SYS-0001          # show full traceability chain up and down
 rqtk scan                          # list `verifies` links between tests and activities
 rqtk verify --results junit.xml    # record test results as evidence in .rqtk/evidence.toml
 rqtk coverage                      # need satisfaction and verification status (incl. Suspect)
-rqtk coverage --strict             # same, but exit 1 on Gap, Failed or Suspect
+rqtk coverage --strict             # same, but exit 1 unless every requirement is Verified
+rqtk review REQ-SW-0004 --note ".." # confirm a requirement still holds after an upstream change
 rqtk baseline 1.0.0               # tag HEAD as rqtk/1.0.0
 rqtk diff 0.9.0 1.0.0             # semantic diff between two baselines
 rqtk log FOBC-SYS-0001            # git history for a single requirement
@@ -98,7 +103,7 @@ rqtk search "telemetry" -i \
           --field title,statement  # case-insensitive search in specific fields
 rqtk graph                         # traceability graph as Graphviz DOT
 rqtk export --format json|csv|markdown
-rqtk rehash                        # recompute and write content hashes (keeps comments)
+rqtk rehash                        # refresh stored content hashes (--all: stamp every file)
 rqtk report [-o report.md]         # Markdown requirements report (stdout by default)
 rqtk schema requirement            # JSON Schema of a file kind (config, need, evidence, …)
 rqtk explain RQ010                 # what a lint rule checks and how to fix it
@@ -245,7 +250,7 @@ external       = [{type = "JIRA", ref = "OBC-42"}]
 
 ```toml
 [[verification.activities]]
-id             = "VA-SYS-001-01"
+id             = "VA-SYS-0001-01"
 name           = "End-to-end telemetry acquisition test"
 procedure      = "..."
 expected_result = "..."
@@ -254,7 +259,7 @@ executed_at    = 2024-11-15
 evidence       = ["test-report-v1.pdf"]
 ```
 
-`status`, `executed_at` and `evidence` are for activities performed by hand (inspection, analysis, demonstration). An activity linked to a test gets its status from `rqtk verify` instead; see [Verification flow](#verification-flow).
+`status`, `executed_at` and `evidence` are for activities performed by hand (inspection, analysis, demonstration); `rqtk lint` warns when an evidence file doesn't exist (RQ031). An activity linked to a test gets its status from `rqtk verify` instead; see [Verification flow](#verification-flow).
 
 ## Baselines and diffs
 
@@ -385,22 +390,24 @@ Every broken file is reported in one run, with its line number. The full list of
 
 ## Linking tests to verification activities
 
-Every requirement can declare verification activities with IDs like `VA-SYS-001-01`. Tests declare which activity they verify, and `rqtk scan` lists every link it finds:
+Every requirement can declare verification activities with IDs like `VA-SYS-0001-01`. Tests declare which activity they verify, and `rqtk scan` lists every link it finds and the test it is attached to:
 
 ```bash
 rqtk scan
-#   VA-SYS-001-01
+#   VA-SYS-0001-01
 #      · crates/obc/tests/telemetry.rs:12  telemetry_acquisition_rate
 #
-#   14 links to 9 activities  ·  3 activities not linked to tests
+#   14 links to 9 activities  ·  0 not attached to a test  ·  3 activities not linked to tests
 ```
 
-The scanner walks the repository (respecting `.gitignore`) and recognises Rust attributes (`#[verifies("…")]`), Python decorators (`@verifies("…")`), and, in any language, a comment tag placed directly above the test:
+The scanner walks the repository (respecting `.gitignore`) and recognises Rust attributes (`#[verifies("…")]`), Python decorators (`@verifies("…")`), and, in any language, a comment tag placed directly above the test, with only comments and attributes in between:
 
 ```go
-// rqtk: verifies VA-SYS-001-01
+// rqtk: verifies VA-SYS-0001-01
 func TestTelemetryRate(t *testing.T) { … }
 ```
+
+It recognises tests in Rust, Python, Go, JavaScript/TypeScript (`it`, `test`, `describe`, `.each`), Java, Kotlin, C#, C/C++ (including GoogleTest and Catch2), Swift and Ruby. One case of a table-driven test is linked by tagging its row: `// rqtk: verifies VA-… case "name"`.
 
 Configure what is scanned in `.rqtk/config.toml`:
 
@@ -410,7 +417,7 @@ paths = ["."]                         # default
 exclude = ["tests/fixtures/**"]       # gitignore-style globs
 ```
 
-`rqtk lint` reports annotations that name an unknown activity (RQ028) and annotations that aren't followed by a function (RQ030).
+`rqtk lint` reports annotations that name an unknown activity (RQ028) and, as an error, annotations with no test below them (RQ030).
 
 ### Rust
 
@@ -422,14 +429,14 @@ rqtk = { version = "1", default-features = false, features = ["macros"] }
 ```
 
 ```rust
-#[rqtk::verifies("VA-SYS-001-01")]
+#[rqtk::verifies("VA-SYS-0001-01")]
 #[test]
 fn telemetry_acquisition_rate() {
     // ...
 }
 ```
 
-The same macros are available as `rqtk::macros::*`, or from the standalone `rqtk-macros` crate.
+This pulls in only the macro and a TOML parser. The same macro is available as `rqtk::macros::verifies`, or from the standalone `rqtk-macros` crate; `#[requirements_docs]`, which renders the requirement set as rustdoc, needs the `requirements-docs` feature.
 
 The macro resolves the activity ID at compile time by walking up from `CARGO_MANIFEST_DIR` to find `.rqtk/config.toml`. If the activity does not exist in any requirement file, the build fails with an error pointing to the annotation. When it does exist, the macro injects the requirement context as rustdoc on the function — visible in IDE hover and `cargo doc` — and registers the requirement file as a build input, so editing it triggers a rebuild.
 
@@ -440,7 +447,7 @@ Install the Python package (`pip install rqtk`, which also provides the `rqtk` c
 ```python
 from rqtk import verifies
 
-@verifies("VA-SYS-001-01")
+@verifies("VA-SYS-0001-01")
 def test_telemetry_acquisition_rate():
     ...
 ```
@@ -453,7 +460,7 @@ The decorator resolves the activity ID at import time from the `.rqtk/config.tom
 rqtk install-hook
 ```
 
-Writes a `pre-commit` hook to `.git/hooks/` that runs `rqtk rehash` (updates content hashes) and `rqtk lint` before every commit. Pass `--force` to overwrite an existing hook.
+Writes a `pre-commit` hook to `.git/hooks/` that runs `rqtk rehash` (refreshes stored content hashes) and `rqtk lint` before every commit, keeping any existing hook content.
 
 ## License
 

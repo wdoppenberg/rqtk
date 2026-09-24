@@ -1,8 +1,7 @@
 {
   "$defs": {
     "ActivityEvidence": {
-      "additionalProperties": false,
-      "description": "The latest recorded result for one verification activity.",
+      "description": "The latest recorded result for one verification activity.\n\nUnknown fields are ignored so that files written by a later rqtk still load.",
       "properties": {
         "commit": {
           "description": "Commit checked out when the evidence was recorded.",
@@ -32,6 +31,24 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "tests_hash": {
+          "description": "Hash of the linked tests' source when they last ran.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unchanged_tests": {
+          "description": "The requirement was re-verified after it changed, by the same tests that passed for\nits earlier wording. It stays Suspect until someone runs `rqtk review`.",
+          "type": "boolean"
+        },
+        "upstream": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Content hashes of the requirement's ancestors and of the needs they satisfy, when this\nversion of the requirement was first verified. A later change to any of them makes\nthe requirement Suspect until it is reviewed.",
+          "type": "object"
         }
       },
       "required": [
@@ -53,10 +70,51 @@
     "RequirementId": {
       "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
       "type": "string"
+    },
+    "Review": {
+      "description": "A person's or agent's confirmation that a requirement still holds after something it\ndepends on changed, recorded with `rqtk review`.",
+      "properties": {
+        "commit": {
+          "description": "Commit checked out when the review was recorded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date": {
+          "description": "Date of the review, `YYYY-MM-DD`.",
+          "type": "string"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requirement": {
+          "$ref": "#/$defs/RequirementId"
+        },
+        "requirement_hash": {
+          "description": "The requirement's content hash when it was reviewed; a later change voids the review.",
+          "type": "string"
+        },
+        "upstream": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Content hashes of its ancestors and their needs when it was reviewed.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "requirement",
+        "requirement_hash",
+        "date"
+      ],
+      "type": "object"
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "additionalProperties": false,
   "properties": {
     "activity": {
       "default": [],
@@ -65,10 +123,23 @@
       },
       "type": "array"
     },
+    "review": {
+      "items": {
+        "$ref": "#/$defs/Review"
+      },
+      "type": "array"
+    },
     "schema_version": {
       "format": "uint32",
       "minimum": 0,
       "type": "integer"
+    },
+    "written_by": {
+      "description": "Version of rqtk that last wrote the file.",
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "required": [

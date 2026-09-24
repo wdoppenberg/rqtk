@@ -9,6 +9,7 @@ pub struct AddNeedArgs {
     pub title: String,
     pub statement: String,
     pub stakeholders: Option<Vec<String>>,
+    pub rationale: Option<String>,
     pub dry_run: bool,
 }
 
@@ -22,8 +23,10 @@ pub fn run(ctx: &Ctx, args: AddNeedArgs) -> Result<Exit, Box<dyn Error>> {
         .into_iter()
         .map(StakeholderId)
         .collect();
-    need.content_hash = Some(need.compute_content_hash());
+    need.rationale = args.rationale;
 
     let path = set.needs_dir().join(format!("{id}.toml"));
-    super::add::finish(ctx, "Need", &id.0, path, &need, args.dry_run)
+    let mut view = need.clone();
+    view.content_hash = Some(need.compute_content_hash());
+    super::add::finish(ctx, "Need", &id.0, path, &need, &view, args.dry_run)
 }

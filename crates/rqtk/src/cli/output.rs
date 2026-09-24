@@ -101,6 +101,15 @@ pub fn success(label: &str, pairs: &[(&str, &str)]) {
     }
 }
 
+pub fn warning(msg: &str) {
+    eprintln!(
+        "{}{} {}",
+        INDENT,
+        style("!").yellow().bold(),
+        style(msg).yellow()
+    );
+}
+
 pub fn failure(msg: &str) {
     eprintln!(
         "{}{} {}",

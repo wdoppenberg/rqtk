@@ -23,3 +23,7 @@ name = "Link discovery"
 [[verification.activities]]
 id = "VA-CORE-006-02"
 name = "JUnit results"
+
+[[verification.activities]]
+id = "VA-CORE-006-03"
+name = "Real runner output per ecosystem"

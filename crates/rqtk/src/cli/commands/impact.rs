@@ -8,9 +8,9 @@ use crate::cli::output::{self, Ctx, Exit};
 /// Informational: always exits 0 unless the comparison itself fails.
 pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
+    let (links, evidence) = super::load_links_and_evidence(&set)?;
     let changed_files = set.git().changed_files_since(base)?;
-    let impact = set.impact(base, &links, &changed_files)?;
+    let impact = set.impact(base, &links, &evidence, &changed_files)?;
 
     if ctx.json() {
         output::json(&impact)?;
@@ -29,9 +29,10 @@ pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {
             output::item(&format!("{}  via {}", d.id, d.via.join(", ")));
         }
     }
-    if !impact.reverify.is_empty() {
+    let (done, pending): (Vec<_>, Vec<_>) = impact.reverify.iter().partition(|r| r.done);
+    if !pending.is_empty() {
         output::section("Re-verify", "(run these tests, then `rqtk verify`)");
-        for r in &impact.reverify {
+        for r in &pending {
             let reasons: Vec<String> = r
                 .reasons
                 .iter()
@@ -48,6 +49,15 @@ pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {
                 r.requirement,
                 reasons.join("; ")
             ));
+            for test in &r.tests {
+                println!("         {test}");
+            }
+        }
+    }
+    if !done.is_empty() {
+        output::section("Already re-verified", "(evidence covers the change)");
+        for r in &done {
+            output::item(&format!("{}  {}", r.activity, r.requirement));
         }
     }
     println!();

@@ -228,7 +228,7 @@ fn lint_prints_summary_with_zero_errors() {
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .stdout(predicate::str::contains("All requirements passed lint"));
+        .stdout(predicate::str::contains("No lint findings"));
 }
 
 #[verifies("VA-CORE-002-02")]
@@ -240,7 +240,7 @@ fn lint_prints_all_requirement_ids_in_issues_when_present() {
     rqtk(&repo_root)
         .arg("lint")
         .assert()
-        .stdout(predicate::str::contains("All requirements passed lint"));
+        .stdout(predicate::str::contains("No lint findings"));
 }
 
 /// VA-CLI-002-01 (negative): missing rationale should exit 2 and report RQ007.
@@ -1456,6 +1456,145 @@ fn init_scaffolds_root_config_and_custom_requirements_dir() {
     assert!(repo_root.join("reqs").join("SYS").is_dir());
 }
 
+#[verifies("VA-CLI-004-01")]
+#[test]
+fn init_names_the_project_and_leaves_examples_opt_in() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo_root = dir.path();
+    fs::write(repo_root.join("package.json"), r#"{ "name": "shop" }"#).unwrap();
+    rqtk(repo_root)
+        .arg("init")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("not inside a git repository"));
+    let config = fs::read_to_string(repo_root.join(".rqtk/config.toml")).unwrap();
+    assert!(config.contains("name = \"shop\""), "{config}");
+    assert!(
+        config.contains("require_parent_for_categories = []"),
+        "{config}"
+    );
+    assert!(!repo_root.join(".rqtk/stakeholders").exists());
+    git_init(repo_root);
+    rqtk(repo_root).arg("lint").assert().success();
+
+    rqtk(repo_root)
+        .args(["init", "--force", "--example"])
+        .assert()
+        .success();
+    assert!(repo_root.join(".rqtk/stakeholders/STK-001.toml").exists());
+    assert!(repo_root.join(".rqtk/needs/NEED-0001.toml").exists());
+}
+
+#[verifies("VA-CLI-004-01")]
+#[test]
+fn add_writes_trace_verification_and_activities_that_lint_clean() {
+    let config = BASE_CONFIG.replace(
+        "require_parent_for_levels = []",
+        "require_parent_for_levels = [\"SUB\"]",
+    );
+    let (_dir, repo_root) = write_fixture(
+        &config,
+        &[("SYS/TEST-SYS-0001.toml", &valid_req("TEST-SYS-0001"))],
+    );
+    let add = |extra: &[&str]| {
+        let mut cmd = rqtk(&repo_root);
+        cmd.args([
+            "add",
+            "--category",
+            "SUB",
+            "--type",
+            "Functional",
+            "--title",
+            "Boot",
+            "--statement",
+            "The subsystem shall boot.",
+            "--rationale",
+            "Needed.",
+        ])
+        .args(extra);
+        cmd
+    };
+    // The config requires a parent for SUB: refuse rather than write a file that fails lint.
+    add(&[])
+        .assert()
+        .code(2)
+        .stderr(predicate::str::contains("--parent"));
+    add(&["--parent", "TEST-SYS-9999"]).assert().code(2);
+
+    add(&[
+        "--parent",
+        "TEST-SYS-0001",
+        "--criteria",
+        "Boots in under 5 s.",
+        "--activity",
+        "Boot time",
+        "--activity",
+        "Cold boot",
+    ])
+    .assert()
+    .success();
+    let path = repo_root.join(".rqtk/requirements/SUB/TEST-SUB-0001.toml");
+    let written = fs::read_to_string(&path).unwrap();
+    assert!(
+        written.contains("parents = [\"TEST-SYS-0001\"]"),
+        "{written}"
+    );
+    assert!(
+        written.contains("success_criteria = \"Boots in under 5 s.\""),
+        "{written}"
+    );
+    assert!(written.contains("id = \"VA-SUB-0001-01\""), "{written}");
+    assert!(written.contains("id = \"VA-SUB-0001-02\""), "{written}");
+    assert!(written.contains("priority = \"Medium\""), "{written}");
+    assert!(!written.contains("content_hash"), "{written}");
+    rqtk(&repo_root).arg("lint").assert().success();
+
+    // Editing a fresh requirement leaves no stale-hash warning behind.
+    fs::write(&path, written.replace("shall boot", "shall boot quickly")).unwrap();
+    rqtk(&repo_root)
+        .arg("lint")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("RQ021").not());
+}
+
+#[verifies("VA-CORE-004-01")]
+#[test]
+fn add_activity_appends_and_keeps_layout() {
+    let req = format!(
+        "# Owned by the systems team.\n{}",
+        valid_req("TEST-SYS-0001")
+    );
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    rqtk(&repo_root)
+        .args(["add-activity", "TEST-SYS-0001", "--name", "Boot time"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("VA-SYS-0001-01"));
+    let written =
+        fs::read_to_string(repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml")).unwrap();
+    assert!(
+        written.starts_with("# Owned by the systems team.\n"),
+        "{written}"
+    );
+    assert!(
+        written
+            .contains("[[verification.activities]]\nid = \"VA-SYS-0001-01\"\nname = \"Boot time\""),
+        "{written}"
+    );
+    rqtk(&repo_root)
+        .args([
+            "add-activity",
+            "TEST-SYS-0001",
+            "--name",
+            "Again",
+            "--id",
+            "VA-SYS-0001-01",
+        ])
+        .assert()
+        .code(2);
+}
+
 #[verifies("VA-CORE-002-02")]
 #[test]
 fn lint_reports_missing_required_repository_paths() {
@@ -1928,9 +2067,15 @@ fn rehash_preserves_comments_and_layout() {
         valid_req("TEST-SYS-0001").replace("title =", "# keep this note\ntitle =")
     );
     let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[("SYS/TEST-SYS-0001.toml", &req)]);
+    // Without --all, files that carry no hash are left alone.
     rqtk(&repo_root).arg("rehash").assert().success();
-
     let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    assert_eq!(fs::read_to_string(&path).unwrap(), req);
+    rqtk(&repo_root)
+        .args(["rehash", "--all"])
+        .assert()
+        .success();
+
     let written = fs::read_to_string(&path).unwrap();
     assert!(
         written.starts_with("# Owned by the systems team.\n"),
@@ -1973,6 +2118,33 @@ fn report_prints_markdown_to_stdout() {
         ))
         .stdout(predicate::str::contains("## Traceability matrix"))
         .stdout(predicate::str::contains("#### `FOBC-SYS-0001`"));
+}
+
+#[verifies("VA-CLI-007-02")]
+#[test]
+fn report_shows_the_evidence_behind_each_activity_and_failures_first() {
+    let (_dir, repo_root) =
+        evidence_fixture(&["VA-1", "VA-2"], &[("VA-1", "boots"), ("VA-2", "halts")]);
+    let results = write_junit(&repo_root, &[("boots", true), ("halts", false)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1);
+    let out = rqtk(&repo_root).arg("report").output().unwrap();
+    let report = String::from_utf8(out.stdout).unwrap();
+    let attention = report.find("## Needs attention").expect(&report);
+    assert!(
+        attention < report.find("## Requirements").unwrap(),
+        "{report}"
+    );
+    assert!(
+        report.contains("| `TEST-SYS-0001` | **Failed** | `VA-2` failed |"),
+        "{report}"
+    );
+    assert!(report.contains("## Verification traceability"), "{report}");
+    assert!(report.contains("`boot::boots`"), "{report}");
 }
 
 #[verifies("VA-CLI-007-02")]
@@ -2103,6 +2275,32 @@ fn verify_then_edit_makes_requirement_suspect_until_reverified() {
         .assert()
         .code(1);
 
+    // Rerunning the same, unchanged test proves nothing about the new wording.
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "VA-1  passed with unchanged tests",
+        ));
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains(
+            "passed again with unchanged tests",
+        ));
+
+    // Updating the test for the new wording and running it settles the requirement.
+    let source = repo_root.join("tests/boot.rs");
+    let text = fs::read_to_string(&source).unwrap();
+    fs::write(
+        &source,
+        text.replace("fn boots() {}", "fn boots() { assert!(true); }"),
+    )
+    .unwrap();
     rqtk(&repo_root)
         .arg("verify")
         .arg("--results")
@@ -2123,6 +2321,118 @@ fn verify_then_edit_makes_requirement_suspect_until_reverified() {
         .success();
 }
 
+#[verifies("VA-SYS-005-01")]
+#[test]
+fn review_settles_unchanged_tests_but_not_an_unrun_change() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("boots", true)]);
+    let verify = |repo_root: &Path| {
+        rqtk(repo_root)
+            .arg("verify")
+            .arg("--results")
+            .arg(&results)
+            .assert()
+            .success();
+    };
+    verify(&repo_root);
+    let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(&path, text.replace("shall do", "shall always do")).unwrap();
+
+    // Not rerun yet: a review doesn't stand in for running the tests.
+    rqtk(&repo_root)
+        .args(["review", "TEST-SYS-0001"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Still Suspect"));
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1);
+
+    verify(&repo_root);
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1);
+    rqtk(&repo_root)
+        .args(["review", "TEST-SYS-0001", "--note", "wording only"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Settled"));
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .success();
+    let evidence = fs::read_to_string(repo_root.join(".rqtk/evidence.toml")).unwrap();
+    assert!(evidence.contains("note = \"wording only\""), "{evidence}");
+}
+
+#[verifies("VA-SYS-005-01")]
+#[test]
+fn changed_parent_leaves_children_suspect_until_reviewed() {
+    let parent = req_with_activities("TEST-SYS-0001", &["VA-1"]);
+    let child = req_with_activities("TEST-SUB-0001", &["VA-2"]).replace(
+        "[verification]",
+        "[trace]\nparents = [\"TEST-SYS-0001\"]\n\n[verification]",
+    );
+    let (_dir, repo_root) = write_fixture(
+        BASE_CONFIG,
+        &[
+            ("SYS/TEST-SYS-0001.toml", &parent),
+            ("SUB/TEST-SUB-0001.toml", &child),
+        ],
+    );
+    fs::create_dir_all(repo_root.join("tests")).unwrap();
+    fs::write(
+        repo_root.join("tests/boot.rs"),
+        test_source(&[("VA-1", "boots"), ("VA-2", "halts")]),
+    )
+    .unwrap();
+    let results = write_junit(&repo_root, &[("boots", true), ("halts", true)]);
+    let verify = || {
+        rqtk(&repo_root)
+            .arg("verify")
+            .arg("--results")
+            .arg(&results)
+            .assert()
+            .success();
+    };
+    verify();
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .success();
+
+    let path = repo_root.join(".rqtk/requirements/SYS/TEST-SYS-0001.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(&path, text.replace("shall do", "shall quickly do")).unwrap();
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains(
+            "TEST-SUB-0001  (TEST-SYS-0001 changed",
+        ));
+
+    // Rerunning the child's tests says nothing about whether it still fits its parent.
+    verify();
+    rqtk(&repo_root)
+        .arg("coverage")
+        .assert()
+        .stdout(predicate::str::contains(
+            "TEST-SUB-0001  (TEST-SYS-0001 changed",
+        ));
+    rqtk(&repo_root)
+        .args(["review", "TEST-SUB-0001"])
+        .assert()
+        .success();
+    rqtk(&repo_root)
+        .arg("coverage")
+        .assert()
+        .stdout(predicate::str::contains("TEST-SUB-0001").not());
+}
+
 #[verifies("VA-SYS-002-02")]
 #[test]
 fn verify_records_failures_and_exits_nonzero() {
@@ -2140,6 +2450,60 @@ fn verify_records_failures_and_exits_nonzero() {
         .code(1)
         .stdout(predicate::str::contains("Failed 1"))
         .stdout(predicate::str::contains("VA-1 failed"));
+}
+
+#[verifies("VA-SYS-004-02")]
+#[test]
+fn coverage_strict_requires_every_requirement_verified_unless_allowed() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    rqtk(&repo_root)
+        .args(["coverage", "--strict"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Planned 1"));
+    rqtk(&repo_root)
+        .args(["coverage", "--strict", "--allow", "planned"])
+        .assert()
+        .success();
+}
+
+#[verifies("VA-SYS-002-02")]
+#[test]
+fn verify_fails_when_no_result_matches_a_linked_test() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("something_else", true)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains(
+            "none of the 1 test results matched",
+        ));
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+}
+
+#[verifies("VA-SYS-002-02")]
+#[test]
+fn verify_refuses_to_guess_between_same_named_tests() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = repo_root.join("junit.xml");
+    fs::write(
+        &results,
+        "<testsuite><testcase classname=\"alpha\" name=\"boots\"/>\
+         <testcase classname=\"beta\" name=\"boots\"><failure/></testcase></testsuite>",
+    )
+    .unwrap();
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Ambiguous"))
+        .stdout(predicate::str::contains("alpha::boots, beta::boots"));
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
 }
 
 #[verifies("VA-SYS-002-03")]
@@ -2349,18 +2713,33 @@ fn dry_runs_write_nothing() {
     assert_eq!(added["dry_run"], true);
     assert_eq!(added["item"]["statement"], "The system shall work.");
 
-    let (_, rehash) = json_stdout(&repo_root, &["rehash", "--dry-run"]);
+    let (_, rehash) = json_stdout(&repo_root, &["rehash", "--all", "--dry-run"]);
     assert_eq!(rehash["updated"].as_array().unwrap().len(), 1);
 
     let (_, baseline) = json_stdout(&repo_root, &["baseline", "1.0.0", "--dry-run"]);
     assert_eq!(baseline["tag"], "rqtk/1.0.0");
     assert!(!git_tag_exists(&repo_root, "rqtk/1.0.0"));
 
+    let (_, activity) = json_stdout(
+        &repo_root,
+        &[
+            "add-activity",
+            "TEST-SYS-0001",
+            "--name",
+            "Boot",
+            "--dry-run",
+        ],
+    );
+    assert_eq!(activity["id"], "VA-SYS-0001-01");
+    let (_, review) = json_stdout(&repo_root, &["review", "TEST-SYS-0001", "--dry-run"]);
+    assert_eq!(review["written"], false);
+    assert!(!repo_root.join(".rqtk/evidence.toml").exists());
+
     assert_eq!(snapshot(), before);
 
     let fresh = tempfile::tempdir().unwrap();
     let (_, init) = json_stdout(fresh.path(), &["init", "--dry-run"]);
-    assert!(init["created"].as_array().unwrap().len() >= 3);
+    assert!(init["created"].as_array().unwrap().len() >= 2);
     assert!(!fresh.path().join(".rqtk").exists());
 }
 
@@ -3043,7 +3422,7 @@ const JSON_CONTRACT: &[&[&str]] = &[
     &["search", "telemetry", "-i"],
     &["trace", "FOBC-SW-0001"],
     &["context", "FOBC-SW-0001"],
-    &["rehash", "--dry-run"],
+    &["rehash", "--all", "--dry-run"],
     &[
         "add",
         "--category",
@@ -3054,6 +3433,14 @@ const JSON_CONTRACT: &[&[&str]] = &[
         "T",
         "--statement",
         "The OBC shall work.",
+        "--dry-run",
+    ],
+    &["review", "FOBC-SW-0001", "--dry-run"],
+    &[
+        "add-activity",
+        "FOBC-SW-0001",
+        "--name",
+        "Telemetry frame test",
         "--dry-run",
     ],
     &["explain", "RQ001"],
@@ -3094,5 +3481,25 @@ fn json_output_only_grows() {
         broken.is_empty(),
         "JSON output lost fields or changed types (a breaking change in 1.x):\n{}",
         broken.join("\n")
+    );
+}
+
+#[verifies("VA-CLI-002-01")]
+#[test]
+fn a_closed_pipe_is_not_an_error() {
+    // `rqtk … | head`: the reader closes stdout before rqtk is done writing.
+    let mut child = std::process::Command::new(assert_cmd::cargo::cargo_bin("rqtk"))
+        .args(["explain"])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    drop(child.stdout.take());
+    let output = child.wait_with_output().unwrap();
+    assert_eq!(output.status.code(), Some(0));
+    assert!(
+        output.stderr.is_empty(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
     );
 }

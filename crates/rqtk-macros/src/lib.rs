@@ -1,11 +1,33 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use rqtk_core::verification::{
-    build_requirements_doc_from_manifest_dir, build_verification_doc,
-    find_activity_from_manifest_dir,
-};
-use syn::{LitStr, parse_macro_input};
+mod lookup;
+
+use lookup::{find_activity_from_manifest_dir, verification_doc};
+use syn::parse::{Parse, ParseStream};
+use syn::{Ident, LitStr, Token, parse_macro_input};
+
+/// `"VA-…"` or `"VA-…", case = "…"`.
+struct VerifiesArgs {
+    activity: LitStr,
+}
+
+impl Parse for VerifiesArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let activity: LitStr = input.parse()?;
+        if input.parse::<Option<Token![,]>>()?.is_some() && !input.is_empty() {
+            let key: Ident = input.parse()?;
+            if key != "case" {
+                return Err(syn::Error::new(key.span(), "expected `case = \"…\"`"));
+            }
+            input.parse::<Token![=]>()?;
+            // The case is read by `rqtk scan` from the source; the macro only checks its form.
+            input.parse::<LitStr>()?;
+            input.parse::<Option<Token![,]>>()?;
+        }
+        Ok(VerifiesArgs { activity })
+    }
+}
 
 /// Asserts at compile time that a verification activity ID exists in the requirements tree.
 ///
@@ -19,16 +41,22 @@ use syn::{LitStr, parse_macro_input};
 /// fn lifecycle_round_trip() { /* … */ }
 /// ```
 ///
+/// For one case of a parameterised test (for example with `rstest`), name the case:
+///
+/// ```rust,ignore
+/// #[verifies("VA-SYS-001-02", case = "empty_input")]
+/// ```
+///
 /// The build will fail with a descriptive error if the activity ID is not found.
 /// Hovering over the annotated item shows the requirement overview and activity details.
 #[proc_macro_attribute]
 pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let activity_id = parse_macro_input!(attr as LitStr);
+    let activity_id = parse_macro_input!(attr as VerifiesArgs).activity;
     let id_value = activity_id.value();
 
     match find_activity_from_manifest_dir(&id_value) {
         Ok(Some(info)) => {
-            let doc = build_verification_doc(&id_value, &info);
+            let doc = verification_doc(&id_value, &info);
             // `include_bytes!` makes Cargo rebuild when the requirement file changes, so the
             // check and the injected docs never go stale.
             let path = info.path.display().to_string();
@@ -80,7 +108,8 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// The macro loads and validates requirements by walking up from `CARGO_MANIFEST_DIR`
 /// until `.rqtk/config.toml` is found. Generation fails with a compile error if requirements
-/// are missing or invalid.
+/// are missing or invalid. Requires the `docs` feature, which builds all of `rqtk-core`.
+#[cfg(feature = "docs")]
 #[proc_macro_attribute]
 pub fn requirements_docs(attr: TokenStream, item: TokenStream) -> TokenStream {
     if !attr.is_empty() {
@@ -88,7 +117,7 @@ pub fn requirements_docs(attr: TokenStream, item: TokenStream) -> TokenStream {
         return TokenStream::from(syn::Error::new(Span::call_site(), msg).to_compile_error());
     }
 
-    match build_requirements_doc_from_manifest_dir() {
+    match rqtk_core::verification::build_requirements_doc_from_manifest_dir() {
         Ok(doc) => {
             let item_ts: proc_macro2::TokenStream = item.into();
             TokenStream::from(quote! {

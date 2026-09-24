@@ -20,13 +20,23 @@ The statement is the contract. When the task contradicts it, stop and say so: ch
 
 ## Writing requirements
 
-- Create items with `rqtk add`, `rqtk add-need` and `rqtk add-stakeholder`. Run with `--dry-run` first to show the user what will be written. rqtk assigns IDs; use the ID it prints.
+- Create items with `rqtk add`, `rqtk add-need`, `rqtk add-stakeholder` and `rqtk add-activity`. Run with `--dry-run` first to show the user what will be written. rqtk assigns IDs; use the ID it prints (`--json` has it as `id`).
 - A statement is one sentence with the project's shall keyword and a measurable criterion. Split a compound requirement into several.
-- Every requirement carries a `rationale` (why it exists), `trace.parents` (what it decomposes) and `trace.satisfies` (the need it serves).
-- Every requirement gets a `[verification]` table with `success_criteria` and at least one `[[verification.activities]]` entry with an `id`. Tests cite activity IDs, so give each independently testable behaviour its own activity.
-- Edit the TOML directly for everything the `add` commands don't set; rqtk preserves comments and layout. Allowed fields: `rqtk schema requirement` (or `need`, `stakeholder`, `config`). Allowed values for category, type, state, priority and verification method/level/phase: `.rqtk/config.toml`.
+- Every requirement carries a `rationale` (why it exists), its parents and the needs it satisfies, success criteria, and one activity per independently testable behaviour. `rqtk add` sets all of it:
+
+  ```bash
+  rqtk add --category SW --type Functional --title "PID output clamp" \
+    --statement "The PID controller shall clamp its output to 0.0–1.0." \
+    --rationale "The heater duty cycle is a fraction." \
+    --parent REQ-SYS-0001 --satisfies NEED-0001 \
+    --criteria "Output stays within [0, 1] for errors of ±100 °C." \
+    --activity "Clamp at both ends" --json
+  ```
+
+  Activity IDs are generated as `VA-<CATEGORY>-<NUMBER>-<NN>` (here `VA-SW-0001-01`). Tests cite them. Add one to an existing requirement with `rqtk add-activity <ID> --name "…"`.
+- Edit the TOML directly for everything else; rqtk preserves comments and layout. Allowed fields: `rqtk schema requirement` (or `need`, `stakeholder`, `config`). Allowed values for category, type, state, priority and verification method/level/phase: `.rqtk/config.toml`.
 - Leave `status` unset on activities that tests verify; their status comes from recorded evidence (see the `rqtk-verification` skill).
 
 ## Done
 
-`rqtk lint` exits 0. For each finding, `rqtk explain <code>` states what the rule checks and how to fix it. Then `rqtk rehash` refreshes content hashes (the pre-commit hook also does this).
+`rqtk lint` exits 0. For each finding, `rqtk explain <code>` states what the rule checks and how to fix it.

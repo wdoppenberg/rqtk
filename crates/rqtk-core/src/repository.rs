@@ -73,6 +73,16 @@ pub struct RequirementSet<S = Loaded> {
 }
 
 /// Read and parse `.rqtk/config.toml`, checking the schema version.
+/// "Medium" if the project has that priority level, otherwise its middle level.
+fn default_priority(levels: &[String]) -> String {
+    levels
+        .iter()
+        .find(|l| l.eq_ignore_ascii_case("medium"))
+        .or_else(|| levels.get(levels.len() / 2))
+        .cloned()
+        .unwrap_or_else(|| "Medium".to_owned())
+}
+
 pub fn load_config(config_path: &Path) -> Result<Config, RqtkError> {
     let text = read_file(config_path)?;
     // Check the version before the full parse so an old config gets a clear message
@@ -259,7 +269,7 @@ impl RequirementSet<Loaded> {
         let phases: HashSet<&str> = cfg.verification.phases.iter().map(String::as_str).collect();
         let parent_required: HashSet<&str> = cfg
             .validation
-            .require_parent_for_levels
+            .require_parent_for_categories
             .iter()
             .map(String::as_str)
             .collect();
@@ -463,6 +473,19 @@ impl RequirementSet<Loaded> {
                             activity.id
                         ),
                     ));
+                }
+                for evidence in &activity.evidence {
+                    let is_path = !evidence.contains("://") && !evidence.trim().is_empty();
+                    if is_path && !self.repo_root.join(evidence).exists() {
+                        issues.push(finding(
+                            "RQ031",
+                            "verification.activities",
+                            format!(
+                                "evidence `{evidence}` of activity `{}` does not exist",
+                                activity.id
+                            ),
+                        ));
+                    }
                 }
             }
         }
@@ -756,13 +779,13 @@ impl<S> RequirementSet<S> {
                 .unwrap_or_else(|| fallback.to_owned())
         };
         let cfg = &self.config;
-        let mut req = Requirement {
+        Requirement {
             id: self.next_requirement_id(input.category),
             title: input.title.to_owned(),
             category: input.category.to_owned(),
             req_type: input.req_type.to_owned(),
             state: cfg.lifecycle.default_state.clone(),
-            priority: first(&cfg.priority.levels, "Medium"),
+            priority: default_priority(&cfg.priority.levels),
             criticality: None,
             maturity: None,
             tbd: false,
@@ -788,9 +811,26 @@ impl<S> RequirementSet<S> {
             risk: None,
             allocation: None,
             custom: BTreeMap::new(),
-        };
-        req.content_hash = Some(req.compute_content_hash());
-        req
+        }
+    }
+
+    /// The ID for a new verification activity of `req`: `VA-<CATEGORY>-<NUMBER>-<NN>`, from
+    /// the requirement ID without its prefix, numbered after the requirement's existing
+    /// activities and unused anywhere in the set.
+    pub fn next_activity_id(&self, req: &Requirement) -> String {
+        let ident = &self.config.identification;
+        let head = format!("{}{}", ident.prefix, ident.id_separator);
+        let suffix = req.id.0.strip_prefix(&head).unwrap_or(&req.id.0);
+        let taken: BTreeSet<&str> = self
+            .requirements
+            .values()
+            .chain(std::iter::once(req))
+            .flat_map(|r| r.verification.activities.iter().map(|a| a.id.as_str()))
+            .collect();
+        (req.verification.activities.len() + 1..)
+            .map(|n| format!("VA-{suffix}-{n:02}"))
+            .find(|id| !taken.contains(id.as_str()))
+            .expect("an unused number exists")
     }
 
     pub fn next_stakeholder_id(&self) -> StakeholderId {
@@ -825,7 +865,7 @@ impl<S> RequirementSet<S> {
     }
 
     pub fn scaffold_need(&self, id: NeedId, title: &str, statement: &str) -> Need {
-        let mut need = Need {
+        Need {
             id,
             title: title.to_owned(),
             state: self.config.lifecycle.default_state.clone(),
@@ -836,14 +876,12 @@ impl<S> RequirementSet<S> {
             rationale: None,
             content_hash: None,
             acceptance: None,
-        };
-        need.content_hash = Some(need.compute_content_hash());
-        need
+        }
     }
 
-    /// Items whose stored content hash is missing or stale, with the file to update and the
-    /// hash it should hold.
-    pub fn stale_hashes(&self) -> Vec<StaleHash> {
+    /// Items whose stored content hash is stale (or, with `include_missing`, absent), with
+    /// the file to update and the hash it should hold.
+    pub fn stale_hashes(&self, include_missing: bool) -> Vec<StaleHash> {
         let reqs = self.requirements.iter().map(|(id, r)| {
             (
                 EntityRef::Requirement(id.clone()),
@@ -861,7 +899,10 @@ impl<S> RequirementSet<S> {
             )
         });
         reqs.chain(needs)
-            .filter(|(_, _, stored, computed)| *stored != Some(computed.as_str()))
+            .filter(|(_, _, stored, computed)| match stored {
+                Some(stored) => *stored != computed.as_str(),
+                None => include_missing,
+            })
             .map(|(subject, path, _, computed)| StaleHash {
                 subject,
                 path: path.clone(),
@@ -870,9 +911,10 @@ impl<S> RequirementSet<S> {
             .collect()
     }
 
-    /// Write every stale or missing content hash, preserving formatting. Returns what changed.
-    pub fn rehash(&mut self) -> Result<Vec<StaleHash>, RqtkError> {
-        let stale = self.stale_hashes();
+    /// Write every stale content hash (and, with `include_missing`, stamp items that have
+    /// none), preserving formatting. Returns what changed.
+    pub fn rehash(&mut self, include_missing: bool) -> Result<Vec<StaleHash>, RqtkError> {
+        let stale = self.stale_hashes(include_missing);
         for item in &stale {
             write_content_hash(&item.path, &item.hash)?;
             match &item.subject {
@@ -890,6 +932,33 @@ impl<S> RequirementSet<S> {
             }
         }
         Ok(stale)
+    }
+
+    /// Append a verification activity to requirement `id`'s file, keeping its comments and
+    /// layout. Returns the file's path.
+    pub fn append_activity(
+        &self,
+        id: &RequirementId,
+        activity: &crate::model::VerificationActivity,
+    ) -> Result<PathBuf, RqtkError> {
+        let path = self.files_by_id[id].clone();
+        edit_toml_file(&path, |doc| {
+            let verification = doc
+                .entry("verification")
+                .or_insert_with(toml_edit::table)
+                .as_table_mut()
+                .expect("`verification` is a table in a parsed requirement");
+            let activities = verification
+                .entry("activities")
+                .or_insert_with(|| toml_edit::Item::ArrayOfTables(Default::default()))
+                .as_array_of_tables_mut()
+                .expect("`verification.activities` is an array of tables");
+            let mut table = toml_edit::Table::new();
+            table.insert("id", toml_edit::value(&activity.id));
+            table.insert("name", toml_edit::value(&activity.name));
+            activities.push(table);
+        })?;
+        Ok(path)
     }
 
     /// Edges that express derivation or dependency; a cycle among these is a modelling error.

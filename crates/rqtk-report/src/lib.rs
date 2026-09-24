@@ -2,34 +2,55 @@
 
 use chrono::NaiveDate;
 use rqtk_core::{
-    ActivityState, ClosureStatus, Requirement, RequirementId, RequirementSet,
-    RequirementVerification, SatisfactionStatus, Validated,
+    ActivityState, ClosureStatus, Evidence, Requirement, RequirementId, RequirementSet,
+    RequirementVerification, SatisfactionStatus, SourceLink, SuspectReason, Validated,
+    VerificationActivity,
 };
 use std::collections::BTreeMap;
 use std::fmt::Write;
 
-/// Render the full requirements report. `verification` comes from
-/// [`RequirementSet::verification_status`]; `date` is printed in the document header.
-pub fn render_report(
-    set: &RequirementSet<Validated>,
-    verification: &BTreeMap<RequirementId, RequirementVerification>,
-    date: NaiveDate,
-) -> String {
-    let closure: BTreeMap<RequirementId, ClosureStatus> = verification
+/// What a report is rendered from.
+pub struct ReportInput<'a> {
+    pub set: &'a RequirementSet<Validated>,
+    /// From [`RequirementSet::verification_status`].
+    pub verification: &'a BTreeMap<RequirementId, RequirementVerification>,
+    /// Recorded test evidence and reviews.
+    pub evidence: &'a Evidence,
+    /// `verifies` links found in source.
+    pub links: &'a [SourceLink],
+    /// Commit the report describes, if known.
+    pub commit: Option<&'a str>,
+    /// Printed in the document header.
+    pub date: NaiveDate,
+}
+
+/// Render the full requirements report.
+pub fn render_report(input: &ReportInput<'_>) -> String {
+    let set = input.set;
+    let closure: BTreeMap<RequirementId, ClosureStatus> = input
+        .verification
         .iter()
         .map(|(id, v)| (id.clone(), v.status))
         .collect();
     let mut out = String::with_capacity(64 * 1024);
-    write_header(&mut out, set, date);
+    write_header(&mut out, set, input.date, input.commit);
     write_summary(&mut out, set, &closure);
-    write_categories(&mut out, set, verification);
+    write_attention(&mut out, set, input.verification);
+    write_categories(&mut out, input);
+    write_stakeholders(&mut out, set);
     write_needs(&mut out, set);
     write_trace_matrix(&mut out, set);
+    write_verification_matrix(&mut out, input);
     write_verification_summary(&mut out, set, &closure);
     out
 }
 
-fn write_header(out: &mut String, set: &RequirementSet<Validated>, date: NaiveDate) {
+fn write_header(
+    out: &mut String,
+    set: &RequirementSet<Validated>,
+    date: NaiveDate,
+    commit: Option<&str>,
+) {
     let meta = &set.config().project;
     let _ = writeln!(out, "# {} — Requirements Specification\n", meta.name);
     if let Some(desc) = &meta.description {
@@ -47,6 +68,10 @@ fn write_header(out: &mut String, set: &RequirementSet<Validated>, date: NaiveDa
         ("Classification", meta.classification.clone()),
         ("Mission phase", meta.mission_phase.clone()),
         ("Organization", org.map(str::to_owned)),
+        (
+            "Commit",
+            commit.map(|c| format!("`{}`", &c[..c.len().min(12)])),
+        ),
     ];
     out.push_str("| | |\n|---|---|\n");
     for (label, value) in rows {
@@ -139,11 +164,68 @@ fn write_summary(
     out.push('\n');
 }
 
-fn write_categories(
+/// Failed and Suspect requirements, first, with the reason for each.
+fn write_attention(
     out: &mut String,
     set: &RequirementSet<Validated>,
     verification: &BTreeMap<RequirementId, RequirementVerification>,
 ) {
+    let open: Vec<(&RequirementId, &RequirementVerification)> = ordered_ids(set)
+        .into_iter()
+        .filter_map(|id| verification.get(id).map(|v| (id, v)))
+        .filter(|(_, v)| matches!(v.status, ClosureStatus::Failed | ClosureStatus::Suspect))
+        .collect();
+    if open.is_empty() {
+        return;
+    }
+    out.push_str("## Needs attention\n\n| Requirement | Status | Why |\n|---|---|---|\n");
+    for (id, v) in open {
+        let mut why: Vec<String> = v
+            .activities
+            .iter()
+            .filter(|(_, s)| {
+                matches!(s, ActivityState::Failed)
+                    || matches!(s, ActivityState::Manual(Some(m)) if m == "Failed")
+            })
+            .map(|(a, _)| format!("`{a}` failed"))
+            .collect();
+        why.extend(v.suspect_reasons.iter().map(suspect_text));
+        let _ = writeln!(
+            out,
+            "| `{id}` | {} | {} |",
+            closure_label(&v.status),
+            cell(&why.join("; "))
+        );
+    }
+    out.push('\n');
+}
+
+fn suspect_text(reason: &SuspectReason) -> String {
+    match reason {
+        SuspectReason::RequirementChanged { activities } => format!(
+            "changed since {} passed",
+            activities
+                .iter()
+                .map(|a| format!("`{a}`"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        SuspectReason::TestsUnchanged { activities } => format!(
+            "{} passed again with unchanged tests after it changed",
+            activities
+                .iter()
+                .map(|a| format!("`{a}`"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        SuspectReason::UpstreamChanged { items } => {
+            format!("upstream changed: {}", id_list(items))
+        }
+    }
+}
+
+fn write_categories(out: &mut String, input: &ReportInput<'_>) {
+    let set = input.set;
     out.push_str("## Requirements\n\n");
     for (key, cat) in sorted_categories(set) {
         let _ = writeln!(out, "### {key} — {}\n", inline(&cat.name));
@@ -159,16 +241,13 @@ fn write_categories(
             out.push_str("_No requirements in this category._\n\n");
         }
         for req in reqs {
-            write_requirement(out, req, verification.get(&req.id));
+            write_requirement(out, input, req);
         }
     }
 }
 
-fn write_requirement(
-    out: &mut String,
-    req: &Requirement,
-    verification: Option<&RequirementVerification>,
-) {
+fn write_requirement(out: &mut String, input: &ReportInput<'_>, req: &Requirement) {
+    let verification = input.verification.get(&req.id);
     let _ = writeln!(out, "#### `{}` — {}\n", req.id, inline(&req.title));
 
     let mut facts = vec![
@@ -240,7 +319,7 @@ fn write_requirement(
     }
     out.push('\n');
     if !v.activities.is_empty() {
-        out.push_str("| Activity | Name | Status | Expected result |\n|---|---|---|---|\n");
+        out.push_str("| Activity | Name | Status | Evidence |\n|---|---|---|---|\n");
         for a in &v.activities {
             let _ = writeln!(
                 out,
@@ -248,11 +327,76 @@ fn write_requirement(
                 a.id,
                 cell(&a.name),
                 cell(&activity_label(verification, &a.id)),
-                cell(a.expected_result.as_deref().unwrap_or(""))
+                evidence_cell(input, a)
             );
         }
         out.push('\n');
     }
+    if let Some(review) = input.evidence.reviews.get(&req.id) {
+        let note = review.note.as_deref().map(|n| format!(": {}", inline(n)));
+        let _ = writeln!(
+            out,
+            "**Reviewed** {}{}\n",
+            review.date,
+            note.unwrap_or_default()
+        );
+    }
+}
+
+/// What backs an activity's status: the tests and commit recorded by `rqtk verify`, or the
+/// date and files of a manual activity.
+fn evidence_cell(input: &ReportInput<'_>, activity: &VerificationActivity) -> String {
+    if let Some(e) = input.evidence.activities.get(&activity.id) {
+        let tests = e
+            .tests
+            .iter()
+            .map(|t| format!("`{}`", t.replace('|', "\\|")))
+            .collect::<Vec<_>>()
+            .join("<br>");
+        let commit = e
+            .commit
+            .as_deref()
+            .map(|c| format!(" at `{}`", &c[..c.len().min(12)]))
+            .unwrap_or_default();
+        return format!("{tests}{commit}");
+    }
+    let linked: Vec<String> = input
+        .links
+        .iter()
+        .filter(|l| l.activity == activity.id)
+        .map(|l| format!("`{}:{}`", l.path.display(), l.line))
+        .collect();
+    if !linked.is_empty() {
+        return format!("not run: {}", linked.join(", "));
+    }
+    let mut parts = Vec::new();
+    if let Some(date) = activity.executed_at {
+        parts.push(date.to_string());
+    }
+    parts.extend(activity.evidence.iter().map(|e| format!("`{}`", cell(e))));
+    if let Some(expected) = &activity.expected_result {
+        parts.push(format!("expected: {}", cell(expected)));
+    }
+    parts.join(", ")
+}
+
+fn write_stakeholders(out: &mut String, set: &RequirementSet<Validated>) {
+    if set.stakeholders().is_empty() {
+        return;
+    }
+    out.push_str(
+        "## Stakeholders\n\n| Stakeholder | Name | Role | Organization |\n|---|---|---|---|\n",
+    );
+    for (id, s) in set.stakeholders() {
+        let _ = writeln!(
+            out,
+            "| `{id}` | {} | {} | {} |",
+            cell(&s.name),
+            cell(s.role.as_deref().unwrap_or("")),
+            cell(s.organization.as_deref().unwrap_or(""))
+        );
+    }
+    out.push('\n');
 }
 
 fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
@@ -283,7 +427,8 @@ fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
 
 fn write_trace_matrix(out: &mut String, set: &RequirementSet<Validated>) {
     out.push_str("## Traceability matrix\n\n| ID | Title | Category | Parents | Satisfies |\n|---|---|---|---|---|\n");
-    for (id, req) in set.requirements() {
+    for id in ordered_ids(set) {
+        let req = &set.requirements()[id];
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} |",
@@ -296,13 +441,39 @@ fn write_trace_matrix(out: &mut String, set: &RequirementSet<Validated>) {
     out.push('\n');
 }
 
+/// One row per activity: the need it ultimately serves, the requirement, and what proves it.
+fn write_verification_matrix(out: &mut String, input: &ReportInput<'_>) {
+    let set = input.set;
+    out.push_str("## Verification traceability\n\n| Needs | Requirement | Activity | Status | Evidence |\n|---|---|---|---|---|\n");
+    for id in ordered_ids(set) {
+        let req = &set.requirements()[id];
+        let needs: Vec<String> = set
+            .upstream_hashes(id)
+            .into_keys()
+            .filter(|k| set.needs().keys().any(|n| n.0 == *k))
+            .collect();
+        for a in &req.verification.activities {
+            let _ = writeln!(
+                out,
+                "| {} | `{id}` | `{}` | {} | {} |",
+                dash_if_empty(id_list(&needs)),
+                a.id,
+                cell(&activity_label(input.verification.get(id), &a.id)),
+                evidence_cell(input, a)
+            );
+        }
+    }
+    out.push('\n');
+}
+
 fn write_verification_summary(
     out: &mut String,
     set: &RequirementSet<Validated>,
     closure: &BTreeMap<RequirementId, ClosureStatus>,
 ) {
     out.push_str("## Verification summary\n\n| ID | Title | Method | Level | Activities | Status |\n|---|---|---|---|---:|---|\n");
-    for (id, req) in set.requirements() {
+    for id in ordered_ids(set) {
+        let req = &set.requirements()[id];
         let _ = writeln!(
             out,
             "| `{id}` | {} | {} | {} | {} | {} |",
@@ -313,6 +484,20 @@ fn write_verification_summary(
             closure.get(id).map_or("", closure_label)
         );
     }
+}
+
+/// Requirement IDs by category level, then ID, so system requirements come before the
+/// software requirements derived from them.
+fn ordered_ids(set: &RequirementSet<Validated>) -> Vec<&RequirementId> {
+    let level = |req: &Requirement| {
+        set.config()
+            .categories
+            .get(&req.category)
+            .map_or(u8::MAX, |c| c.level)
+    };
+    let mut ids: Vec<&RequirementId> = set.requirements().keys().collect();
+    ids.sort_by_key(|id| (level(&set.requirements()[*id]), *id));
+    ids
 }
 
 fn sorted_categories(set: &RequirementSet<Validated>) -> Vec<(&String, &rqtk_core::Category)> {

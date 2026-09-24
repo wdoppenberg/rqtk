@@ -132,6 +132,9 @@ struct Written {
     /// For symlinks: where the link points, relative to the link's directory.
     #[serde(skip_serializing_if = "Option::is_none")]
     link_target: Option<PathBuf>,
+    /// For instruction files: the rqtk block was new to an existing file.
+    #[serde(skip)]
+    block_added: bool,
 }
 
 #[derive(Serialize)]
@@ -285,6 +288,7 @@ fn copy_skills(
                     path: output::relative(&skill_dir, root),
                     action,
                     link_target: Some(target),
+                    block_added: false,
                 });
                 continue;
             }
@@ -317,6 +321,7 @@ fn copy_skills(
                 path: output::relative(&path, root),
                 action,
                 link_target: None,
+                block_added: false,
             });
         }
     }
@@ -368,6 +373,7 @@ pub fn print(report: &Report) {
     for i in &report.instructions {
         let action = match i.action {
             Action::Created => "Created",
+            Action::Updated if i.block_added => "Added",
             Action::Updated => "Updated",
             _ => "Unchanged",
         };
@@ -443,10 +449,14 @@ fn install_instructions(
     if !dry_run && action != Action::Unchanged {
         std::fs::write(&target, updated)?;
     }
+    let block_added = existing
+        .as_deref()
+        .is_some_and(|text| !text.contains(BLOCK_BEGIN));
     Ok(Written {
         path: output::relative(&target, root),
         action,
         link_target: None,
+        block_added,
     })
 }
 

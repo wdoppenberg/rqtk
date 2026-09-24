@@ -249,8 +249,10 @@ pub struct Standard {
 pub struct ValidationRules {
     pub require_rationale: bool,
     pub require_verification_method: bool,
-    #[serde(default)]
-    pub require_parent_for_levels: Vec<String>,
+    /// Category keys whose requirements must have at least one parent (RQ012).
+    /// `require_parent_for_levels` is accepted as an older name.
+    #[serde(default, alias = "require_parent_for_levels")]
+    pub require_parent_for_categories: Vec<String>,
     pub forbid_orphans: bool,
     pub forbid_circular_traces: bool,
     pub allow_tbd: bool,
@@ -451,6 +453,21 @@ pub struct VerificationActivity {
     pub executed_at: Option<NaiveDate>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub evidence: Vec<String>,
+}
+
+impl VerificationActivity {
+    /// An activity with only an ID and a name, as `rqtk add --activity` creates it.
+    pub fn new(id: String, name: String) -> Self {
+        VerificationActivity {
+            id,
+            name,
+            procedure: None,
+            expected_result: None,
+            status: None,
+            executed_at: None,
+            evidence: Vec::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

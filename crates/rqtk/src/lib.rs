@@ -23,6 +23,9 @@
 //! }
 //! ```
 //!
+//! This pulls in only the macro and a TOML parser. The `requirements-docs` feature adds
+//! `#[requirements_docs]`, which renders the whole requirement set as rustdoc.
+//!
 //! # Stability
 //!
 //! The modules below re-export crates that are still 0.x, so they are not covered by rqtk's
@@ -33,7 +36,11 @@
 #[doc(hidden)]
 pub mod cli;
 
+#[cfg(feature = "lib")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lib")))]
 pub use rqtk_core as core;
+#[cfg(feature = "lib")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lib")))]
 pub use rqtk_export as export;
 
 /// Attribute macros that link Rust code to requirements (`rqtk-macros`).
@@ -43,4 +50,8 @@ pub use rqtk_macros as macros;
 
 #[cfg(feature = "macros")]
 #[cfg_attr(docsrs, doc(cfg(feature = "macros")))]
-pub use rqtk_macros::{requirements_docs, verifies};
+pub use rqtk_macros::verifies;
+
+#[cfg(feature = "requirements-docs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "requirements-docs")))]
+pub use rqtk_macros::requirements_docs;

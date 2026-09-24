@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="9" failures="2" skipped="1">
+	<testsuite name="example.com/corpus" tests="9" failures="2" errors="0" id="0" hostname="Wouters-MacBook-Pro.local" skipped="1" time="0.254" timestamp="2026-09-24T10:38:02+02:00">
+		<testcase name="TestPlain" classname="example.com/corpus" time="0.000"></testcase>
+		<testcase name="TestWithSubtests" classname="example.com/corpus" time="0.000"></testcase>
+		<testcase name="TestWithSubtests/a" classname="example.com/corpus" time="0.000"></testcase>
+		<testcase name="TestWithSubtests/b" classname="example.com/corpus" time="0.000"></testcase>
+		<testcase name="TestTable" classname="example.com/corpus" time="0.000">
+			<failure message="Failed"></failure>
+		</testcase>
+		<testcase name="TestTable/flipped_byte_is_corrupt" classname="example.com/corpus" time="0.000"></testcase>
+		<testcase name="TestTable/intact_file_passes" classname="example.com/corpus" time="0.000">
+			<failure message="Failed"><![CDATA[    shapes_test.go:28: broken]]></failure>
+		</testcase>
+		<testcase name="TestSuite" classname="example.com/corpus" time="0.000"></testcase>
+		<testcase name="TestSkipped" classname="example.com/corpus" time="0.000">
+			<skipped message="Skipped"><![CDATA[    shapes_test.go:42: later]]></skipped>
+		</testcase>
+	</testsuite>
+</testsuites>

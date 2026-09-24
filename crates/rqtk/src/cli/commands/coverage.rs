@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, error::Error};
 use console::style;
 use rqtk_core::{
     ActivityState, ClosureStatus, NeedId, RequirementId, RequirementSet, RequirementVerification,
+    SuspectReason,
 };
 use serde::Serialize;
 
@@ -29,7 +30,16 @@ struct Report<'a> {
     unsatisfied_needs: usize,
 }
 
-pub fn run(ctx: &Ctx, strict: bool, short: bool) -> Result<Exit, Box<dyn Error>> {
+/// Requirement states `coverage --strict --allow` accepts besides Verified.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, clap::ValueEnum)]
+pub enum Allow {
+    /// Activities defined, nothing run yet.
+    Planned,
+    /// Some activities done, not all.
+    InProgress,
+}
+
+pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let (links, evidence) = super::load_links_and_evidence(&set)?;
     let statuses = set.verification_status(&links, &evidence);
@@ -53,12 +63,13 @@ pub fn run(ctx: &Ctx, strict: bool, short: bool) -> Result<Exit, Box<dyn Error>>
         .collect();
     let unsatisfied = needs.iter().filter(|n| n.satisfied_by.is_empty()).count();
 
-    let blocking = [
-        ClosureStatus::Gap,
-        ClosureStatus::Failed,
-        ClosureStatus::Suspect,
-    ];
-    let failing = blocking.iter().any(|s| summary.contains_key(s)) || unsatisfied > 0;
+    let accepted = |status: &ClosureStatus| match status {
+        ClosureStatus::Verified => true,
+        ClosureStatus::Planned => allow.contains(&Allow::Planned),
+        ClosureStatus::InProgress => allow.contains(&Allow::InProgress),
+        ClosureStatus::Suspect | ClosureStatus::Failed | ClosureStatus::Gap => false,
+    };
+    let failing = summary.keys().any(|s| !accepted(s)) || unsatisfied > 0;
     let exit = Exit::findings_if(strict && failing);
 
     if ctx.json() {
@@ -112,7 +123,7 @@ pub fn run(ctx: &Ctx, strict: bool, short: bool) -> Result<Exit, Box<dyn Error>>
             (
                 ClosureStatus::Suspect,
                 "Suspect",
-                "(changed since its tests passed; run the tests and `rqtk verify`)",
+                "(evidence no longer settles it; each line says why)",
             ),
             (
                 ClosureStatus::Gap,
@@ -179,18 +190,35 @@ fn print_unsatisfied(set: &RequirementSet<rqtk_core::Validated>, needs: &[NeedSt
     }
 }
 
-/// The requirement ID, naming the activities behind a Failed or Suspect status.
+/// The requirement ID, naming the activities behind a Failed status and the reasons behind
+/// a Suspect one.
 fn describe(id: &RequirementId, v: &RequirementVerification) -> String {
-    let flagged: Vec<String> = v
+    let mut flagged: Vec<String> = v
         .activities
         .iter()
         .filter_map(|(activity, state)| match state {
             ActivityState::Failed => Some(format!("{activity} failed")),
             ActivityState::Manual(Some(s)) if s == "Failed" => Some(format!("{activity} failed")),
-            ActivityState::Suspect => Some(format!("{activity} suspect")),
             _ => None,
         })
         .collect();
+    for reason in &v.suspect_reasons {
+        flagged.push(match reason {
+            SuspectReason::RequirementChanged { activities } => activities
+                .iter()
+                .map(|a| format!("{a} suspect"))
+                .collect::<Vec<_>>()
+                .join(", "),
+            SuspectReason::TestsUnchanged { activities } => format!(
+                "{} passed again with unchanged tests; update them, or `rqtk review {id}`",
+                activities.join(", ")
+            ),
+            SuspectReason::UpstreamChanged { items } => format!(
+                "{} changed; check it still fits, then `rqtk review {id}`",
+                items.join(", ")
+            ),
+        });
+    }
     if flagged.is_empty() {
         id.to_string()
     } else {

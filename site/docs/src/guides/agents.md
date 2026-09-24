@@ -13,7 +13,7 @@ rqtk skills install      # or, in a new repository: rqtk init --agents
 | `rqtk-requirements` | agent or you | Reading and writing `.rqtk/`: find the governing requirement, read its briefing, author items that lint clean. |
 | `rqtk-verification` | agent or you | The proof loop: link a test, run it, `rqtk verify`; done when `rqtk lint` and `rqtk coverage --strict` exit 0. |
 | `/to-requirements` | you | Turn a spec or discussion into needs and requirements with verification activities; you approve the draft before anything is written. |
-| `/requirements-review` | you | Review a diff against the requirements it touches: facts from `rqtk impact`, then a verdict per requirement. |
+| `/requirements-review` | you | Review a diff against the requirements it touches: facts from `rqtk impact`, then a verdict per requirement, and the `rqtk review` commands that would settle what is still Suspect. |
 
 The skills follow the open [Agent Skills](https://agentskills.io) format, so they work with any agent that supports it:
 
@@ -42,11 +42,12 @@ grill → /to-spec → /to-requirements → /to-tickets → /implement → /code
 ## Commands agents use most
 
 ```bash
-rqtk context SYS-0001 --json     # the briefing: statement, links, tests, status, findings
-rqtk impact main --json          # what a change touches and what to re-verify
+rqtk context REQ-SYS-0001 --json # the briefing: statement, links, tests, status, findings
+rqtk impact main --json          # what a change touches, what to re-verify, and with which tests
 rqtk lint --json                 # findings with code, severity and file:line
 rqtk explain RQ010               # what a rule checks and how to fix it
 rqtk schema requirement          # the JSON Schema of a file kind
+rqtk add … --parent … --criteria … --activity …   # a complete requirement in one command
 ```
 
 Exit codes and the JSON contract are described under [JSON output and exit codes](../reference/json-and-exit-codes.md).

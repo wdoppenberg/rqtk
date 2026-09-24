@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="10" failures="2" errors="0" time="0.009421459">
+    <testsuite name="src/a/shapes.test.ts" timestamp="2026-09-24T08:38:20.361Z" hostname="Wouters-MacBook-Pro.local" tests="9" failures="1" errors="0" skipped="1" time="0.005926542">
+        <testcase classname="src/a/shapes.test.ts" name="plain test with spaces" time="0.001070292">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="outer &gt; inner &gt; nested test" time="0.000106375">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="rejects 450-480 outside hours" time="0.000113458">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="rejects 1080-1110 outside hours" time="0.00016325">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="never accepts two concurrent bookings" time="0.000293042">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="skipped test" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="grouped &gt; first" time="0.000186458">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="grouped &gt; second" time="0.003061584">
+            <failure message="expected 2 to be 3 // Object.is equality" type="AssertionError">
+AssertionError: expected 2 to be 3 // Object.is equality
+
+- Expected
++ Received
+
+- 3
++ 2
+            </failure>
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="same title in two files" time="0.000099375">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/b/other.test.ts" timestamp="2026-09-24T08:38:20.365Z" hostname="Wouters-MacBook-Pro.local" tests="1" failures="1" errors="0" skipped="0" time="0.003494917">
+        <testcase classname="src/b/other.test.ts" name="same title in two files" time="0.002978208">
+            <failure message="expected 1 to be 2 // Object.is equality" type="AssertionError">
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>

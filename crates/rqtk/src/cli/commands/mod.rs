@@ -1,4 +1,5 @@
 pub mod add;
+pub mod add_activity;
 pub mod add_need;
 pub mod add_stakeholder;
 pub mod baseline;
@@ -16,6 +17,7 @@ pub mod log;
 pub mod open;
 pub mod rehash;
 pub mod report;
+pub mod review;
 pub mod scan;
 pub mod schema;
 pub mod search;

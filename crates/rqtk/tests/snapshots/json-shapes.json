@@ -29,6 +29,18 @@
     },
     "path": "string"
   },
+  "add-activity FOBC-SW-0001 --name Telemetry frame test --dry-run": {
+    "dry_run": "bool",
+    "id": "string",
+    "item": {
+      "expected_result": "null",
+      "id": "string",
+      "name": "string",
+      "procedure": "null",
+      "status": "null"
+    },
+    "path": "string"
+  },
   "context FOBC-SW-0001": {
     "ancestors": [
       {
@@ -96,6 +108,13 @@
           "string"
         ]
       ],
+      "activity_states": [
+        {
+          "id": "string",
+          "state": "string",
+          "status": "string"
+        }
+      ],
       "status": "string"
     }
   },
@@ -107,6 +126,13 @@
           [
             "string"
           ]
+        ],
+        "activity_states": [
+          {
+            "id": "string",
+            "state": "string",
+            "status": "string"
+          }
         ],
         "id": "string",
         "status": "string"
@@ -138,7 +164,7 @@
     "errors": "number",
     "warnings": "number"
   },
-  "rehash --dry-run": {
+  "rehash --all --dry-run": {
     "dry_run": "bool",
     "updated": [
       {
@@ -150,6 +176,19 @@
         }
       }
     ]
+  },
+  "review FOBC-SW-0001 --dry-run": {
+    "cleared": [],
+    "review": {
+      "commit": "string",
+      "date": "string",
+      "requirement": "string",
+      "requirement_hash": "string",
+      "upstream": {
+        "FOBC-SYS-0001": "string"
+      }
+    },
+    "written": "bool"
   },
   "scan": {
     "diagnostics": [],

@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, error::Error, path::PathBuf};
 
 use console::style;
 use rqtk_core::evidence::{self, ActivityRun, EVIDENCE_PATH};
-use rqtk_core::{Evidence, EvidenceChange, Outcome, RequirementSet, scan};
+use rqtk_core::{Evidence, EvidenceChange, Outcome, RequirementSet, SourceLink, scan};
 use serde::Serialize;
 
 use crate::cli::output::{self, Ctx, Exit};
@@ -20,11 +20,16 @@ struct Report<'a> {
     changes: &'a [EvidenceChange],
     written: bool,
     up_to_date: bool,
+    /// `verifies` annotations with no test declaration below them (RQ030); no result can
+    /// ever match them.
+    unattached_links: Vec<&'a SourceLink>,
 }
 
 /// Match JUnit results to `verifies` links and record the outcomes in `.rqtk/evidence.toml`.
 ///
-/// Exits 1 if a linked test failed, or with `--check` if the evidence file is out of date.
+/// Exits 1 if a linked test failed, if a linked test matched several distinct tests, if the
+/// results matched no linked test at all, or with `--check` if the evidence file is out of
+/// date.
 pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let links = scan::scan(set.repo_root(), &set.config().scan)?;
@@ -36,14 +41,19 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     let runs = evidence::match_results(&links, &results);
     let mut recorded = Evidence::load(set.repo_root())?;
     let commit = set.git().head_commit().map(|c| c.full().to_owned());
-    let changes = recorded.apply(set.requirements(), &runs, commit.as_deref());
-    let write = !changes.is_empty() && !args.check && !args.dry_run;
+    let changes = recorded.apply(&set, &runs, commit.as_deref());
+    let write = (!changes.is_empty() || recorded.refreshed) && !args.check && !args.dry_run;
     if write {
-        recorded.save(set.repo_root())?;
+        recorded.save(set.repo_root(), env!("CARGO_PKG_VERSION"))?;
     }
 
     let any_failed = runs.values().any(|r| r.outcome() == Some(Outcome::Failed));
-    let exit = Exit::findings_if(any_failed || (args.check && !changes.is_empty()));
+    let any_ambiguous = runs.values().any(|r| !r.ambiguous.is_empty());
+    let nothing_matched = !results.is_empty() && runs.is_empty();
+    let unattached: Vec<&SourceLink> = links.iter().filter(|l| l.test_name.is_none()).collect();
+    let exit = Exit::findings_if(
+        any_failed || any_ambiguous || nothing_matched || (args.check && !changes.is_empty()),
+    );
 
     if ctx.json() {
         output::json(&Report {
@@ -52,6 +62,7 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
             changes: &changes,
             written: write,
             up_to_date: changes.is_empty(),
+            unattached_links: unattached,
         })?;
         return Ok(exit);
     }
@@ -66,9 +77,42 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     );
     let incomplete: Vec<String> = runs
         .iter()
-        .filter(|(_, run)| run.outcome().is_none())
+        .filter(|(_, run)| run.outcome().is_none() && run.ambiguous.is_empty())
         .map(|(id, run)| format!("{id}  (no result for {})", run.missing.join(", ")))
         .collect();
+    let ambiguous: Vec<(&String, &ActivityRun)> = runs
+        .iter()
+        .filter(|(_, r)| !r.ambiguous.is_empty())
+        .collect();
+    if !ambiguous.is_empty() {
+        output::section(
+            "Ambiguous",
+            "(a linked test matches several tests in the results; evidence unchanged)",
+        );
+        for (id, run) in ambiguous {
+            for a in &run.ambiguous {
+                output::item(&format!(
+                    "{id}  {} matches {}",
+                    a.link,
+                    a.candidates.join(", ")
+                ));
+            }
+        }
+    }
+    if !unattached.is_empty() {
+        output::section(
+            "Unattached",
+            "(no test declaration below the annotation, RQ030; `rqtk lint` shows where)",
+        );
+        for link in &unattached {
+            output::item(&format!(
+                "{}  {}:{}",
+                link.activity,
+                link.path.display(),
+                link.line
+            ));
+        }
+    }
     if !incomplete.is_empty() {
         output::section(
             "Incomplete",
@@ -86,7 +130,12 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     }
     println!();
 
-    if changes.is_empty() {
+    if nothing_matched {
+        output::failure(&format!(
+            "none of the {} test results matched a linked test; check the results file and that `rqtk scan` finds the tests",
+            results.len()
+        ));
+    } else if changes.is_empty() && !write {
         output::success("Evidence is up to date", &[]);
     } else if write {
         output::success(
@@ -118,6 +167,12 @@ fn describe(change: &EvidenceChange) -> String {
             after.id,
             outcome(before.outcome),
             outcome(after.outcome)
+        ),
+        EvidenceChange::Updated { after, .. } if after.unchanged_tests => format!(
+            "~ {}  {} with unchanged tests after the requirement changed; still Suspect until the tests change or `rqtk review {}`",
+            after.id,
+            outcome(after.outcome),
+            after.requirement
         ),
         EvidenceChange::Updated { after, .. } => {
             format!("~ {}  {} (re-verified)", after.id, outcome(after.outcome))

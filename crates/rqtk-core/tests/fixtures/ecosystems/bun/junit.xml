@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="10" assertions="9" failures="2" skipped="1" time="0.128372">
+  <testsuite name="src/a/shapes.test.ts" file="src/a/shapes.test.ts" tests="9" assertions="8" failures="1" skipped="1" time="0" hostname="Wouters-MacBook-Pro.local">
+    <testcase name="plain test with spaces" classname="" time="0.000871" file="src/a/shapes.test.ts" line="4" assertions="1" />
+    <testsuite name="outer" file="src/a/shapes.test.ts" line="8" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="Wouters-MacBook-Pro.local">
+      <testsuite name="inner" file="src/a/shapes.test.ts" line="9" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="Wouters-MacBook-Pro.local">
+        <testcase name="nested test" classname="inner &amp;gt; outer" time="0.000062" file="src/a/shapes.test.ts" line="11" assertions="1" />
+      </testsuite>
+    </testsuite>
+    <testcase name="rejects 450-480 outside hours" classname="" time="0.000186" file="src/a/shapes.test.ts" line="18" assertions="1" />
+    <testcase name="rejects 1080-1110 outside hours" classname="" time="0.000011" file="src/a/shapes.test.ts" line="18" assertions="1" />
+    <testcase name="never accepts two concurrent bookings" classname="" time="0.000012" file="src/a/shapes.test.ts" line="23" assertions="1" />
+    <testcase name="skipped test" classname="" time="0" file="src/a/shapes.test.ts" line="28" assertions="0">
+      <skipped />
+    </testcase>
+    <testsuite name="grouped" file="src/a/shapes.test.ts" line="31" tests="2" assertions="2" failures="1" skipped="0" time="0.003" hostname="Wouters-MacBook-Pro.local">
+      <testcase name="first" classname="grouped" time="0.00023" file="src/a/shapes.test.ts" line="32" assertions="1" />
+      <testcase name="second" classname="grouped" time="0.003057" file="src/a/shapes.test.ts" line="33" assertions="1">
+        <failure type="AssertionError" />
+      </testcase>
+    </testsuite>
+    <testcase name="same title in two files" classname="" time="0.000051" file="src/a/shapes.test.ts" line="37" assertions="1" />
+  </testsuite>
+  <testsuite name="src/b/other.test.ts" file="src/b/other.test.ts" tests="1" assertions="1" failures="1" skipped="0" time="0" hostname="Wouters-MacBook-Pro.local">
+    <testcase name="same title in two files" classname="" time="0.000113" file="src/b/other.test.ts" line="4" assertions="1">
+      <failure type="AssertionError" />
+    </testcase>
+  </testsuite>
+</testsuites>

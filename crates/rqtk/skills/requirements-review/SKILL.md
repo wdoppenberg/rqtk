@@ -18,9 +18,9 @@ Use the commit, branch, tag or baseline the user gave; ask if they gave none. Co
 
 These are deterministic; don't second-guess them:
 
-- `rqtk impact <fixed-point> --json`: requirements and needs added, removed or changed; downstream requirements; activities to re-verify and why.
+- `rqtk impact <fixed-point> --json`: requirements and needs added, removed or changed; downstream requirements; activities to re-verify, why, their tests, and whether evidence already covers them (`done`).
 - `rqtk lint --json`: findings.
-- `rqtk coverage --json`: status per requirement and activity.
+- `rqtk coverage --json`: status per requirement and activity, and `suspect_reasons` for each Suspect one.
 
 ### 3. Judge each touched requirement
 
@@ -42,3 +42,13 @@ Two sections, in this order, under 400 words:
 - **Judgement**: per requirement, one of implemented / partial / wrong / untested, each with the quoted statement and the hunk; then the untraced changes.
 
 End with one line: the number of findings and the worst one.
+
+## Settling review debt
+
+A requirement that is Suspect because its tests passed again unchanged after it was reworded, or because an ancestor or need changed (`tests_unchanged`, `upstream_changed`), stays Suspect until its tests change or someone records a review. When your judgement is **implemented** and the tests prove the current statement, list the command for the user to run, with your reason as the note:
+
+```bash
+rqtk review <ID> --note "…"
+```
+
+Recording it is the user's decision; don't run it yourself unless they ask you to.

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="7"
+	failures="2"
+	disabled="1"
+	skipped="0"
+	hostname=""
+	time="0"
+	timestamp="2026-09-24T10:39:13"
+	>
+	<testcase name="Shapes.Plain" classname="Shapes.Plain" time="0.00358442" status="run">
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Shapes.Plain
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Shapes
+[ RUN      ] Shapes.Plain
+[       OK ] Shapes.Plain (0 ms)
+[----------] 1 test from Shapes (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+</system-out>
+	</testcase>
+	<testcase name="Shapes.Fails" classname="Shapes.Fails" time="0.00334563" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Shapes.Fails
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Shapes
+[ RUN      ] Shapes.Fails
+/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:18: Failure
+Expected equality of these values:
+  1
+  2
+
+[  FAILED  ] Shapes.Fails (0 ms)
+[----------] 1 test from Shapes (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] Shapes.Fails
+
+ 1 FAILED TEST
+</system-out>
+	</testcase>
+	<testcase name="Shapes.Later" classname="Shapes.Later" time="0" status="disabled">
+		<properties/>
+		<system-out>Disabled</system-out>
+	</testcase>
+	<testcase name="Fixture.UsesFixture" classname="Fixture.UsesFixture" time="0.00341113" status="run">
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Fixture.UsesFixture
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Fixture
+[ RUN      ] Fixture.UsesFixture
+[       OK ] Fixture.UsesFixture (0 ms)
+[----------] 1 test from Fixture (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+</system-out>
+	</testcase>
+	<testcase name="Other.Plain" classname="Other.Plain" time="0.00355588" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Other.Plain
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Other
+[ RUN      ] Other.Plain
+/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:24: Failure
+Expected equality of these values:
+  1
+  2
+
+[  FAILED  ] Other.Plain (0 ms)
+[----------] 1 test from Other (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] Other.Plain
+
+ 1 FAILED TEST
+</system-out>
+	</testcase>
+	<testcase name="Values/Params.IsPositive/1" classname="Values/Params.IsPositive/1" time="0.00325771" status="run">
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Values/Params.IsPositive/0
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Values/Params
+[ RUN      ] Values/Params.IsPositive/0
+[       OK ] Values/Params.IsPositive/0 (0 ms)
+[----------] 1 test from Values/Params (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+</system-out>
+	</testcase>
+	<testcase name="Values/Params.IsPositive/2" classname="Values/Params.IsPositive/2" time="0.00332633" status="run">
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Values/Params.IsPositive/1
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Values/Params
+[ RUN      ] Values/Params.IsPositive/1
+[       OK ] Values/Params.IsPositive/1 (0 ms)
+[----------] 1 test from Values/Params (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+</system-out>
+	</testcase>
+</testsuite>

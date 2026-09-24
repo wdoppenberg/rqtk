@@ -345,8 +345,9 @@
           },
           "type": "array"
         },
-        "require_parent_for_levels": {
+        "require_parent_for_categories": {
           "default": [],
+          "description": "Category keys whose requirements must have at least one parent (RQ012).\n`require_parent_for_levels` is accepted as an older name.",
           "items": {
             "type": "string"
           },

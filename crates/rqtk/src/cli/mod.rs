@@ -45,6 +45,9 @@ enum Command {
         /// Also install the agent skills (see `rqtk skills install`).
         #[arg(long)]
         agents: bool,
+        /// Also create an example stakeholder and need.
+        #[arg(long)]
+        example: bool,
         /// Report the files that would be created without writing them.
         #[arg(long)]
         dry_run: bool,
@@ -64,7 +67,46 @@ enum Command {
         statement: String,
         #[arg(long)]
         rationale: Option<String>,
+        /// Parent requirement ID (repeatable, or comma-separated).
+        #[arg(long = "parent", value_delimiter = ',')]
+        parents: Vec<String>,
+        /// ID of a need this requirement satisfies (repeatable, or comma-separated).
+        #[arg(long, value_delimiter = ',')]
+        satisfies: Vec<String>,
+        /// Priority from `priority.levels` [default: Medium, or the middle level].
+        #[arg(long)]
+        priority: Option<String>,
+        /// Verification method from `verification.methods` [default: the first].
+        #[arg(long)]
+        method: Option<String>,
+        /// Verification level from `verification.levels` [default: the first].
+        #[arg(long)]
+        level: Option<String>,
+        /// Verification phase from `verification.phases` [default: the first].
+        #[arg(long)]
+        phase: Option<String>,
+        /// Success criteria: what a passing verification shows.
+        #[arg(long)]
+        criteria: Option<String>,
+        /// Add a verification activity with this name (repeatable). IDs are generated as
+        /// VA-<CATEGORY>-<NUMBER>-<NN>.
+        #[arg(long = "activity")]
+        activities: Vec<String>,
         /// Print the file that would be created without writing it.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Add a verification activity to an existing requirement.
+    AddActivity {
+        /// Requirement ID.
+        requirement: String,
+        /// What the activity checks.
+        #[arg(long)]
+        name: String,
+        /// Defaults to the next free VA-<CATEGORY>-<NUMBER>-<NN>.
+        #[arg(long)]
+        id: Option<String>,
+        /// Print the activity that would be added without writing it.
         #[arg(long)]
         dry_run: bool,
     },
@@ -95,6 +137,9 @@ enum Command {
         /// Stakeholder IDs associated with this need (comma-separated).
         #[arg(long, value_delimiter = ',')]
         stakeholders: Option<Vec<String>>,
+        /// Why the stakeholders need it.
+        #[arg(long)]
+        rationale: Option<String>,
         /// Print the file that would be created without writing it.
         #[arg(long)]
         dry_run: bool,
@@ -113,9 +158,13 @@ enum Command {
     Trace { id: String },
     /// Report need satisfaction and verification status (verified / suspect / failed / …).
     Coverage {
-        /// Exit 1 on any Gap, Failed or Suspect requirement, or unsatisfied need.
+        /// Exit 1 unless every requirement is Verified and every need is satisfied.
         #[arg(long)]
         strict: bool,
+        /// With --strict, also accept requirements in this state (repeatable), e.g. for
+        /// requirements written ahead of their implementation.
+        #[arg(long, value_enum, requires = "strict")]
+        allow: Vec<commands::coverage::Allow>,
         /// Print only the one-line summary.
         #[arg(short, long)]
         short: bool,
@@ -159,6 +208,20 @@ enum Command {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Confirm a requirement still holds after something it depends on changed.
+    ///
+    /// Settles a Suspect requirement whose tests passed again unchanged after it was
+    /// reworded, or whose ancestor or need changed. Recorded in `.rqtk/evidence.toml`.
+    Review {
+        /// Requirement ID.
+        id: String,
+        /// Why the requirement still holds, kept with the review.
+        #[arg(long)]
+        note: Option<String>,
+        /// Report what would be recorded without writing.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Search requirements, needs and stakeholders by substring.
     Search {
         /// Pattern to search for.
@@ -176,8 +239,13 @@ enum Command {
     Log { id: String },
     /// Install a git pre-commit hook that runs `rqtk rehash` and `rqtk lint`.
     InstallHook,
-    /// Recompute and write content hashes for all requirements and needs.
+    /// Refresh stored content hashes that no longer match their requirement or need.
+    ///
+    /// Only files that carry a `content_hash` are touched; `--all` also stamps the rest.
     Rehash {
+        /// Also write a hash into files that have none.
+        #[arg(long)]
+        all: bool,
         /// Report stale hashes without writing.
         #[arg(long)]
         dry_run: bool,
@@ -264,15 +332,45 @@ where
         root: cli.repo_root.clone(),
         format: if cli.json { Format::Json } else { Format::Text },
     };
-    match run(&ctx, cli.command) {
-        Ok(Exit::Ok) => 0,
-        Ok(Exit::Findings) => 1,
-        Err(err) => {
+    quiet_broken_pipes();
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run(&ctx, cli.command)));
+    match outcome {
+        Ok(Ok(Exit::Ok)) => 0,
+        Ok(Ok(Exit::Findings)) => 1,
+        Ok(Err(err)) => {
             let usage = err.is::<Usage>();
             output::error(&ctx, &err.to_string(), usage);
             if usage { 2 } else { 3 }
         }
+        // The reader went away (`rqtk … | head`). Files are written before output is
+        // printed, so the command has done its work; there is nobody left to tell.
+        Err(payload) if is_broken_pipe(payload.as_ref()) => 0,
+        Err(payload) => std::panic::resume_unwind(payload),
     }
+}
+
+/// Whether a panic came from printing to a closed pipe.
+fn is_broken_pipe(payload: &(dyn std::any::Any + Send)) -> bool {
+    let message = payload
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| payload.downcast_ref::<&str>().copied())
+        .unwrap_or_default();
+    message.starts_with("failed printing to std")
+        && (message.contains("(os error 32)") || message.contains("(os error 232)"))
+}
+
+/// Silence the panic message for broken pipes; every other panic is reported as before.
+fn quiet_broken_pipes() {
+    static INSTALL: std::sync::Once = std::sync::Once::new();
+    INSTALL.call_once(|| {
+        let previous = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            if !is_broken_pipe(info.payload()) {
+                previous(info);
+            }
+        }));
+    });
 }
 
 fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
@@ -281,9 +379,18 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
             requirements_dir,
             force,
             agents,
+            example,
             dry_run,
         } if agents => {
-            let init = commands::init::execute(ctx, requirements_dir.as_deref(), force, dry_run)?;
+            let init = commands::init::execute(
+                ctx,
+                &commands::init::InitArgs {
+                    requirements_dir: requirements_dir.as_deref(),
+                    force,
+                    example,
+                    dry_run,
+                },
+            )?;
             let args = commands::skills::InstallArgs {
                 dry_run,
                 ..Default::default()
@@ -301,15 +408,32 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Init {
             requirements_dir,
             force,
+            example,
             dry_run,
             ..
-        } => commands::init::run(ctx, requirements_dir.as_deref(), force, dry_run),
+        } => commands::init::run(
+            ctx,
+            &commands::init::InitArgs {
+                requirements_dir: requirements_dir.as_deref(),
+                force,
+                example,
+                dry_run,
+            },
+        ),
         Command::Add {
             category,
             req_type,
             title,
             statement,
             rationale,
+            parents,
+            satisfies,
+            priority,
+            method,
+            level,
+            phase,
+            criteria,
+            activities,
             dry_run,
         } => commands::add::run(
             ctx,
@@ -319,6 +443,28 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
                 title,
                 statement,
                 rationale,
+                parents,
+                satisfies,
+                priority,
+                method,
+                level,
+                phase,
+                criteria,
+                activities,
+                dry_run,
+            },
+        ),
+        Command::AddActivity {
+            requirement,
+            name,
+            id,
+            dry_run,
+        } => commands::add_activity::run(
+            ctx,
+            commands::add_activity::AddActivityArgs {
+                requirement,
+                name,
+                id,
                 dry_run,
             },
         ),
@@ -343,6 +489,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
             title,
             statement,
             stakeholders,
+            rationale,
             dry_run,
         } => commands::add_need::run(
             ctx,
@@ -351,6 +498,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
                 title,
                 statement,
                 stakeholders,
+                rationale,
                 dry_run,
             },
         ),
@@ -358,7 +506,11 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Context { id } => commands::context::run(ctx, &id),
         Command::Impact { base } => commands::impact::run(ctx, &base),
         Command::Trace { id } => commands::trace::run(ctx, id),
-        Command::Coverage { strict, short } => commands::coverage::run(ctx, strict, short),
+        Command::Coverage {
+            strict,
+            allow,
+            short,
+        } => commands::coverage::run(ctx, strict, &allow, short),
         Command::Graph { format } => commands::graph::run(ctx, format),
         Command::Baseline { version, dry_run } => commands::baseline::run(ctx, version, dry_run),
         Command::Export { format, output } => commands::export::run(ctx, format, output),
@@ -376,6 +528,9 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
                 dry_run,
             },
         ),
+        Command::Review { id, note, dry_run } => {
+            commands::review::run(ctx, commands::review::ReviewArgs { id, note, dry_run })
+        }
         Command::Search {
             pattern,
             ignore_case,
@@ -391,7 +546,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Open { id } => commands::open::run(ctx, id),
         Command::Log { id } => commands::log::run(ctx, id),
         Command::InstallHook => commands::install_hook::run(ctx),
-        Command::Rehash { dry_run } => commands::rehash::run(ctx, dry_run),
+        Command::Rehash { all, dry_run } => commands::rehash::run(ctx, all, dry_run),
         Command::Report { output } => commands::report::run(ctx, output),
         Command::Schema { kind } => commands::schema::run(ctx, kind.as_deref()),
         Command::Explain { code } => commands::explain::run(ctx, code.as_deref()),

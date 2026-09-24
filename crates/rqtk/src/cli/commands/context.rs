@@ -87,6 +87,12 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
                     };
                     output::item(&format!("{activity}  {}{tests}", state_label(state)));
                 }
+                if !v.suspect_reasons.is_empty() {
+                    output::section("Suspect because", "");
+                    for reason in &v.suspect_reasons {
+                        output::item(&super::review::describe(reason));
+                    }
+                }
             }
             findings(&c.diagnostics);
         }

@@ -1,7 +1,7 @@
 [package]
 name = "rqtk-py"
 # Released to PyPI as `rqtk`, in step with the rqtk command line.
-version = "1.1.0"
+version = "1.2.0"
 description = "The rqtk Python package: the rqtk command line and the @verifies decorator."
 edition.workspace = true
 rust-version.workspace = true
@@ -17,6 +17,9 @@ publish = false
 pyo3 = { version = "0.28.3", features = ["extension-module", "abi3-py39"] }
 rqtk = { path = "../rqtk", default-features = false, features = ["cli"] }
 rqtk-core = { workspace = true, features = ["verification-lookup"] }
+
+[build-dependencies]
+pyo3-build-config = "0.28.3"
 
 [lib]
 # Not `rqtk`: that name would collide with the rqtk binary's outputs (rqtk.exe, rqtk.pdb) on

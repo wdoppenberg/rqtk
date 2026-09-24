@@ -1,6 +1,6 @@
 [package]
 name = "rqtk-macros"
-version = "0.1.0"
+version = "0.2.0"
 description = "The #[verifies] attribute: link Rust tests to rqtk verification activities, checked at compile time."
 edition.workspace = true
 rust-version.workspace = true
@@ -13,11 +13,16 @@ categories = ["development-tools::testing"]
 [lib]
 proc-macro = true
 
+[features]
+# `#[requirements_docs]`, which loads and validates the whole requirement set with rqtk-core.
+docs = ["dep:rqtk-core"]
+
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-rqtk-core = { workspace = true, features = ["verification-lookup"] }
+rqtk-core = { workspace = true, features = ["verification-lookup"], optional = true }
 syn = { version = "2", features = ["full"] }
+toml = { workspace = true }
 
 [dev-dependencies]
 trybuild = "1"

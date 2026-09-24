@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="1" tests="11" time="0.015" timestamp="2026-09-24T10:37:54.421549+02:00" hostname="Wouters-MacBook-Pro.local"><testcase classname="tests.test_other" name="test_duplicate_name" time="0.000"><failure message="assert False">def test_duplicate_name():
+&gt;       assert False
+E       assert False
+
+tests/test_other.py:3: AssertionError</failure></testcase><testcase classname="tests.test_shapes" name="test_plain" time="0.000" /><testcase classname="tests.test_shapes" name="test_parametrized[1]" time="0.000" /><testcase classname="tests.test_shapes" name="test_parametrized[2]" time="0.000" /><testcase classname="tests.test_shapes" name="test_parametrized[3]" time="0.000" /><testcase classname="tests.test_shapes" name="test_sign[pos]" time="0.000" /><testcase classname="tests.test_shapes" name="test_sign[neg]" time="0.000"><failure message="AssertionError: assert 'neg' == 'pos'&#10;  &#10;  - pos&#10;  + neg">sign = 'neg'
+
+    @pytest.mark.parametrize("sign", ["pos", "neg"])
+    def test_sign(sign):
+&gt;       assert sign == "pos"
+E       AssertionError: assert 'neg' == 'pos'
+E         
+E         - pos
+E         + neg
+
+tests/test_shapes.py:23: AssertionError</failure></testcase><testcase classname="tests.test_shapes.TestGroup" name="test_in_class" time="0.000" /><testcase classname="tests.test_shapes" name="test_skipped" time="0.000"><skipped type="pytest.skip" message="not yet">/private/tmp/rqtk-trials/corpus/pytest/tests/test_shapes.py:33: not yet</skipped></testcase><testcase classname="tests.test_shapes" name="test_async_def" time="0.001" /><testcase classname="tests.test_shapes" name="test_duplicate_name" time="0.000" /></testsuite></testsuites>

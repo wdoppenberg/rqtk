@@ -18,12 +18,12 @@ struct Report {
     dry_run: bool,
 }
 
-pub fn run(ctx: &Ctx, dry_run: bool) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, all: bool, dry_run: bool) -> Result<Exit, Box<dyn Error>> {
     let mut set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let stale = if dry_run {
-        set.stale_hashes()
+        set.stale_hashes(all)
     } else {
-        set.rehash()?
+        set.rehash(all)?
     };
     let updated: Vec<Updated> = stale
         .into_iter()

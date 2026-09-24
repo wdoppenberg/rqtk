@@ -10,7 +10,7 @@ In a git repository:
 rqtk init
 ```
 
-This creates `.rqtk/config.toml` with a starter policy, plus an example stakeholder and need. Add `--agents` to also install the [agent skills](../guides/agents.md).
+This creates `.rqtk/config.toml` with a starter policy, named after your project. Add `--agents` to also install the [agent skills](../guides/agents.md), and `--example` for an example stakeholder and need.
 
 ## 2. Add a requirement
 
@@ -18,10 +18,12 @@ This creates `.rqtk/config.toml` with a starter policy, plus an example stakehol
 rqtk add --category SYS --type Functional \
   --title "Fast boot" \
   --statement "The system shall boot in under 5 seconds." \
-  --rationale "Operators restart the unit during a pass."
+  --rationale "Operators restart the unit during a pass." \
+  --criteria "Boot completes in under 5 s on reference hardware." \
+  --activity "Boot time test"
 ```
 
-rqtk assigns the next free ID (here `REQ-SYS-0001`) and writes `.rqtk/requirements/SYS/REQ-SYS-0001.toml`. Open it and give the requirement a verification activity:
+rqtk assigns the next free ID (here `REQ-SYS-0001`) and writes `.rqtk/requirements/SYS/REQ-SYS-0001.toml`, with a verification activity `VA-SYS-0001-01`:
 
 ```toml
 [verification]
@@ -31,11 +33,11 @@ phase = "Development"
 success_criteria = "Boot completes in under 5 s on reference hardware."
 
 [[verification.activities]]
-id = "VA-SYS-001-01"
+id = "VA-SYS-0001-01"
 name = "Boot time test"
 ```
 
-Then check it:
+`--parent` and `--satisfies` link it to the requirement it derives from and the need it serves; `rqtk add-activity` adds more activities later. Then check it:
 
 ```bash
 rqtk lint
@@ -46,14 +48,14 @@ rqtk lint
 Put the activity ID above the test that proves it:
 
 ```rust
-// rqtk: verifies VA-SYS-001-01
+// rqtk: verifies VA-SYS-0001-01
 #[test]
 fn boots_in_under_five_seconds() {
     // …
 }
 ```
 
-`rqtk scan` lists every link it finds.
+`rqtk scan` lists every link it finds, and the test each one is attached to.
 
 ## 4. Record the results
 
@@ -69,6 +71,8 @@ The requirement is now **Verified**, and `.rqtk/evidence.toml` records which tes
 
 ## 5. Change the requirement
 
-Tighten the statement to "under 3 seconds" and run `rqtk coverage` again. The requirement is now **Suspect**: its tests passed for the old wording, and nothing has proven the new one. Run the tests and `rqtk verify` again to clear it.
+Tighten the statement to "under 3 seconds" and run `rqtk coverage` again. The requirement is now **Suspect**: its tests passed for the old wording, and nothing has proven the new one.
 
-`rqtk coverage --strict` exits 1 while anything is Suspect, Failed or unverified, so it works as a CI gate.
+Rerunning the same test doesn't settle it: it passed for 5 seconds and says nothing about 3. Update the test for the new limit, run it, and `rqtk verify` again. (If a test already checks the new wording, record that with `rqtk review REQ-SYS-0001 --note "…"`.)
+
+`rqtk coverage --strict` exits 1 until every requirement is Verified, so it works as a CI gate.
