@@ -16,6 +16,7 @@ pub mod log;
 pub mod open;
 pub mod rehash;
 pub mod report;
+pub mod review;
 pub mod scan;
 pub mod schema;
 pub mod search;

@@ -65,6 +65,23 @@ pub struct RequirementVerification {
     pub status: ClosureStatus,
     /// Each activity's ID and state, in file order.
     pub activities: Vec<(String, ActivityState)>,
+    /// Why the requirement is Suspect, when it is.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub suspect_reasons: Vec<SuspectReason>,
+}
+
+/// Why recorded evidence no longer settles a requirement.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "reason", rename_all = "snake_case")]
+pub enum SuspectReason {
+    /// The requirement changed after these activities' tests passed. Rerun them.
+    RequirementChanged { activities: Vec<String> },
+    /// The requirement changed, and the same tests that passed for its earlier wording passed
+    /// again. Update the tests, or confirm they still prove it with `rqtk review`.
+    TestsUnchanged { activities: Vec<String> },
+    /// An ancestor requirement, or a need one of them satisfies, changed since this
+    /// requirement was verified. Check it still fits, then `rqtk review` it.
+    UpstreamChanged { items: Vec<String> },
 }
 
 impl RequirementSet<Validated> {
@@ -80,19 +97,124 @@ impl RequirementSet<Validated> {
             .iter()
             .map(|(id, req)| {
                 let hash = req.compute_content_hash();
+                let review = evidence
+                    .reviews
+                    .get(id)
+                    .filter(|r| r.requirement_hash == hash);
+                let mut changed = Vec::new();
+                let mut unchanged_tests = Vec::new();
                 let activities: Vec<(String, ActivityState)> = req
                     .verification
                     .activities
                     .iter()
                     .map(|a| {
-                        let state = activity_state(req, a, &hash, &linked, evidence);
+                        let mut state = activity_state(req, a, &hash, &linked, evidence);
+                        let entry = evidence.activities.get(&a.id);
+                        if state == ActivityState::Suspect {
+                            changed.push(a.id.clone());
+                        } else if state == ActivityState::Passed
+                            && entry.is_some_and(|e| e.unchanged_tests)
+                            && review.is_none()
+                        {
+                            state = ActivityState::Suspect;
+                            unchanged_tests.push(a.id.clone());
+                        }
                         (a.id.clone(), state)
                     })
                     .collect();
-                let status = closure_status(req, &activities);
-                (id.clone(), RequirementVerification { status, activities })
+
+                let mut suspect_reasons = Vec::new();
+                if !changed.is_empty() {
+                    suspect_reasons.push(SuspectReason::RequirementChanged {
+                        activities: changed,
+                    });
+                }
+                if !unchanged_tests.is_empty() {
+                    suspect_reasons.push(SuspectReason::TestsUnchanged {
+                        activities: unchanged_tests,
+                    });
+                }
+                let upstream = self.upstream_changes(id, req, &hash, evidence);
+                if !upstream.is_empty() {
+                    suspect_reasons.push(SuspectReason::UpstreamChanged { items: upstream });
+                }
+
+                let mut status = closure_status(req, &activities);
+                if !suspect_reasons.is_empty() && status != ClosureStatus::Failed {
+                    status = ClosureStatus::Suspect;
+                }
+                let verification = RequirementVerification {
+                    status,
+                    activities,
+                    suspect_reasons,
+                };
+                (id.clone(), verification)
             })
             .collect()
+    }
+
+    /// Content hashes of everything a requirement depends on: its ancestors (transitively)
+    /// and the needs it and its ancestors satisfy, keyed by ID.
+    pub fn upstream_hashes(&self, id: &RequirementId) -> BTreeMap<String, String> {
+        let mut out = BTreeMap::new();
+        let mut stack = vec![id.clone()];
+        let mut seen = BTreeSet::new();
+        while let Some(current) = stack.pop() {
+            if !seen.insert(current.clone()) {
+                continue;
+            }
+            let Some(req) = self.requirements.get(&current) else {
+                continue;
+            };
+            if current != *id {
+                out.insert(current.to_string(), req.compute_content_hash());
+            }
+            for need in &req.trace.satisfies {
+                if let Some(n) = self.needs.get(need) {
+                    out.insert(need.to_string(), n.compute_content_hash());
+                }
+            }
+            stack.extend(req.trace.parents.iter().cloned());
+        }
+        out
+    }
+
+    /// Upstream items that changed since the requirement's current wording was verified or
+    /// last reviewed.
+    fn upstream_changes(
+        &self,
+        id: &RequirementId,
+        req: &Requirement,
+        hash: &str,
+        evidence: &Evidence,
+    ) -> Vec<String> {
+        let baseline: BTreeMap<&String, &String> = match evidence
+            .reviews
+            .get(id)
+            .filter(|r| r.requirement_hash == hash)
+        {
+            Some(review) => review.upstream.iter().collect(),
+            None => req
+                .verification
+                .activities
+                .iter()
+                .filter_map(|a| evidence.activities.get(&a.id))
+                .filter(|e| e.requirement == *id && e.requirement_hash == hash)
+                .flat_map(|e| e.upstream.iter())
+                .collect(),
+        };
+        if baseline.is_empty() {
+            return Vec::new();
+        }
+        let current = self.upstream_hashes(id);
+        let mut changed: Vec<String> = baseline
+            .into_iter()
+            .filter(|(item, recorded)| current.get(*item).is_some_and(|now| now != *recorded))
+            .map(|(item, _)| item.clone())
+            .collect();
+        changed.sort();
+        changed.dedup();
+        changed
     }
 
     /// Cross-check source links against the requirement set:

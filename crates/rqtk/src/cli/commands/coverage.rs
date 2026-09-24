@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, error::Error};
 use console::style;
 use rqtk_core::{
     ActivityState, ClosureStatus, NeedId, RequirementId, RequirementSet, RequirementVerification,
+    SuspectReason,
 };
 use serde::Serialize;
 
@@ -122,7 +123,7 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
             (
                 ClosureStatus::Suspect,
                 "Suspect",
-                "(changed since its tests passed; run the tests and `rqtk verify`)",
+                "(evidence no longer settles it; each line says why)",
             ),
             (
                 ClosureStatus::Gap,
@@ -189,18 +190,35 @@ fn print_unsatisfied(set: &RequirementSet<rqtk_core::Validated>, needs: &[NeedSt
     }
 }
 
-/// The requirement ID, naming the activities behind a Failed or Suspect status.
+/// The requirement ID, naming the activities behind a Failed status and the reasons behind
+/// a Suspect one.
 fn describe(id: &RequirementId, v: &RequirementVerification) -> String {
-    let flagged: Vec<String> = v
+    let mut flagged: Vec<String> = v
         .activities
         .iter()
         .filter_map(|(activity, state)| match state {
             ActivityState::Failed => Some(format!("{activity} failed")),
             ActivityState::Manual(Some(s)) if s == "Failed" => Some(format!("{activity} failed")),
-            ActivityState::Suspect => Some(format!("{activity} suspect")),
             _ => None,
         })
         .collect();
+    for reason in &v.suspect_reasons {
+        flagged.push(match reason {
+            SuspectReason::RequirementChanged { activities } => activities
+                .iter()
+                .map(|a| format!("{a} suspect"))
+                .collect::<Vec<_>>()
+                .join(", "),
+            SuspectReason::TestsUnchanged { activities } => format!(
+                "{} passed again with unchanged tests; update them, or `rqtk review {id}`",
+                activities.join(", ")
+            ),
+            SuspectReason::UpstreamChanged { items } => format!(
+                "{} changed; check it still fits, then `rqtk review {id}`",
+                items.join(", ")
+            ),
+        });
+    }
     if flagged.is_empty() {
         id.to_string()
     } else {

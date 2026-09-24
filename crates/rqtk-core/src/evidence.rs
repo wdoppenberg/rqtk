@@ -3,6 +3,7 @@
 
 use crate::error::RqtkError;
 use crate::model::{Requirement, RequirementId, SCHEMA_VERSION};
+use crate::repository::{RequirementSet, Validated};
 use crate::scan::SourceLink;
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
@@ -24,8 +25,9 @@ pub enum Outcome {
 }
 
 /// The latest recorded result for one verification activity.
+///
+/// Unknown fields are ignored so that files written by a later rqtk still load.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 pub struct ActivityEvidence {
     /// Verification activity ID.
     pub id: String,
@@ -39,30 +41,73 @@ pub struct ActivityEvidence {
     pub tests: Vec<String>,
     /// Commit checked out when the evidence was recorded.
     pub commit: Option<String>,
+    /// Hash of the linked tests' source when they last ran.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tests_hash: Option<String>,
+    /// The requirement was re-verified after it changed, by the same tests that passed for
+    /// its earlier wording. It stays Suspect until someone runs `rqtk review`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub unchanged_tests: bool,
+    /// Content hashes of the requirement's ancestors and of the needs they satisfy, when this
+    /// version of the requirement was first verified. A later change to any of them makes
+    /// the requirement Suspect until it is reviewed.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub upstream: BTreeMap<String, String>,
 }
 
 impl ActivityEvidence {
-    /// Equal apart from the commit it was recorded at.
+    /// Equal apart from the commit and the test source hash: editing a test that still
+    /// passes doesn't make committed evidence out of date.
     fn same_result(&self, other: &Self) -> bool {
         self.requirement == other.requirement
             && self.requirement_hash == other.requirement_hash
             && self.outcome == other.outcome
             && self.tests == other.tests
+            && self.unchanged_tests == other.unchanged_tests
+            && (self.upstream.is_empty()
+                || other.upstream.is_empty()
+                || self.upstream == other.upstream)
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct EvidenceFile {
-    pub schema_version: u32,
-    #[serde(default, rename = "activity")]
-    pub activities: Vec<ActivityEvidence>,
+/// A person's or agent's confirmation that a requirement still holds after something it
+/// depends on changed, recorded with `rqtk review`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Review {
+    pub requirement: RequirementId,
+    /// The requirement's content hash when it was reviewed; a later change voids the review.
+    pub requirement_hash: String,
+    /// Content hashes of its ancestors and their needs when it was reviewed.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub upstream: BTreeMap<String, String>,
+    /// Date of the review, `YYYY-MM-DD`.
+    pub date: String,
+    /// Commit checked out when the review was recorded.
+    pub commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
 }
 
-/// All recorded evidence, keyed by activity ID.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct EvidenceFile {
+    pub schema_version: u32,
+    /// Version of rqtk that last wrote the file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub written_by: Option<String>,
+    #[serde(default, rename = "activity")]
+    pub activities: Vec<ActivityEvidence>,
+    #[serde(default, rename = "review", skip_serializing_if = "Vec::is_empty")]
+    pub reviews: Vec<Review>,
+}
+
+/// All recorded evidence, keyed by activity ID, and reviews, keyed by requirement.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Evidence {
     pub activities: BTreeMap<String, ActivityEvidence>,
+    pub reviews: BTreeMap<RequirementId, Review>,
+    /// Set when `apply` refreshed bookkeeping (test source hashes, fields added by a newer
+    /// rqtk) without changing any result; saving is worthwhile but not required.
+    pub refreshed: bool,
 }
 
 /// How one activity's entry changed when new results were applied.
@@ -112,18 +157,27 @@ impl Evidence {
                 .into_iter()
                 .map(|e| (e.id.clone(), e))
                 .collect(),
+            reviews: file
+                .reviews
+                .into_iter()
+                .map(|r| (r.requirement.clone(), r))
+                .collect(),
+            refreshed: false,
         })
     }
 
     /// Write `.rqtk/evidence.toml`, sorted by activity ID so diffs stay minimal.
-    pub fn save(&self, repo_root: &Path) -> Result<(), RqtkError> {
+    /// `written_by` is the version of the tool writing it, recorded in the file.
+    pub fn save(&self, repo_root: &Path, written_by: &str) -> Result<(), RqtkError> {
         let path = repo_root.join(EVIDENCE_PATH);
         let file = EvidenceFile {
             schema_version: SCHEMA_VERSION,
+            written_by: Some(written_by.to_owned()),
             activities: self.activities.values().cloned().collect(),
+            reviews: self.reviews.values().cloned().collect(),
         };
         let text = format!(
-            "# Generated by `rqtk verify`. Commit this file; do not edit by hand.\n{}",
+            "# Generated by `rqtk verify` and `rqtk review`. Commit this file; do not edit by hand.\n{}",
             toml::to_string_pretty(&file)?
         );
         std::fs::write(&path, text).map_err(|source| RqtkError::Io { path, source })
@@ -132,14 +186,20 @@ impl Evidence {
     /// Record the outcomes of a test run. Only activities with a complete result in `runs`
     /// are touched, so partial runs (e.g. one language's tests) keep other evidence. An entry
     /// whose result is unchanged keeps its original commit. Evidence for activities that no
-    /// longer exist in any requirement is removed.
+    /// longer exist in any requirement is removed, and so are reviews of requirements that
+    /// no longer exist.
+    ///
+    /// When a requirement changed since its tests last passed and the same tests (by source
+    /// hash) pass again, the entry is marked `unchanged_tests`: rerunning a test proves
+    /// nothing about a statement it was never updated for.
     pub fn apply(
         &mut self,
-        requirements: &BTreeMap<RequirementId, Requirement>,
+        set: &RequirementSet<Validated>,
         runs: &BTreeMap<String, ActivityRun>,
         commit: Option<&str>,
     ) -> Vec<EvidenceChange> {
-        let owners: BTreeMap<&str, &Requirement> = requirements
+        let owners: BTreeMap<&str, &Requirement> = set
+            .requirements()
             .values()
             .flat_map(|r| {
                 r.verification
@@ -154,22 +214,63 @@ impl Evidence {
             let (Some(req), Some(outcome)) = (owners.get(activity.as_str()), run.outcome()) else {
                 continue;
             };
+            let requirement_hash = req.compute_content_hash();
+            let previous = self
+                .activities
+                .get(activity)
+                .filter(|p| p.requirement == req.id);
+            let (upstream, unchanged_tests) = match previous {
+                // Same wording: keep the baseline the requirement was first verified against.
+                // Tests that were unchanged stay so until their source changes.
+                Some(p) if p.requirement_hash == requirement_hash => {
+                    let upstream = if p.upstream.is_empty() {
+                        set.upstream_hashes(&req.id)
+                    } else {
+                        p.upstream.clone()
+                    };
+                    let still_unchanged = p.unchanged_tests
+                        && (p.tests_hash.is_none() || p.tests_hash == run.tests_hash);
+                    (upstream, still_unchanged)
+                }
+                Some(p) => (
+                    set.upstream_hashes(&req.id),
+                    p.tests_hash.is_some() && p.tests_hash == run.tests_hash,
+                ),
+                None => (set.upstream_hashes(&req.id), false),
+            };
+            // A review answers the evidence it saw. New unchanged-test evidence for this
+            // wording needs a review recorded after it.
+            let newly_unchanged =
+                unchanged_tests && previous.is_some_and(|p| p.requirement_hash != requirement_hash);
+            if newly_unchanged {
+                self.reviews.remove(&req.id);
+            }
             let entry = ActivityEvidence {
                 id: activity.clone(),
                 requirement: req.id.clone(),
-                requirement_hash: req.compute_content_hash(),
+                requirement_hash,
                 outcome,
                 tests: run.tests.clone(),
                 commit: commit.map(str::to_owned),
+                tests_hash: run.tests_hash.clone(),
+                unchanged_tests,
+                upstream,
             };
-            match self.activities.get(activity) {
-                Some(existing) if existing.same_result(&entry) => {}
+            match self.activities.get_mut(activity) {
+                Some(existing) if existing.same_result(&entry) => {
+                    let fill_upstream = existing.upstream.is_empty() && !entry.upstream.is_empty();
+                    if existing.tests_hash != entry.tests_hash || fill_upstream {
+                        existing.tests_hash = entry.tests_hash;
+                        existing.upstream = entry.upstream;
+                        self.refreshed = true;
+                    }
+                }
                 Some(existing) => {
                     changes.push(EvidenceChange::Updated {
                         before: existing.clone(),
                         after: entry.clone(),
                     });
-                    self.activities.insert(activity.clone(), entry);
+                    *existing = entry;
                 }
                 None => {
                     changes.push(EvidenceChange::Added(entry.clone()));
@@ -189,8 +290,34 @@ impl Evidence {
                 changes.push(EvidenceChange::Removed(removed));
             }
         }
+        let before = self.reviews.len();
+        self.reviews
+            .retain(|id, _| set.requirements().contains_key(id));
+        self.refreshed |= self.reviews.len() != before;
         changes.sort_by(|a, b| a.activity().cmp(b.activity()));
         changes
+    }
+
+    /// Record a review of `id` against its current wording and upstream. Returns the review.
+    pub fn review(
+        &mut self,
+        set: &RequirementSet<Validated>,
+        id: &RequirementId,
+        date: String,
+        commit: Option<&str>,
+        note: Option<String>,
+    ) -> Option<Review> {
+        let req = set.requirements().get(id)?;
+        let review = Review {
+            requirement: id.clone(),
+            requirement_hash: req.compute_content_hash(),
+            upstream: set.upstream_hashes(id),
+            date,
+            commit: commit.map(str::to_owned),
+            note,
+        };
+        self.reviews.insert(id.clone(), review.clone());
+        Some(review)
     }
 }
 

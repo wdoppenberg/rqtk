@@ -163,6 +163,20 @@ enum Command {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Confirm a requirement still holds after something it depends on changed.
+    ///
+    /// Settles a Suspect requirement whose tests passed again unchanged after it was
+    /// reworded, or whose ancestor or need changed. Recorded in `.rqtk/evidence.toml`.
+    Review {
+        /// Requirement ID.
+        id: String,
+        /// Why the requirement still holds, kept with the review.
+        #[arg(long)]
+        note: Option<String>,
+        /// Report what would be recorded without writing.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Search requirements, needs and stakeholders by substring.
     Search {
         /// Pattern to search for.
@@ -384,6 +398,9 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
                 dry_run,
             },
         ),
+        Command::Review { id, note, dry_run } => {
+            commands::review::run(ctx, commands::review::ReviewArgs { id, note, dry_run })
+        }
         Command::Search {
             pattern,
             ignore_case,

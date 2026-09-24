@@ -41,10 +41,10 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     let runs = evidence::match_results(&links, &results);
     let mut recorded = Evidence::load(set.repo_root())?;
     let commit = set.git().head_commit().map(|c| c.full().to_owned());
-    let changes = recorded.apply(set.requirements(), &runs, commit.as_deref());
-    let write = !changes.is_empty() && !args.check && !args.dry_run;
+    let changes = recorded.apply(&set, &runs, commit.as_deref());
+    let write = (!changes.is_empty() || recorded.refreshed) && !args.check && !args.dry_run;
     if write {
-        recorded.save(set.repo_root())?;
+        recorded.save(set.repo_root(), env!("CARGO_PKG_VERSION"))?;
     }
 
     let any_failed = runs.values().any(|r| r.outcome() == Some(Outcome::Failed));
@@ -135,7 +135,7 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
             "none of the {} test results matched a linked test; check the results file and that `rqtk scan` finds the tests",
             results.len()
         ));
-    } else if changes.is_empty() {
+    } else if changes.is_empty() && !write {
         output::success("Evidence is up to date", &[]);
     } else if write {
         output::success(
@@ -167,6 +167,12 @@ fn describe(change: &EvidenceChange) -> String {
             after.id,
             outcome(before.outcome),
             outcome(after.outcome)
+        ),
+        EvidenceChange::Updated { after, .. } if after.unchanged_tests => format!(
+            "~ {}  {} with unchanged tests after the requirement changed; still Suspect until the tests change or `rqtk review {}`",
+            after.id,
+            outcome(after.outcome),
+            after.requirement
         ),
         EvidenceChange::Updated { after, .. } => {
             format!("~ {}  {} (re-verified)", after.id, outcome(after.outcome))

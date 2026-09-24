@@ -16,7 +16,9 @@ pub mod verification;
 
 pub use diagnostic::{Diagnostic, Location, Severity};
 pub use error::RqtkError;
-pub use evidence::{ActivityEvidence, Evidence, EvidenceChange, Outcome, TestOutcome, TestResult};
+pub use evidence::{
+    ActivityEvidence, Evidence, EvidenceChange, Outcome, Review, TestOutcome, TestResult,
+};
 pub use git::{
     Baseline, BaselineName, ChangeKind, CommitHash, CommitInfo, GitContext, ModifiedRequirement,
     RequirementDiff,
@@ -33,4 +35,4 @@ pub use repository::{
     Loaded, RequirementSet, SatisfactionStatus, StaleHash, TraceView, Validated, load_config,
 };
 pub use scan::SourceLink;
-pub use status::{ActivityState, ClosureStatus, RequirementVerification};
+pub use status::{ActivityState, ClosureStatus, RequirementVerification, SuspectReason};
