@@ -68,12 +68,41 @@
 .rqtk h2,
 .rqtk h3,
 .rqtk h4,
-.rqtk .menu-title,
-.rqtk .chapter li a,
-.rqtk .sidebar .chapter strong {
+.rqtk .menu-title {
   font-family: var(--mono-font);
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+/* Sidebar hierarchy: parts are small grey labels, pages are links under them, and the
+   current page's own headings are smaller still. */
+.rqtk .chapter li.part-title {
+  font-family: var(--mono-font);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6f6f6f;
+  margin: 1.8em 0 0.5em;
+}
+
+.rqtk .chapter li.chapter-item a {
+  font-family: var(--mono-font);
+  font-weight: 400;
+}
+
+.rqtk .chapter li.chapter-item a.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+.rqtk .on-this-page a {
+  font-size: 0.9em;
+  color: #8a8a8a;
+}
+
+.rqtk .on-this-page a.current-header {
+  color: #fff;
 }
 
 .rqtk .content a {
