@@ -13,7 +13,7 @@ Requirements are TOML files, checked in alongside code. Baselines are git tags. 
     SYS/FOBC-SYS-0001.toml
     SW/FOBC-SW-0001.toml
   needs/NEED-0001.toml
-  stakeholders/STK-001.toml
+  stakeholders/STK-0001.toml
 ```
 
 Each requirement is a single file:
@@ -73,7 +73,7 @@ Windows: `powershell -ExecutionPolicy Bypass -c "irm https://rqtk.dev/install.ps
 ## Commands
 
 ```bash
-rqtk init                          # scaffold .rqtk/ (--example for a sample stakeholder and need)
+rqtk init                          # scaffold .rqtk/ (--hook: pre-commit hook; --example: sample stakeholder and need)
 rqtk add --category SYS \
           --type Functional \
           --title "..." \
@@ -82,7 +82,7 @@ rqtk add --category SYS \
           --criteria "..." \
           --activity "..."         # create the next requirement, complete with an activity
 rqtk add-activity REQ-SYS-0002 --name "..."   # add a verification activity
-rqtk add-need --title "..." --statement "..." --stakeholders STK-001
+rqtk add-need --title "..." --statement "..." --stakeholders STK-0001
 rqtk add-stakeholder --name "..." [--role "..."]
 rqtk lint                          # validate all requirements against config
 rqtk context FOBC-SW-0001         # everything about one item: links, tests, status, findings

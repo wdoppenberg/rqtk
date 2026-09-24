@@ -10,7 +10,7 @@ In a git repository:
 rqtk init
 ```
 
-This creates `.rqtk/config.toml` with a starter policy, named after your project. Add `--agents` to also install the [agent skills](../guides/agents.md), and `--example` for an example stakeholder and need.
+This creates `.rqtk/config.toml` with a starter policy, named after your project. Add `--agents` to also install the [agent skills](../guides/agents.md), `--hook` for a pre-commit hook that lints before every commit, and `--example` for an example stakeholder and need. Everything except history (`impact`, `diff`, `log`, `baseline`) works outside a git repository too.
 
 ## 2. Add a requirement
 

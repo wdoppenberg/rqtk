@@ -49,7 +49,16 @@ fixes them; some checks are stricter as a result.
   `rqtk review <ID> [--note …]`. `coverage`, `context` and `report` say why a requirement is
   Suspect (`suspect_reasons` in JSON).
 - **Table-driven and parameterised tests:** `// rqtk: verifies VA-… case "name"` on a table
-  row, or `verifies("VA-…", case = "…")`, links one case.
+  row, or `verifies("VA-…", case = "…")`, links one case: Go subtests, pytest parameters,
+  rows of `it.each([...])`, and GoogleTest parameter values.
+- JUnit `@DisplayName` / `@ParameterizedTest(name = …)` and xUnit `DisplayName` are read from
+  the annotations, so tests match under Gradle, which reports display names.
+- Evidence names tests as `<source file>::<name>`, the same whichever runner reported them
+  (Bun and vitest, CTest and GoogleTest).
+- `verify` counts linked tests that got no result, and warns when it records evidence with no
+  commit to record it against.
+- `init --hook` installs the pre-commit hook.
+- The report header shows uncommitted requirement changes and the latest baseline.
 - **`rqtk add` writes complete requirements:** `--parent`, `--satisfies`, `--criteria`,
   `--activity` (IDs `VA-<CATEGORY>-<NUMBER>-<NN>`), `--priority`, `--method`, `--level`,
   `--phase`. It refuses a category that requires a parent when none is given.
@@ -72,6 +81,16 @@ fixes them; some checks are stricter as a result.
   warning. `rehash` refreshes stored hashes only; `rehash --all` stamps every file.
 - `validation.require_parent_for_categories` is the documented name of the parent rule;
   `require_parent_for_levels` still works.
+- `identification.id_pattern` is optional: without it, IDs are checked against
+  `<prefix>-<CATEGORY>-<NUMBER>` for the configured categories, so adding a category is one
+  table. `init` no longer writes it.
+- Everything except history (`impact`, `diff`, `log`, `baseline`) works outside a git
+  repository; `lint` used to fail there.
+- New stakeholder and need IDs follow `zero_padding` (`STK-0001`), or the width a project's
+  existing IDs already use.
+- Requirements in top-level categories default to verification level System.
+- `trace` says when a requirement is top-level or a leaf instead of printing empty lists, and
+  shows titles.
 - `rqtk = { default-features = false, features = ["macros"] }` builds 16 crates instead of about
   270: the macros look activities up with a TOML parser, and the `rqtk` crate's dependencies
   hang off its `lib`, `cli` and `macros` features.

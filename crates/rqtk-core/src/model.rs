@@ -98,6 +98,25 @@ pub struct Config {
     pub scan: ScanConfig,
 }
 
+impl Config {
+    /// The pattern requirement IDs must match: `identification.id_pattern`, or one derived
+    /// from the prefix, separator, category keys and padding.
+    pub fn id_pattern(&self) -> String {
+        if let Some(pattern) = &self.identification.id_pattern {
+            return pattern.clone();
+        }
+        let ident = &self.identification;
+        let categories: Vec<String> = self.categories.keys().map(|k| regex::escape(k)).collect();
+        format!(
+            "^{}{sep}({}){sep}\\d{{{},}}$",
+            regex::escape(&ident.prefix),
+            categories.join("|"),
+            ident.zero_padding,
+            sep = regex::escape(&ident.id_separator),
+        )
+    }
+}
+
 /// Where `rqtk scan` looks for `verifies` annotations in source code.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -182,7 +201,11 @@ pub struct ProjectOrganization {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct IdentificationScheme {
-    pub id_pattern: String,
+    /// Regular expression every requirement ID must match (RQ001). When omitted, it is
+    /// derived from `prefix`, `id_separator`, the category keys and `zero_padding`, so a new
+    /// category needs no pattern change.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id_pattern: Option<String>,
     #[serde(default = "default_separator")]
     pub id_separator: String,
     #[serde(default = "default_prefix")]

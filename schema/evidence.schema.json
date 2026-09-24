@@ -26,7 +26,7 @@
           "type": "string"
         },
         "tests": {
-          "description": "Test cases that produced the outcome, as `classname::name`.",
+          "description": "Test cases that produced the outcome, as `path::name`: the linked test's source file\nand the name the runner gave the case.",
           "items": {
             "type": "string"
           },

@@ -52,6 +52,12 @@ func TestIntact(t *testing.T) {
 
 The link belongs to the enclosing test and matches the runner's result for that case: Go's `TestIntact/flipped_byte_is_corrupt`, or pytest's `test_x[case]`. In Python and Rust, pass `case` to the annotation instead: `@rqtk.verifies("VA-…", case="neg")`.
 
+The same works for rows of a JS/TS `it.each([...])` table, where the case is any part of the rendered title (`case "1+1"` for `"adds 1+1"`), and for GoogleTest value-parameterised tests, where the case is the parameter's value: tag the `TEST_P` with `// rqtk: verifies VA-… case "7"`.
+
+### Display names
+
+JUnit's `@DisplayName("…")` and `@ParameterizedTest(name = "…")`, and xUnit's `DisplayName = "…"`, change the name some runners report (Gradle does; Maven Surefire reports the method name). rqtk reads them from the annotations above the test and matches either name. A parameterised JUnit test without a `name` is reported by Gradle as `[1] …` with no trace of the method, so give it a `name`.
+
 ### Choosing what is scanned
 
 In `.rqtk/config.toml`:
@@ -80,7 +86,7 @@ rqtk reads [JUnit XML](../reference/json-and-exit-codes.md#why-junit-xml), which
 
 ### How results are matched
 
-A result matches a link by test name, together with the suite for GoogleTest and the case for a case link. When several tests share a name, rqtk narrows by the source file the runner reports (Bun, vitest, GoogleTest) or by what the link's path says about the result's class or module. If a linked test still matches several distinct tests, `rqtk verify` records nothing for it and says which tests it matched; rename one. Disabled and skipped tests leave an activity incomplete.
+A result matches a link by test name (or display name), together with the suite for GoogleTest and the case for a case link. When several tests share a name, rqtk narrows by the source file the runner reports (Bun, vitest, GoogleTest) or by what the link's path says about the result's class or module. If a linked test still matches several distinct tests, `rqtk verify` records nothing for it and says which tests it matched; rename one. Disabled and skipped tests leave an activity incomplete.
 
 ## Recording results
 
@@ -91,7 +97,8 @@ rqtk verify --results junit.xml
 rqtk matches each test case to the functions linked to each activity and records one entry per activity in `.rqtk/evidence.toml`: the outcome, the tests, the commit, and the **content hash of the requirement at that moment**.
 
 - An activity passes only when every linked test ran and passed; a skipped test leaves it incomplete.
-- A run that covers only some tests, such as the Python suite without the Rust one, leaves other activities' evidence untouched.
+- A run that covers only some tests, such as the Python suite without the Rust one, leaves other activities' evidence untouched. `verify` counts the linked tests it found no result for, so a runner naming tests differently doesn't go unnoticed.
+- Evidence names each test as `<source file>::<name>`, so the same test gets the same entry whichever runner reported it.
 - `verify` exits 1 if a linked test failed, if a linked test matched several tests, or if the results matched no linked test at all (usually the wrong file, or tags rqtk can't attach).
 - `verify --check` writes nothing and exits 1 if the committed evidence doesn't match this run. Use it in CI.
 

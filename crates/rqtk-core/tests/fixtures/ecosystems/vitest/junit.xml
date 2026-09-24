@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="10" failures="2" errors="0" time="0.009421459">
-    <testsuite name="src/a/shapes.test.ts" timestamp="2026-09-24T08:38:20.361Z" hostname="Wouters-MacBook-Pro.local" tests="9" failures="1" errors="0" skipped="1" time="0.005926542">
-        <testcase classname="src/a/shapes.test.ts" name="plain test with spaces" time="0.001070292">
+<testsuites name="vitest tests" tests="12" failures="3" errors="0" time="0.007819667">
+    <testsuite name="src/a/shapes.test.ts" timestamp="2026-09-24T09:55:53.491Z" hostname="Mac" tests="11" failures="2" errors="0" skipped="1" time="0.004434209">
+        <testcase classname="src/a/shapes.test.ts" name="plain test with spaces" time="0.0006125">
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="outer &gt; inner &gt; nested test" time="0.000106375">
+        <testcase classname="src/a/shapes.test.ts" name="outer &gt; inner &gt; nested test" time="0.000074667">
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="rejects 450-480 outside hours" time="0.000113458">
+        <testcase classname="src/a/shapes.test.ts" name="rejects 450-480 outside hours" time="0.000083291">
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="rejects 1080-1110 outside hours" time="0.00016325">
+        <testcase classname="src/a/shapes.test.ts" name="rejects 1080-1110 outside hours" time="0.000047792">
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="never accepts two concurrent bookings" time="0.000293042">
+        <testcase classname="src/a/shapes.test.ts" name="never accepts two concurrent bookings" time="0.000051125">
         </testcase>
         <testcase classname="src/a/shapes.test.ts" name="skipped test" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="grouped &gt; first" time="0.000186458">
+        <testcase classname="src/a/shapes.test.ts" name="grouped &gt; first" time="0.000056583">
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="grouped &gt; second" time="0.003061584">
+        <testcase classname="src/a/shapes.test.ts" name="grouped &gt; second" time="0.002465334">
             <failure message="expected 2 to be 3 // Object.is equality" type="AssertionError">
 AssertionError: expected 2 to be 3 // Object.is equality
 
@@ -27,11 +27,24 @@ AssertionError: expected 2 to be 3 // Object.is equality
 + 2
             </failure>
         </testcase>
-        <testcase classname="src/a/shapes.test.ts" name="same title in two files" time="0.000099375">
+        <testcase classname="src/a/shapes.test.ts" name="same title in two files" time="0.000074042">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="adds 1+1" time="0.0000595">
+        </testcase>
+        <testcase classname="src/a/shapes.test.ts" name="adds 2+2" time="0.000278625">
+            <failure message="expected 4 to be 5 // Object.is equality" type="AssertionError">
+AssertionError: expected 4 to be 5 // Object.is equality
+
+- Expected
++ Received
+
+- 5
++ 4
+            </failure>
         </testcase>
     </testsuite>
-    <testsuite name="src/b/other.test.ts" timestamp="2026-09-24T08:38:20.365Z" hostname="Wouters-MacBook-Pro.local" tests="1" failures="1" errors="0" skipped="0" time="0.003494917">
-        <testcase classname="src/b/other.test.ts" name="same title in two files" time="0.002978208">
+    <testsuite name="src/b/other.test.ts" timestamp="2026-09-24T09:55:53.493Z" hostname="Mac" tests="1" failures="1" errors="0" skipped="0" time="0.003385458">
+        <testcase classname="src/b/other.test.ts" name="same title in two files" time="0.002910208">
             <failure message="expected 1 to be 2 // Object.is equality" type="AssertionError">
 AssertionError: expected 1 to be 2 // Object.is equality
 

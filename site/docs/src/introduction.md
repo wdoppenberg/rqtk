@@ -9,7 +9,7 @@ rqtk keeps requirements, stakeholder needs and verification evidence as TOML fil
   config.toml                ← project policy: categories, states, lint rules
   requirements/SYS/SYS-0001.toml
   needs/NEED-0001.toml
-  stakeholders/STK-001.toml
+  stakeholders/STK-0001.toml
   evidence.toml              ← which tests passed, against which version of each requirement
 ```
 

@@ -37,7 +37,8 @@ pub struct ActivityEvidence {
     /// current hash differs, the evidence is stale and the activity is Suspect.
     pub requirement_hash: String,
     pub outcome: Outcome,
-    /// Test cases that produced the outcome, as `classname::name`.
+    /// Test cases that produced the outcome, as `path::name`: the linked test's source file
+    /// and the name the runner gave the case.
     pub tests: Vec<String>,
     /// Commit checked out when the evidence was recorded.
     pub commit: Option<String>,
@@ -340,6 +341,8 @@ pub struct TestResult {
     pub file: Option<String>,
     /// 1-based line of the test in `file`.
     pub line: Option<usize>,
+    /// The parameter of a GoogleTest value-parameterised instance.
+    pub value_param: Option<String>,
 }
 
 impl TestResult {
@@ -418,6 +421,7 @@ fn testcase(e: &BytesStart<'_>) -> Result<TestResult, String> {
     let mut classname = String::new();
     let mut file = None;
     let mut line = None;
+    let mut value_param = None;
     let mut outcome = TestOutcome::Passed;
     for attr in e.attributes() {
         let attr = attr.map_err(|e| e.to_string())?;
@@ -425,8 +429,9 @@ fn testcase(e: &BytesStart<'_>) -> Result<TestResult, String> {
             .normalized_value(quick_xml::XmlVersion::Implicit1_0)
             .map_err(|e| e.to_string())?;
         match attr.key.local_name().as_ref() {
-            b"name" => name = Some(value.into_owned()),
-            b"classname" => classname = value.into_owned(),
+            b"name" => name = Some(decode_entities(&value)),
+            b"classname" => classname = decode_entities(&value),
+            b"value_param" => value_param = Some(value.into_owned()),
             b"file" => file = Some(value.into_owned()),
             b"line" => line = value.trim().parse().ok(),
             // CTest and GoogleTest mark disabled tests with an attribute, not <skipped/>.
@@ -446,7 +451,47 @@ fn testcase(e: &BytesStart<'_>) -> Result<TestResult, String> {
         outcome,
         file,
         line,
+        value_param,
     })
+}
+
+/// Undo a second level of XML escaping, which Bun applies to names (`&amp;gt;`).
+fn decode_entities(value: &str) -> String {
+    if !value.contains('&') {
+        return value.to_owned();
+    }
+    value
+        .replace("&gt;", ">")
+        .replace("&lt;", "<")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&amp;", "&")
+}
+
+/// How evidence names a test case: the linked source file and the test's own name, so the
+/// same test gets the same ID whichever runner reported it. Describe-block paths and
+/// GoogleTest suites are dropped (the file identifies the test), and a GoogleTest
+/// parameter index is replaced by the parameter's value, as CTest names it.
+fn evidence_test_id(link: &SourceLink, r: &TestResult) -> String {
+    let mut name = r.name.as_str();
+    if let Some((_, last)) = name.rsplit_once(" > ") {
+        name = last;
+    }
+    let mut name = name.to_owned();
+    if let Some(suite) = &link.suite
+        && let Some(at) = name.find(&format!("{suite}."))
+    {
+        name = name[at + suite.len() + 1..].to_owned();
+    }
+    if let (Some(value), Some((head, index))) = (&r.value_param, name.rsplit_once('/'))
+        && index.chars().all(|c| c.is_ascii_digit())
+    {
+        name = format!("{head}/{value}");
+    }
+    format!(
+        "{}::{name}",
+        link.path.display().to_string().replace('\\', "/")
+    )
 }
 
 // ── Matching results to links ────────────────────────────────────────────────
@@ -504,6 +549,13 @@ pub fn match_results(
         by_activity.entry(&link.activity).or_default().push(link);
     }
 
+    // Rust integration test binaries are named after their file (nextest: `crate::file`).
+    let integration_binaries: BTreeSet<String> = links
+        .iter()
+        .filter(|l| is_rust_integration_test(&l.path))
+        .filter_map(|l| l.path.file_stem()?.to_str().map(str::to_owned))
+        .collect();
+
     let mut runs = BTreeMap::new();
     for (activity, links) in by_activity {
         let mut tests = BTreeSet::new();
@@ -515,7 +567,7 @@ pub fn match_results(
             let Some(test_name) = &link.test_name else {
                 continue;
             };
-            let matched = results_for(link, results);
+            let matched = results_for(link, results, &integration_binaries);
             seen |= !matched.tests.is_empty();
             if matched.distinct.len() > 1 {
                 ambiguous.push(Ambiguity {
@@ -534,7 +586,7 @@ pub fn match_results(
             }
             for r in ran {
                 any_failed |= r.outcome == TestOutcome::Failed;
-                tests.insert(r.id());
+                tests.insert(evidence_test_id(link, r));
             }
         }
         if !seen {
@@ -576,7 +628,11 @@ struct Matched<'a> {
 
 /// Results for one link: by name (with suite, case or group), then narrowed by the source
 /// file the runner reports, then by what the link's path says about the classname.
-fn results_for<'a>(link: &SourceLink, results: &'a [TestResult]) -> Matched<'a> {
+fn results_for<'a>(
+    link: &SourceLink,
+    results: &'a [TestResult],
+    integration_binaries: &BTreeSet<String>,
+) -> Matched<'a> {
     let pattern = NamePattern::new(link);
     let mut candidates: Vec<&TestResult> = results.iter().filter(|r| pattern.matches(r)).collect();
 
@@ -586,7 +642,7 @@ fn results_for<'a>(link: &SourceLink, results: &'a [TestResult]) -> Matched<'a> 
     let hinted: Vec<&TestResult> = candidates
         .iter()
         .copied()
-        .filter(|r| path_hint_matches(&link.path, r))
+        .filter(|r| path_hint_matches(&link.path, r, integration_binaries))
         .collect();
     if !hinted.is_empty() {
         candidates = hinted;
@@ -636,7 +692,7 @@ fn same_file(reported: &str, scanned: &Path) -> bool {
 }
 
 /// Whether a result's classname or name is consistent with the link's source file.
-fn path_hint_matches(path: &Path, r: &TestResult) -> bool {
+fn path_hint_matches(path: &Path, r: &TestResult, integration_binaries: &BTreeSet<String>) -> bool {
     let hay = format!("{} {}", r.classname, r.name);
     let stem = path
         .file_stem()
@@ -644,13 +700,25 @@ fn path_hint_matches(path: &Path, r: &TestResult) -> bool {
         .unwrap_or_default();
     let stem = stem.split('.').next().unwrap_or(stem);
     if path.extension().is_some_and(|e| e == "rs") {
-        // libtest names the classname after the module (`tests`) for unit tests and
-        // `integration` for the top level of an integration test binary.
-        let integration = path.components().any(|c| c.as_os_str() == "tests");
-        return contains_word(&hay, stem) || (r.classname == "integration") == integration;
+        // libtest reports the top level of an integration test binary as `integration` and
+        // unit tests by module (`tests`); nextest names binaries `crate` and `crate::file`.
+        let in_integration_binary = r.classname == "integration"
+            || integration_binaries
+                .iter()
+                .any(|b| r.classname.ends_with(&format!("::{b}")));
+        return if is_rust_integration_test(path) {
+            contains_word(&hay, stem) || r.classname == "integration"
+        } else {
+            !in_integration_binary
+        };
     }
     let as_path = path.to_string_lossy().replace('\\', "/");
     contains_word(&hay, stem) || hay.contains(&as_path)
+}
+
+fn is_rust_integration_test(path: &Path) -> bool {
+    path.extension().is_some_and(|e| e == "rs")
+        && path.components().any(|c| c.as_os_str() == "tests")
 }
 
 /// `needle` occurs in `hay` delimited by non-alphanumeric characters (or the ends).
@@ -679,10 +747,9 @@ fn base_name(name: &str) -> &str {
 
 /// What a link's test is called in the results.
 struct NamePattern {
-    /// `Suite.Name` or `Name`, without `DISABLED_`.
-    expected: String,
-    /// Set when the name has placeholders (`it.each`'s `%i`, `$x`, `${x}`).
-    template: Option<Regex>,
+    /// `Suite.Name` or `Name` without `DISABLED_`, then any display names; each with a
+    /// regex when it has placeholders (`it.each`'s `%i`, `$x`, `${x}`, JUnit's `{0}`).
+    alternatives: Vec<(String, Option<Regex>)>,
     case: Option<String>,
     group: bool,
 }
@@ -698,26 +765,36 @@ impl NamePattern {
             Some(suite) => format!("{}.{name}", suite.replace("DISABLED_", "")),
             None => name,
         };
-        static PLACEHOLDER: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"%[sdifjoc#]|\$\{[^}]*\}|\$\w+").unwrap());
-        let template = PLACEHOLDER.is_match(&expected).then(|| {
-            let mut rx = String::from(r"(?:^|[.:/> #$])");
-            let mut last = 0;
-            for m in PLACEHOLDER.find_iter(&expected) {
-                rx.push_str(&regex::escape(&expected[last..m.start()]));
-                rx.push_str(".+?");
-                last = m.end();
-            }
-            rx.push_str(&regex::escape(&expected[last..]));
-            rx.push('$');
-            Regex::new(&rx).expect("escaped pattern")
-        });
+        let alternatives = std::iter::once(expected)
+            .chain(link.aliases.iter().cloned())
+            .map(|name| {
+                let template = template_regex(&name);
+                (name, template)
+            })
+            .collect();
         NamePattern {
-            expected,
-            template,
+            alternatives,
             case: link.case.clone(),
             group: link.group,
         }
+    }
+
+    /// Whether `name` is this test's name, ending at a path boundary.
+    fn matches_name(&self, name: &str) -> bool {
+        self.alternatives.iter().any(|(expected, template)| {
+            if let Some(template) = template {
+                return template.is_match(name);
+            }
+            match name.strip_suffix(expected.as_str()) {
+                Some("") => true,
+                Some(prefix) => prefix.ends_with(['.', ':', ' ', '/', '>', '#', '$']),
+                None => false,
+            }
+        })
+    }
+
+    fn is_template(&self) -> bool {
+        self.alternatives.first().is_some_and(|(_, t)| t.is_some())
     }
 
     fn matches(&self, r: &TestResult) -> bool {
@@ -728,28 +805,25 @@ impl NamePattern {
         names.iter().any(|name| {
             if self.group {
                 let hay = format!("{} {name}", r.classname);
-                return contains_segment(&hay, &self.expected);
+                return contains_segment(&hay, &self.alternatives[0].0);
             }
             match &self.case {
-                Some(case) => self.matches_case(name, case),
+                Some(case) => {
+                    self.matches_case(name, case)
+                        || (r.value_param.as_deref() == Some(case.as_str())
+                            && self.matches_name(base_name(name)))
+                }
                 None => self.matches_name(base_name(name)),
             }
         })
     }
 
-    fn matches_name(&self, name: &str) -> bool {
-        if let Some(template) = &self.template {
-            return template.is_match(name);
-        }
-        match name.strip_suffix(self.expected.as_str()) {
-            Some("") => true,
-            Some(prefix) => prefix.ends_with(['.', ':', ' ', '/', '>', '#', '$']),
-            None => false,
-        }
-    }
-
-    /// Go's `TestX/case_name` and pytest's `test_x[case]`.
+    /// Go's `TestX/case_name`, pytest's `test_x[case]`, CTest's `Suite.Name/value`, and a
+    /// row of `it.each`, whose rendered title contains the case.
     fn matches_case(&self, name: &str, case: &str) -> bool {
+        if self.is_template() {
+            return self.matches_name(name) && name.contains(case);
+        }
         let underscored = case.replace(' ', "_");
         if let Some((head, rest)) = name.split_once('[') {
             let id = rest.strip_suffix(']').unwrap_or(rest);
@@ -760,6 +834,25 @@ impl NamePattern {
             self.matches_name(head) && (tail == case || tail == underscored)
         })
     }
+}
+
+/// A regex for a test name with placeholders, or `None` if it has none.
+fn template_regex(name: &str) -> Option<Regex> {
+    static PLACEHOLDER: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"%[sdifjoc#]|\$\{[^}]*\}|\$\w+|\{\w+\}").unwrap());
+    if !PLACEHOLDER.is_match(name) {
+        return None;
+    }
+    let mut rx = String::from(r"(?:^|[.:/> #$])");
+    let mut last = 0;
+    for m in PLACEHOLDER.find_iter(name) {
+        rx.push_str(&regex::escape(&name[last..m.start()]));
+        rx.push_str(".+?");
+        last = m.end();
+    }
+    rx.push_str(&regex::escape(&name[last..]));
+    rx.push('$');
+    Regex::new(&rx).ok()
 }
 
 /// `needle` occurs in `hay` between separators (` > `, `.`, `::`, `/`, spaces) or the ends.
@@ -851,6 +944,7 @@ mod tests {
             outcome: TestOutcome::Passed,
             file: None,
             line: None,
+            value_param: None,
         }
     }
 
@@ -905,7 +999,7 @@ mod tests {
         ];
         let runs = match_results(&links, &results);
         assert_eq!(runs["A"].outcome(), Some(Outcome::Passed));
-        assert_eq!(runs["A"].tests, vec!["rqtk::integration_test::lint_ok"]);
+        assert_eq!(runs["A"].tests, vec!["tests/integration_test.rs::lint_ok"]);
         assert_eq!(runs["B"].outcome(), Some(Outcome::Failed));
         assert_eq!(
             runs["C"].outcome(),

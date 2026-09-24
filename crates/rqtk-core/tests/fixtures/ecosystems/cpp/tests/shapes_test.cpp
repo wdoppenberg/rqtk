@@ -22,3 +22,10 @@ TEST(Shapes, DISABLED_Later) {}
 
 // Unrelated and failing, with the same test name as a linked one in another suite.
 TEST(Other, Plain) { EXPECT_EQ(1, 2); }
+
+class Dlc : public ::testing::TestWithParam<int> {};
+
+// rqtk: verifies VA-CPP-06 case "7"
+// rqtk: verifies VA-CPP-07 case "9"
+TEST_P(Dlc, BelowEight) { EXPECT_LT(GetParam(), 8); }
+INSTANTIATE_TEST_SUITE_P(Lengths, Dlc, ::testing::Values(7, 9));

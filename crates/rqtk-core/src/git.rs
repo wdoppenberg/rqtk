@@ -113,7 +113,8 @@ pub struct RequirementDiff {
 }
 
 pub struct GitContext {
-    pub(crate) repo: gix::Repository,
+    /// `None` outside a git repository: loading and linting work, history doesn't.
+    repository: Option<gix::Repository>,
     pub workdir: PathBuf,
 }
 
@@ -126,18 +127,43 @@ impl std::fmt::Debug for GitContext {
 }
 
 impl GitContext {
+    /// Open the repository containing `path`. Outside a git repository the context is
+    /// empty: commands that need history report that, everything else works.
     pub fn open(path: &Path) -> Result<Self, RqtkError> {
-        let repo = gix::discover(path).map_err(|e| RqtkError::Git(e.to_string()))?;
+        let Ok(repo) = gix::discover(path) else {
+            return Ok(Self {
+                repository: None,
+                workdir: path.to_path_buf(),
+            });
+        };
         let workdir = repo
             .workdir()
             .ok_or_else(|| RqtkError::Git("bare repositories are not supported".into()))?
             .to_path_buf();
-        Ok(Self { repo, workdir })
+        Ok(Self {
+            repository: Some(repo),
+            workdir,
+        })
+    }
+
+    /// Whether the requirements live in a git repository.
+    pub fn is_repository(&self) -> bool {
+        self.repository.is_some()
+    }
+
+    fn repo(&self) -> Result<&gix::Repository, RqtkError> {
+        self.repository.as_ref().ok_or_else(|| {
+            RqtkError::Git(format!(
+                "`{}` is not inside a git repository; this command needs git history",
+                self.workdir.display()
+            ))
+        })
     }
 
     /// Repository-relative paths that differ between revision `base` and the working tree,
     /// including uncommitted and untracked (non-ignored) files. Uses the `git` executable.
     pub fn changed_files_since(&self, base: &str) -> Result<Vec<PathBuf>, RqtkError> {
+        self.repo()?;
         let git = |args: &[&str]| -> Result<String, RqtkError> {
             let out = std::process::Command::new("git")
                 .args(args)
@@ -166,12 +192,12 @@ impl GitContext {
 
     /// Full SHA of the commit HEAD points to, or `None` in a repository without commits.
     pub fn head_commit(&self) -> Option<CommitHash> {
-        let id = self.repo.head_id().ok()?;
+        let id = self.repository.as_ref()?.head_id().ok()?;
         Some(CommitHash::from(id.to_string()))
     }
 
     pub fn committer_name(&self) -> Result<String, RqtkError> {
-        self.repo
+        self.repo()?
             .committer()
             .ok_or_else(|| RqtkError::Git("no committer identity configured".into()))
             .and_then(|r| r.map_err(|e| RqtkError::Git(e.to_string())))
@@ -181,16 +207,16 @@ impl GitContext {
     /// Create an annotated tag `rqtk/<name>` at HEAD.
     pub fn create_baseline_tag(&self, name: &BaselineName, message: &str) -> Result<(), RqtkError> {
         let head_id = self
-            .repo
+            .repo()?
             .head_id()
             .map_err(|e| RqtkError::Git(e.to_string()))?;
         let sig = self
-            .repo
+            .repo()?
             .committer()
             .ok_or_else(|| RqtkError::Git("no committer identity configured".into()))
             .and_then(|r| r.map_err(|e| RqtkError::Git(e.to_string())))?;
         let tag_name = format!("{BASELINE_TAG_PREFIX}{name}");
-        self.repo
+        self.repo()?
             .tag(
                 &tag_name,
                 head_id,
@@ -209,7 +235,7 @@ impl GitContext {
         let mut baselines = Vec::new();
 
         let refs = self
-            .repo
+            .repo()?
             .references()
             .map_err(|e| RqtkError::Git(e.to_string()))?;
 
@@ -229,7 +255,7 @@ impl GitContext {
                 None => continue,
             };
 
-            let obj = match self.repo.find_object(direct_oid) {
+            let obj = match self.repo()?.find_object(direct_oid) {
                 Ok(o) => o,
                 Err(_) => continue,
             };
@@ -277,6 +303,7 @@ impl GitContext {
         &self,
         req_path: &Path,
     ) -> Result<Option<DateTime<Utc>>, RqtkError> {
+        let repo = self.repo()?;
         let req_path_c = req_path
             .canonicalize()
             .unwrap_or_else(|_| req_path.to_path_buf());
@@ -289,14 +316,13 @@ impl GitContext {
             .unwrap_or(req_path)
             .to_path_buf();
 
-        let head_id = match self.repo.head_id() {
+        let head_id = match repo.head_id() {
             Ok(id) => id.detach(),
             Err(_) => return Ok(None),
         };
 
         // Collect all commits and reverse to walk oldest-first.
-        let walk = self
-            .repo
+        let walk = repo
             .rev_walk(std::iter::once(head_id))
             .sorting(gix::revision::walk::Sorting::ByCommitTime(
                 Default::default(),
@@ -325,8 +351,7 @@ impl GitContext {
                 true
             } else {
                 parent_ids.iter().all(|parent_id| {
-                    self.repo
-                        .find_object(*parent_id)
+                    repo.find_object(*parent_id)
                         .ok()
                         .and_then(|o| o.try_into_commit().ok())
                         .and_then(|c| c.tree().ok())
@@ -353,6 +378,7 @@ impl GitContext {
     /// Note: rename tracking (`git log --follow`) is not supported; only the path
     /// as given is considered.
     pub fn requirement_history(&self, req_path: &Path) -> Result<Vec<CommitInfo>, RqtkError> {
+        let repo = self.repo()?;
         let req_path_c = req_path
             .canonicalize()
             .unwrap_or_else(|_| req_path.to_path_buf());
@@ -365,13 +391,12 @@ impl GitContext {
             .unwrap_or(req_path)
             .to_path_buf();
 
-        let head_id = match self.repo.head_id() {
+        let head_id = match repo.head_id() {
             Ok(id) => id.detach(),
             Err(_) => return Ok(Vec::new()),
         };
 
-        let walk = self
-            .repo
+        let walk = repo
             .rev_walk(std::iter::once(head_id))
             .sorting(gix::revision::walk::Sorting::ByCommitTime(
                 Default::default(),
@@ -398,8 +423,7 @@ impl GitContext {
                 true
             } else {
                 parent_ids.iter().any(|parent_id| {
-                    let parent_blob_oid: Option<gix::ObjectId> = self
-                        .repo
+                    let parent_blob_oid: Option<gix::ObjectId> = repo
                         .find_object(*parent_id)
                         .ok()
                         .and_then(|o| o.try_into_commit().ok())
@@ -480,19 +504,19 @@ impl GitContext {
         req_dir: &Path,
     ) -> Result<RequirementDiff, RqtkError> {
         let from_tree = self
-            .repo
+            .repo()?
             .find_object(from_tree_id)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
         let to_tree = self
-            .repo
+            .repo()?
             .find_object(to_tree_id)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
 
         let repo_root = self.workdir.as_path();
-        let from_reqs = read_requirements_from_tree(&self.repo, &from_tree, req_dir, repo_root)?;
-        let to_reqs = read_requirements_from_tree(&self.repo, &to_tree, req_dir, repo_root)?;
+        let from_reqs = read_requirements_from_tree(self.repo()?, &from_tree, req_dir, repo_root)?;
+        let to_reqs = read_requirements_from_tree(self.repo()?, &to_tree, req_dir, repo_root)?;
 
         let from_ids: std::collections::HashSet<_> = from_reqs.keys().cloned().collect();
         let to_ids: std::collections::HashSet<_> = to_reqs.keys().cloned().collect();
@@ -545,7 +569,7 @@ impl GitContext {
     fn resolve_ref_tree_id(&self, spec: &str) -> Result<gix::ObjectId, RqtkError> {
         if spec == "HEAD" {
             let head_id = self
-                .repo
+                .repo()?
                 .head_id()
                 .map_err(|e| RqtkError::Git(e.to_string()))?
                 .detach();
@@ -565,7 +589,7 @@ impl GitContext {
         };
 
         for candidate in &candidates {
-            if let Ok(mut r) = self.repo.find_reference(candidate.as_str()) {
+            if let Ok(mut r) = self.repo()?.find_reference(candidate.as_str()) {
                 let commit_id = r
                     .peel_to_id()
                     .map_err(|e| RqtkError::Git(e.to_string()))?
@@ -575,7 +599,7 @@ impl GitContext {
         }
 
         // Anything else git understands: SHAs, `HEAD~2`, `main^`, …
-        if let Ok(id) = self.repo.rev_parse_single(spec) {
+        if let Ok(id) = self.repo()?.rev_parse_single(spec) {
             let git_err = |e: &dyn std::fmt::Display| RqtkError::Git(e.to_string());
             let commit_id = id
                 .object()
@@ -593,7 +617,7 @@ impl GitContext {
 
     fn commit_oid_to_tree_id(&self, oid: gix::ObjectId) -> Result<gix::ObjectId, RqtkError> {
         let commit = self
-            .repo
+            .repo()?
             .find_object(oid)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .try_into_commit()
@@ -612,11 +636,11 @@ impl GitContext {
         dir: &Path,
     ) -> Result<Vec<T>, RqtkError> {
         let tree = self
-            .repo
+            .repo()?
             .find_object(self.resolve_ref_tree_id(spec)?)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
-        read_items_from_tree(&self.repo, &tree, dir, &self.workdir)
+        read_items_from_tree(self.repo()?, &tree, dir, &self.workdir)
     }
 
     /// Return the parsed requirement file as it existed at a given baseline.
@@ -627,7 +651,7 @@ impl GitContext {
     ) -> Result<Option<Requirement>, RqtkError> {
         let tree_id = self.resolve_baseline_tree_id(baseline)?;
         let tree = self
-            .repo
+            .repo()?
             .find_object(tree_id)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
@@ -651,7 +675,7 @@ impl GitContext {
             Some(entry) => {
                 let blob_oid = entry.oid().to_owned();
                 let obj = self
-                    .repo
+                    .repo()?
                     .find_object(blob_oid)
                     .map_err(|e| RqtkError::Git(e.to_string()))?;
                 let content =
@@ -670,7 +694,7 @@ impl GitContext {
     fn resolve_baseline_tree_id(&self, name: &BaselineName) -> Result<gix::ObjectId, RqtkError> {
         let ref_name = format!("refs/tags/{BASELINE_TAG_PREFIX}{name}");
         let mut ref_ = self
-            .repo
+            .repo()?
             .find_reference(ref_name.as_str())
             .map_err(|_| RqtkError::BaselineNotFound(name.to_string()))?;
         // peel_to_id follows symrefs and tag objects to reach the commit
@@ -679,7 +703,7 @@ impl GitContext {
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .detach();
         let commit = self
-            .repo
+            .repo()?
             .find_object(commit_id)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .try_into_commit()

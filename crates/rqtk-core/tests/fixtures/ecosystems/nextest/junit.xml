@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="nextest-run" tests="5" skipped="0" failures="1" errors="0" uuid="4448401e-fda1-4227-84c8-1db57e72770b" timestamp="2026-09-24T11:57:38.616+02:00" time="0.013">
+    <testsuite name="corpus" tests="3" skipped="0" errors="0" failures="0">
+        <testcase name="tests::cut_off" classname="corpus" timestamp="2026-09-24T11:57:38.617+02:00" time="0.010"/>
+        <testcase name="tests::doubles" classname="corpus" timestamp="2026-09-24T11:57:38.617+02:00" time="0.010"/>
+        <testcase name="tests::nested::deep" classname="corpus" timestamp="2026-09-24T11:57:38.617+02:00" time="0.011"/>
+    </testsuite>
+    <testsuite name="corpus::closed_loop" tests="2" skipped="0" errors="0" failures="1">
+        <testcase name="settles" classname="corpus::closed_loop" timestamp="2026-09-24T11:57:38.617+02:00" time="0.011"/>
+        <testcase name="cut_off" classname="corpus::closed_loop" timestamp="2026-09-24T11:57:38.617+02:00" time="0.010">
+            <failure message="thread &apos;cut_off&apos; (3110271) panicked at tests/closed_loop.rs:8:5" type="test failure with exit code 101">thread &apos;cut_off&apos; (3110271) panicked at tests/closed_loop.rs:8:5:
+assertion `left == right` failed
+  left: 2
+ right: 3
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace</failure>
+            <system-out>
+running 1 test
+test cut_off ... FAILED
+
+failures:
+
+failures:
+    cut_off
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+</system-out>
+            <system-err>
+thread &apos;cut_off&apos; (3110271) panicked at tests/closed_loop.rs:8:5:
+assertion `left == right` failed
+  left: 2
+ right: 3
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+</system-err>
+        </testcase>
+    </testsuite>
+</testsuites>

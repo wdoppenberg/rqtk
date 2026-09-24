@@ -73,7 +73,7 @@ ecr_ids      = ["ECR-0042"]
 ## Pre-commit hook
 
 ```bash
-rqtk install-hook
+rqtk install-hook      # or, in a new repository: rqtk init --hook
 ```
 
 This adds a managed block to `.git/hooks/pre-commit` that runs `rqtk rehash` (refresh any stored content hashes) and `rqtk lint` before each commit. Existing hook content is kept.

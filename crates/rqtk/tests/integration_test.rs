@@ -329,7 +329,7 @@ fn trace_leaf_has_empty_downward_section() {
         .clone();
     let text = String::from_utf8(output).unwrap();
     let downward_section = &text[text.find("Children").unwrap()..];
-    assert!(downward_section.contains("no children"), "{text}");
+    assert!(downward_section.contains("Children: none"), "{text}");
     assert!(!downward_section.contains("FOBC-SW-0001"), "{text}");
 }
 
@@ -1474,15 +1474,32 @@ fn init_names_the_project_and_leaves_examples_opt_in() {
         "{config}"
     );
     assert!(!repo_root.join(".rqtk/stakeholders").exists());
-    git_init(repo_root);
+    // Lint and coverage work without git; history commands say they need it.
     rqtk(repo_root).arg("lint").assert().success();
+    rqtk(repo_root).arg("coverage").assert().success();
+    rqtk(repo_root)
+        .args(["impact", "HEAD"])
+        .assert()
+        .code(3)
+        .stderr(predicate::str::contains("not inside a git repository"));
 
     rqtk(repo_root)
         .args(["init", "--force", "--example"])
         .assert()
         .success();
-    assert!(repo_root.join(".rqtk/stakeholders/STK-001.toml").exists());
+    assert!(repo_root.join(".rqtk/stakeholders/STK-0001.toml").exists());
     assert!(repo_root.join(".rqtk/needs/NEED-0001.toml").exists());
+}
+
+#[verifies("VA-CLI-004-01")]
+#[test]
+fn init_hook_installs_the_pre_commit_hook() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo_root = dir.path();
+    git_init(repo_root);
+    rqtk(repo_root).args(["init", "--hook"]).assert().success();
+    let hook = fs::read_to_string(repo_root.join(".git/hooks/pre-commit")).unwrap();
+    assert!(hook.contains("rqtk lint"), "{hook}");
 }
 
 #[verifies("VA-CLI-004-01")]
@@ -1829,6 +1846,26 @@ fn add_stakeholder_creates_file() {
     assert!(content.contains("Mission Ops"), "name not in file");
 }
 
+#[verifies("VA-CLI-004-01")]
+#[test]
+fn new_ids_keep_the_width_the_project_uses() {
+    let (_dir, repo_root) = write_fixture_full(BASE_CONFIG_WITH_STAKEHOLDERS, &[], &[], &[]);
+    let add = |name: &str| {
+        let (_, out) = json_stdout(&repo_root, &["add-stakeholder", "--name", name]);
+        out["id"].as_str().unwrap().to_owned()
+    };
+    // A new project follows `identification.zero_padding`, like requirement IDs.
+    assert_eq!(add("Ops"), "STK-0001");
+    // An existing project keeps its width.
+    fs::remove_file(repo_root.join(".rqtk/stakeholders/STK-0001.toml")).unwrap();
+    fs::write(
+        repo_root.join(".rqtk/stakeholders/STK-007.toml"),
+        "id = \"STK-007\"\nname = \"Legacy\"\n",
+    )
+    .unwrap();
+    assert_eq!(add("Ops"), "STK-008");
+}
+
 // ── add-need command ──────────────────────────────────────────────────────────
 
 #[verifies("VA-CLI-004-01")]
@@ -2144,7 +2181,7 @@ fn report_shows_the_evidence_behind_each_activity_and_failures_first() {
         "{report}"
     );
     assert!(report.contains("## Verification traceability"), "{report}");
-    assert!(report.contains("`boot::boots`"), "{report}");
+    assert!(report.contains("`tests/boot.rs::boots`"), "{report}");
 }
 
 #[verifies("VA-CLI-007-02")]
@@ -2248,7 +2285,10 @@ fn verify_then_edit_makes_requirement_suspect_until_reverified() {
     let evidence = fs::read_to_string(repo_root.join(".rqtk/evidence.toml")).unwrap();
     assert!(evidence.contains("id = \"VA-1\""), "{evidence}");
     assert!(evidence.contains("outcome = \"passed\""), "{evidence}");
-    assert!(evidence.contains("tests = [\"boot::boots\"]"), "{evidence}");
+    assert!(
+        evidence.contains("tests = [\"tests/boot.rs::boots\"]"),
+        "{evidence}"
+    );
 
     rqtk(&repo_root)
         .args(["coverage", "--strict"])
@@ -2465,6 +2505,27 @@ fn coverage_strict_requires_every_requirement_verified_unless_allowed() {
         .args(["coverage", "--strict", "--allow", "planned"])
         .assert()
         .success();
+}
+
+#[verifies("VA-SYS-002-01")]
+#[test]
+fn verify_says_when_there_is_no_commit_to_record() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1"], &[("VA-1", "boots")]);
+    let results = write_junit(&repo_root, &[("boots", true)]);
+    rqtk(&repo_root)
+        .arg("verify")
+        .arg("--results")
+        .arg(&results)
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("no commit to record it against"));
+    git_set_identity(&repo_root);
+    git_commit_all(&repo_root, "initial");
+    let (_, report) = json_stdout(
+        &repo_root,
+        &["verify", "--results", results.to_str().unwrap()],
+    );
+    assert!(report["commit"].is_string(), "{report}");
 }
 
 #[verifies("VA-SYS-002-02")]

@@ -16,7 +16,7 @@ A requirement is **verified** only by recorded test results, never by editing a 
    - Rust: `#[rqtk::verifies("VA-…")]`, from the `rqtk` crate as a dev-dependency with `default-features = false, features = ["macros"]`. An unknown ID is a compile error.
    - Python: `@rqtk.verifies("VA-…")`
    - Any other language: a comment `// rqtk: verifies VA-…` (or `#`, `--`) above the test.
-   - One case of a table-driven or parameterised test: tag its row with `// rqtk: verifies VA-… case "case name"`, or pass `case="…"` to `verifies`.
+   - One case of a table-driven or parameterised test: tag its row with `// rqtk: verifies VA-… case "case name"` (Go table rows, `it.each` rows), or pass `case="…"` to `verifies` (pytest parameters). For a GoogleTest `TEST_P`, the case is the parameter value.
 
    Run `rqtk scan` and check the link shows the test's name, not "(no test declaration)". The test checks what the statement demands, through the public interface. When a `tdd` skill is available, call the Skill tool with "tdd" for the red → green loop; this skill adds the traceability on top.
 3. **Record the results.** Run the tests with JUnit output, then `rqtk verify --results <junit.xml>`. An activity passes only when every test linked to it ran and passed. A partial run leaves other activities' evidence untouched. `verify` exits 1 on a failing test, on a linked test name that matches several tests (rename one), and when no result matched any link.

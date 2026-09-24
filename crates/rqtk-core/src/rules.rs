@@ -15,7 +15,7 @@ use Severity::{Error as E, Warning as W};
 /// Every diagnostic code rqtk can emit. Codes are stable: a retired code is never reused.
 #[rustfmt::skip]
 pub const RULES: &[Rule] = &[
-    Rule { code: "RQ001", severity: E, summary: "requirement ID does not match `identification.id_pattern`", fix: "Rename the ID (and file) to match the pattern in .rqtk/config.toml, or widen the pattern." },
+    Rule { code: "RQ001", severity: E, summary: "requirement ID does not match the ID pattern", fix: "Rename the ID (and file) to `<prefix>-<CATEGORY>-<NUMBER>`, as `rqtk add` does, or set `identification.id_pattern` in .rqtk/config.toml to accept it." },
     Rule { code: "RQ002", severity: E, summary: "unknown category", fix: "Use a key from `[categories]` in .rqtk/config.toml, or add the category there." },
     Rule { code: "RQ003", severity: E, summary: "unknown requirement type", fix: "Use a value from `types.allowed`, or add the type there." },
     Rule { code: "RQ004", severity: E, summary: "invalid lifecycle state", fix: "Use a value from `lifecycle.states`." },
