@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.corpus.OtherTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-09-24T09:58:32.584Z" hostname="Mac" time="0.018">
+  <properties/>
+  <testcase name="sharedName()" classname="dev.corpus.OtherTest" time="0.011">
+    <failure message="org.opentest4j.AssertionFailedError: unrelated" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: unrelated
+	at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:38)
+	at org.junit.jupiter.api.Assertions.fail(Assertions.java:138)
+	at dev.corpus.OtherTest.sharedName(OtherTest.java:10)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

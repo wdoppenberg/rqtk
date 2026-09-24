@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites tests="7" failures="2" disabled="1" errors="0" time="0." timestamp="2026-09-24T10:39:13.807" name="AllTests">
-  <testsuite name="Shapes" tests="3" failures="1" disabled="1" skipped="0" errors="0" time="0." timestamp="2026-09-24T10:39:13.807">
-    <testcase name="Plain" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="4" status="run" result="completed" time="0." timestamp="2026-09-24T10:39:13.807" classname="Shapes" />
-    <testcase name="Fails" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="18" status="run" result="completed" time="0." timestamp="2026-09-24T10:39:13.807" classname="Shapes">
+<testsuites tests="9" failures="3" disabled="1" errors="0" time="0." timestamp="2026-09-24T11:55:58.048" name="AllTests">
+  <testsuite name="Shapes" tests="3" failures="1" disabled="1" skipped="0" errors="0" time="0." timestamp="2026-09-24T11:55:58.048">
+    <testcase name="Plain" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="4" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Shapes" />
+    <testcase name="Fails" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="18" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Shapes">
       <failure message="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:18&#x0A;Expected equality of these values:&#x0A;  1&#x0A;  2&#x0A;" type=""><![CDATA[/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:18
 Expected equality of these values:
   1
@@ -11,11 +11,11 @@ Expected equality of these values:
     </testcase>
     <testcase name="DISABLED_Later" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="21" status="notrun" result="suppressed" time="0." timestamp="1970-01-01T01:00:00.000" classname="Shapes" />
   </testsuite>
-  <testsuite name="Fixture" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T10:39:13.807">
-    <testcase name="UsesFixture" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="9" status="run" result="completed" time="0." timestamp="2026-09-24T10:39:13.807" classname="Fixture" />
+  <testsuite name="Fixture" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T11:55:58.048">
+    <testcase name="UsesFixture" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="9" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Fixture" />
   </testsuite>
-  <testsuite name="Other" tests="1" failures="1" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T10:39:13.807">
-    <testcase name="Plain" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="24" status="run" result="completed" time="0." timestamp="2026-09-24T10:39:13.807" classname="Other">
+  <testsuite name="Other" tests="1" failures="1" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T11:55:58.048">
+    <testcase name="Plain" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="24" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Other">
       <failure message="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:24&#x0A;Expected equality of these values:&#x0A;  1&#x0A;  2&#x0A;" type=""><![CDATA[/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:24
 Expected equality of these values:
   1
@@ -23,8 +23,16 @@ Expected equality of these values:
 ]]></failure>
     </testcase>
   </testsuite>
-  <testsuite name="Values/Params" tests="2" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T10:39:13.807">
-    <testcase name="IsPositive/0" value_param="1" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="14" status="run" result="completed" time="0." timestamp="2026-09-24T10:39:13.807" classname="Values/Params" />
-    <testcase name="IsPositive/1" value_param="2" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="14" status="run" result="completed" time="0." timestamp="2026-09-24T10:39:13.807" classname="Values/Params" />
+  <testsuite name="Values/Params" tests="2" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T11:55:58.048">
+    <testcase name="IsPositive/0" value_param="1" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="14" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Values/Params" />
+    <testcase name="IsPositive/1" value_param="2" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="14" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Values/Params" />
+  </testsuite>
+  <testsuite name="Lengths/Dlc" tests="2" failures="1" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-09-24T11:55:58.048">
+    <testcase name="BelowEight/0" value_param="7" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="30" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Lengths/Dlc" />
+    <testcase name="BelowEight/1" value_param="9" file="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp" line="30" status="run" result="completed" time="0." timestamp="2026-09-24T11:55:58.048" classname="Lengths/Dlc">
+      <failure message="/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:30&#x0A;Expected: (GetParam()) &lt; (8), actual: 9 vs 8&#x0A;" type=""><![CDATA[/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:30
+Expected: (GetParam()) < (8), actual: 9 vs 8
+]]></failure>
+    </testcase>
   </testsuite>
 </testsuites>

@@ -20,8 +20,21 @@ pub struct ReportInput<'a> {
     pub links: &'a [SourceLink],
     /// Commit the report describes, if known.
     pub commit: Option<&'a str>,
+    /// Requirement files differ from `commit` (uncommitted changes).
+    pub uncommitted: bool,
+    /// The latest baseline, if any.
+    pub baseline: Option<BaselineInfo>,
     /// Printed in the document header.
     pub date: NaiveDate,
+}
+
+/// The latest baseline and how far the requirements have moved from it.
+pub struct BaselineInfo {
+    /// The tag, e.g. `rqtk/1.0.0`.
+    pub tag: String,
+    pub date: Option<NaiveDate>,
+    /// Requirement and need files changed since the baseline.
+    pub changed_since: usize,
 }
 
 /// Render the full requirements report.
@@ -33,7 +46,7 @@ pub fn render_report(input: &ReportInput<'_>) -> String {
         .map(|(id, v)| (id.clone(), v.status))
         .collect();
     let mut out = String::with_capacity(64 * 1024);
-    write_header(&mut out, set, input.date, input.commit);
+    write_header(&mut out, input);
     write_summary(&mut out, set, &closure);
     write_attention(&mut out, set, input.verification);
     write_categories(&mut out, input);
@@ -45,12 +58,8 @@ pub fn render_report(input: &ReportInput<'_>) -> String {
     out
 }
 
-fn write_header(
-    out: &mut String,
-    set: &RequirementSet<Validated>,
-    date: NaiveDate,
-    commit: Option<&str>,
-) {
+fn write_header(out: &mut String, input: &ReportInput<'_>) {
+    let (set, date) = (input.set, input.date);
     let meta = &set.config().project;
     let _ = writeln!(out, "# {} — Requirements Specification\n", meta.name);
     if let Some(desc) = &meta.description {
@@ -70,7 +79,26 @@ fn write_header(
         ("Organization", org.map(str::to_owned)),
         (
             "Commit",
-            commit.map(|c| format!("`{}`", &c[..c.len().min(12)])),
+            input.commit.map(|c| {
+                let short = &c[..c.len().min(12)];
+                if input.uncommitted {
+                    format!("`{short}` plus uncommitted changes to requirements")
+                } else {
+                    format!("`{short}`")
+                }
+            }),
+        ),
+        (
+            "Baseline",
+            input.baseline.as_ref().map(|b| {
+                let date = b.date.map(|d| format!(" ({d})")).unwrap_or_default();
+                let since = match b.changed_since {
+                    0 => "no requirement changes since".to_owned(),
+                    1 => "1 requirement file changed since".to_owned(),
+                    n => format!("{n} requirement files changed since"),
+                };
+                format!("`{}`{date}, {since}", b.tag)
+            }),
         ),
     ];
     out.push_str("| | |\n|---|---|\n");

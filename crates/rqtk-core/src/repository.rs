@@ -73,6 +73,20 @@ pub struct RequirementSet<S = Loaded> {
 }
 
 /// Read and parse `.rqtk/config.toml`, checking the schema version.
+/// The verification level a new requirement gets: "System" for a requirement in a top-level
+/// category (when the project has that level), otherwise the first configured level.
+fn default_level(cfg: &Config, category: &str) -> String {
+    let levels = &cfg.verification.levels;
+    let top = cfg.categories.values().map(|c| c.level).min();
+    let is_top = cfg.categories.get(category).map(|c| c.level) == top;
+    levels
+        .iter()
+        .find(|l| is_top && l.eq_ignore_ascii_case("system"))
+        .or_else(|| levels.first())
+        .cloned()
+        .unwrap_or_else(|| "System".to_owned())
+}
+
 /// "Medium" if the project has that priority level, otherwise its middle level.
 fn default_priority(levels: &[String]) -> String {
     levels
@@ -113,12 +127,9 @@ impl RequirementSet<Loaded> {
         let config_path = repo_root.join(".rqtk/config.toml");
         let config = load_config(&config_path)?;
 
-        let id_regex = Regex::new(&config.identification.id_pattern).map_err(|source| {
-            RqtkError::InvalidIdPattern {
-                pattern: config.identification.id_pattern.clone(),
-                source,
-            }
-        })?;
+        let pattern = config.id_pattern();
+        let id_regex = Regex::new(&pattern)
+            .map_err(|source| RqtkError::InvalidIdPattern { pattern, source })?;
 
         let root = repo_root.join(&config.repository.requirements_dir);
         let needs_root = repo_root.join(&config.repository.needs_dir);
@@ -296,7 +307,10 @@ impl RequirementSet<Loaded> {
                 issues.push(finding(
                     "RQ001",
                     "id",
-                    format!("ID `{req_id}` does not match configured id_pattern"),
+                    format!(
+                        "ID `{req_id}` does not match the ID pattern `{}`",
+                        self.id_regex.as_str()
+                    ),
                 ));
             }
             if !cfg.categories.contains_key(&req.category) {
@@ -799,7 +813,7 @@ impl<S> RequirementSet<S> {
             trace: Traceability::default(),
             verification: Verification {
                 method: first(&cfg.verification.methods, "Test"),
-                level: first(&cfg.verification.levels, "System"),
+                level: default_level(cfg, input.category),
                 phase: first(&cfg.verification.phases, "Development"),
                 owner: None,
                 success_criteria: None,
@@ -834,13 +848,22 @@ impl<S> RequirementSet<S> {
     }
 
     pub fn next_stakeholder_id(&self) -> StakeholderId {
-        let max = self
-            .stakeholders
-            .keys()
-            .filter_map(|id| id.0.strip_prefix("STK-")?.parse::<usize>().ok())
+        StakeholderId(
+            self.next_numbered_id("STK-", self.stakeholders.keys().map(|id| id.0.as_str())),
+        )
+    }
+
+    /// `prefix` plus the next free number. Numbers are as wide as the existing IDs with that
+    /// prefix, or `identification.zero_padding` in a project that has none yet.
+    fn next_numbered_id<'a>(&self, prefix: &str, ids: impl Iterator<Item = &'a str>) -> String {
+        let numbers: Vec<&str> = ids.filter_map(|id| id.strip_prefix(prefix)).collect();
+        let max = numbers.iter().filter_map(|n| n.parse::<usize>().ok()).max();
+        let width = numbers
+            .iter()
+            .map(|n| n.len())
             .max()
-            .unwrap_or(0);
-        StakeholderId(format!("STK-{:03}", max + 1))
+            .unwrap_or(self.config.identification.zero_padding);
+        format!("{prefix}{:0width$}", max.unwrap_or(0) + 1)
     }
 
     pub fn scaffold_stakeholder(&self, id: StakeholderId, name: &str) -> Stakeholder {
@@ -855,13 +878,7 @@ impl<S> RequirementSet<S> {
     }
 
     pub fn next_need_id(&self) -> NeedId {
-        let max = self
-            .needs
-            .keys()
-            .filter_map(|id| id.0.strip_prefix("NEED-")?.parse::<usize>().ok())
-            .max()
-            .unwrap_or(0);
-        NeedId(format!("NEED-{:04}", max + 1))
+        NeedId(self.next_numbered_id("NEED-", self.needs.keys().map(|id| id.0.as_str())))
     }
 
     pub fn scaffold_need(&self, id: NeedId, title: &str, statement: &str) -> Need {

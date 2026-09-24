@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="(empty)"
-	tests="7"
-	failures="2"
+	tests="9"
+	failures="3"
 	disabled="1"
 	skipped="0"
 	hostname=""
 	time="0"
-	timestamp="2026-09-24T10:39:13"
+	timestamp="2026-09-24T11:55:58"
 	>
-	<testcase name="Shapes.Plain" classname="Shapes.Plain" time="0.00358442" status="run">
+	<testcase name="Shapes.Plain" classname="Shapes.Plain" time="0.00363804" status="run">
 		<properties/>
 		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
 Note: Google Test filter = Shapes.Plain
@@ -24,7 +24,7 @@ Note: Google Test filter = Shapes.Plain
 [  PASSED  ] 1 test.
 </system-out>
 	</testcase>
-	<testcase name="Shapes.Fails" classname="Shapes.Fails" time="0.00334563" status="fail">
+	<testcase name="Shapes.Fails" classname="Shapes.Fails" time="0.00322358" status="fail">
 		<failure message="Failed"/>
 		<properties/>
 		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -54,7 +54,7 @@ Expected equality of these values:
 		<properties/>
 		<system-out>Disabled</system-out>
 	</testcase>
-	<testcase name="Fixture.UsesFixture" classname="Fixture.UsesFixture" time="0.00341113" status="run">
+	<testcase name="Fixture.UsesFixture" classname="Fixture.UsesFixture" time="0.00383329" status="run">
 		<properties/>
 		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
 Note: Google Test filter = Fixture.UsesFixture
@@ -70,7 +70,7 @@ Note: Google Test filter = Fixture.UsesFixture
 [  PASSED  ] 1 test.
 </system-out>
 	</testcase>
-	<testcase name="Other.Plain" classname="Other.Plain" time="0.00355588" status="fail">
+	<testcase name="Other.Plain" classname="Other.Plain" time="0.00380892" status="fail">
 		<failure message="Failed"/>
 		<properties/>
 		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -96,7 +96,7 @@ Expected equality of these values:
  1 FAILED TEST
 </system-out>
 	</testcase>
-	<testcase name="Values/Params.IsPositive/1" classname="Values/Params.IsPositive/1" time="0.00325771" status="run">
+	<testcase name="Values/Params.IsPositive/1" classname="Values/Params.IsPositive/1" time="0.00352608" status="run">
 		<properties/>
 		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
 Note: Google Test filter = Values/Params.IsPositive/0
@@ -112,7 +112,7 @@ Note: Google Test filter = Values/Params.IsPositive/0
 [  PASSED  ] 1 test.
 </system-out>
 	</testcase>
-	<testcase name="Values/Params.IsPositive/2" classname="Values/Params.IsPositive/2" time="0.00332633" status="run">
+	<testcase name="Values/Params.IsPositive/2" classname="Values/Params.IsPositive/2" time="0.00330433" status="run">
 		<properties/>
 		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
 Note: Google Test filter = Values/Params.IsPositive/1
@@ -126,6 +126,46 @@ Note: Google Test filter = Values/Params.IsPositive/1
 [----------] Global test environment tear-down
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
+</system-out>
+	</testcase>
+	<testcase name="Lengths/Dlc.BelowEight/7" classname="Lengths/Dlc.BelowEight/7" time="0.003132" status="run">
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Lengths/Dlc.BelowEight/0
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Lengths/Dlc
+[ RUN      ] Lengths/Dlc.BelowEight/0
+[       OK ] Lengths/Dlc.BelowEight/0 (0 ms)
+[----------] 1 test from Lengths/Dlc (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+</system-out>
+	</testcase>
+	<testcase name="Lengths/Dlc.BelowEight/9" classname="Lengths/Dlc.BelowEight/9" time="0.00338042" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>Running main() from /tmp/rqtk-trials/corpus/cpp/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = Lengths/Dlc.BelowEight/1
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Lengths/Dlc
+[ RUN      ] Lengths/Dlc.BelowEight/1
+/tmp/rqtk-trials/corpus/cpp/tests/shapes_test.cpp:30: Failure
+Expected: (GetParam()) &lt; (8), actual: 9 vs 8
+
+[  FAILED  ] Lengths/Dlc.BelowEight/1, where GetParam() = 9 (0 ms)
+[----------] 1 test from Lengths/Dlc (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] Lengths/Dlc.BelowEight/1, where GetParam() = 9
+
+ 1 FAILED TEST
 </system-out>
 	</testcase>
 </testsuite>

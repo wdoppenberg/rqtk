@@ -1,12 +1,10 @@
 # Expected outcome per activity: passed, failed, incomplete (a linked test was skipped),
 # ambiguous (several distinct tests match) or not_run (no linked test in the results).
-results = ["gtest.xml"]
+results = ["junit.xml"]
 
 [outcomes]
-VA-CPP-01 = "passed"
-VA-CPP-02 = "passed"
-VA-CPP-03 = "passed"
-VA-CPP-04 = "failed"
-VA-CPP-05 = "incomplete"
-VA-CPP-06 = "passed"
-VA-CPP-07 = "failed"
+VA-RS-01 = "passed"
+VA-RS-02 = "passed"
+VA-RS-03 = "passed"
+VA-RS-04 = "not_run"
+VA-RS-05 = "passed"

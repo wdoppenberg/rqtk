@@ -24,20 +24,27 @@ pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
         })?;
         return Ok(Exit::Ok);
     }
-    output::section("Traceability", req_id.as_ref());
-    output::subsection("▲", &format!("Parents ({})", view.upward.len()));
+    let title = |id: &RequirementId| {
+        set.requirements()
+            .get(id)
+            .map_or_else(|| id.to_string(), |r| format!("{id}  {}", r.title))
+    };
+    output::section("Traceability", &title(&req_id));
     if view.upward.is_empty() {
-        output::item("—  no parents");
+        output::subsection("▲", "Parents: none, a top-level requirement");
+    } else {
+        output::subsection("▲", &format!("Parents ({})", view.upward.len()));
+        for id in &view.upward {
+            output::item(&title(id));
+        }
     }
-    for id in &view.upward {
-        output::item(id.as_ref());
-    }
-    output::subsection("▼", &format!("Children ({})", view.downward.len()));
     if view.downward.is_empty() {
-        output::item("—  no children");
-    }
-    for id in &view.downward {
-        output::item(id.as_ref());
+        output::subsection("▼", "Children: none, no requirement derives from it");
+    } else {
+        output::subsection("▼", &format!("Children ({})", view.downward.len()));
+        for id in &view.downward {
+            output::item(&title(id));
+        }
     }
     println!();
     Ok(Exit::Ok)

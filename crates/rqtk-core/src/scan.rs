@@ -48,6 +48,10 @@ pub struct SourceLink {
     /// One case of a table-driven or parameterised test.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub case: Option<String>,
+    /// Other names runners report the test under: JUnit `@DisplayName` and
+    /// `@ParameterizedTest(name = …)` (Gradle uses them), xUnit `DisplayName`.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub aliases: Vec<String>,
     /// The annotation names a group of tests (`describe`, `context`) rather than one test.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub group: bool,
@@ -192,10 +196,12 @@ const NOT_A_METHOD: &[&str] = &[
     "val",
 ];
 
+#[derive(Default)]
 struct Declaration {
     name: String,
     suite: Option<String>,
     group: bool,
+    aliases: Vec<String>,
 }
 
 fn declaration(code: &str) -> Option<Declaration> {
@@ -214,16 +220,19 @@ fn declaration(code: &str) -> Option<Declaration> {
                 name,
                 suite: None,
                 group: false,
+                aliases: Vec::new(),
             }),
             Shape::Group => first().map(|name| Declaration {
                 name,
                 suite: None,
                 group: true,
+                aliases: Vec::new(),
             }),
             Shape::Suite => Some(Declaration {
                 name: c[2].to_owned(),
                 suite: Some(c[1].to_owned()),
                 group: false,
+                aliases: Vec::new(),
             }),
             Shape::Method => {
                 let first_word = c[1].split_whitespace().next().unwrap_or_default();
@@ -233,6 +242,7 @@ fn declaration(code: &str) -> Option<Declaration> {
                         name: name.to_owned(),
                         suite: None,
                         group: false,
+                        aliases: Vec::new(),
                     }
                 })
             }
@@ -325,6 +335,7 @@ pub fn scan_text(path: &Path, text: &str) -> Vec<SourceLink> {
             link.test_name = Some(decl.name);
             link.suite = decl.suite;
             link.group = decl.group;
+            link.aliases = decl.aliases;
             link.test_line = Some(decl_idx + 1);
             link.source_hash = Some(source_hash(&lines, hash_from, decl_idx));
         }
@@ -337,10 +348,12 @@ pub fn scan_text(path: &Path, text: &str) -> Vec<SourceLink> {
 /// other tags, and attributes (which may span several lines).
 fn declaration_below(lines: &[&str], tag: usize) -> Option<(usize, Declaration)> {
     let mut depth = 0i32;
+    let mut aliases = Vec::new();
     for (idx, line) in lines.iter().enumerate().skip(tag + 1).take(MAX_GAP) {
         let code = line.trim();
         if depth > 0 {
             depth += bracket_delta(code);
+            aliases.extend(display_name(code));
             continue;
         }
         if code.is_empty() || is_comment(code) {
@@ -348,22 +361,69 @@ fn declaration_below(lines: &[&str], tag: usize) -> Option<(usize, Declaration)>
         }
         if is_attribute(code) {
             depth = bracket_delta(code).max(0);
+            aliases.extend(display_name(code));
             continue;
         }
-        return declaration(code).map(|d| (idx, d));
+        return declaration(code).map(|mut d| {
+            d.aliases = aliases;
+            (idx, d)
+        });
     }
     None
 }
 
-/// The nearest test declared above line `tag` at a smaller indentation.
+/// A display name set by an attribute: JUnit `@DisplayName("…")` or
+/// `@ParameterizedTest(name = "…")`, xUnit `[Fact(DisplayName = "…")]`.
+fn display_name(code: &str) -> Option<String> {
+    static DISPLAY: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r#"(?:@DisplayName\s*\(\s*|\bname\s*=\s*|\bDisplayName\s*=\s*)"((?:[^"\\]|\\.)*)""#,
+        )
+        .unwrap()
+    });
+    DISPLAY.captures(code).map(|c| c[1].replace("\\\"", "\""))
+}
+
+/// The test a table row on line `tag` belongs to: walk out through the enclosing lines (each
+/// indented less than the last) until one declares a test. An `it.each([` table's title
+/// follows the table, as in `])("adds %i", …)`.
 fn enclosing_declaration(lines: &[&str], tag: usize) -> Option<(usize, Declaration)> {
-    let indent = indentation(lines[tag]);
-    lines[..tag]
-        .iter()
-        .enumerate()
-        .rev()
-        .filter(|(_, l)| !l.trim().is_empty() && indentation(l) < indent)
-        .find_map(|(idx, l)| declaration(l).map(|d| (idx, d)))
+    let mut indent = indentation(lines[tag]);
+    for idx in (0..tag).rev() {
+        let line = lines[idx];
+        if line.trim().is_empty() || indentation(line) >= indent {
+            continue;
+        }
+        indent = indentation(line);
+        if let Some(d) = declaration(line).or_else(|| each_title(lines, idx)) {
+            return Some((idx, d));
+        }
+        if indent == 0 {
+            return None;
+        }
+    }
+    None
+}
+
+/// The title of a JS `it.each([`/`test.each([` table opened on line `open`.
+fn each_title(lines: &[&str], open: usize) -> Option<Declaration> {
+    static EACH_OPEN: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^\s*(?:it|test|specify)\b[\w.\s]*\.\s*each\s*\(\s*[\[`]").unwrap()
+    });
+    static TITLE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r#"^\s*[\]`)]*\s*\)\s*\(\s*(?:"([^"]*)"|'([^']*)'|`([^`]*)`)"#).unwrap()
+    });
+    if !EACH_OPEN.is_match(lines[open]) {
+        return None;
+    }
+    lines.iter().skip(open + 1).take(MAX_BODY).find_map(|l| {
+        let c = TITLE.captures(l)?;
+        let name = c.iter().skip(1).flatten().next()?.as_str().to_owned();
+        Some(Declaration {
+            name,
+            ..Declaration::default()
+        })
+    })
 }
 
 fn is_comment(code: &str) -> bool {
@@ -622,6 +682,25 @@ mod tests {
             scan_text(Path::new("t.py"), py)[0].case.as_deref(),
             Some("neg")
         );
+    }
+
+    // rqtk: verifies VA-CORE-006-01
+    #[test]
+    fn each_rows_bind_to_their_table_not_a_sibling_test() {
+        let js = concat!(
+            "test(\"sibling\", () => {});\n",
+            "\n",
+            "it.each([\n",
+            "  // rqtk: verifies A case \"1+1\"\n",
+            "  [1, 1, 2],\n",
+            "])(\"adds %i+%i\", (a, b, sum) => {});\n",
+        );
+        let links = scan_text(Path::new("x.test.ts"), js);
+        assert_eq!(links[0].test_name.as_deref(), Some("adds %i+%i"));
+        assert_eq!(links[0].case.as_deref(), Some("1+1"));
+        // A row in a table that isn't a test's binds to nothing.
+        let orphan = "test(\"sibling\", () => {});\nconst rows = [\n  // rqtk: verifies A case \"x\"\n  [1],\n];\n";
+        assert_eq!(scan_text(Path::new("x.ts"), orphan)[0].test_name, None);
     }
 
     // rqtk: verifies VA-CORE-006-01

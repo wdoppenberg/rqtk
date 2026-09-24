@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.corpus.ShapesTest" tests="6" skipped="1" failures="0" errors="0" timestamp="2026-09-24T09:58:32.604Z" hostname="Mac" time="0.025">
+  <properties/>
+  <testcase name="sharedName()" classname="dev.corpus.ShapesTest" time="0.0"/>
+  <testcase name="1 + 1 = 2" classname="dev.corpus.ShapesTest" time="0.007"/>
+  <testcase name="2 + 2 = 4" classname="dev.corpus.ShapesTest" time="0.0"/>
+  <testcase name="plain()" classname="dev.corpus.ShapesTest" time="0.0"/>
+  <testcase name="disabled()" classname="dev.corpus.ShapesTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="a display name" classname="dev.corpus.ShapesTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

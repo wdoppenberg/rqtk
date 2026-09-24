@@ -49,7 +49,11 @@
       "additionalProperties": false,
       "properties": {
         "id_pattern": {
-          "type": "string"
+          "description": "Regular expression every requirement ID must match (RQ001). When omitted, it is\nderived from `prefix`, `id_separator`, the category keys and `zero_padding`, so a new\ncategory needs no pattern change.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "id_separator": {
           "default": "-",
@@ -66,9 +70,6 @@
           "type": "integer"
         }
       },
-      "required": [
-        "id_pattern"
-      ],
       "type": "object"
     },
     "LifecyclePolicy": {

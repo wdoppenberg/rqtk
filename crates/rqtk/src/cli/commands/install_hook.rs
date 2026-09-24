@@ -20,34 +20,7 @@ fn splice_region(existing: &str) -> String {
 }
 
 pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
-    let git_dir = find_git_dir(&ctx.root)?;
-    let hooks_dir = git_dir.join("hooks");
-    std::fs::create_dir_all(&hooks_dir)?;
-
-    let hook_path = hooks_dir.join("pre-commit");
-
-    let existing = if hook_path.exists() {
-        std::fs::read_to_string(&hook_path)?
-    } else {
-        format!("{DEFAULT_SHEBANG}\n")
-    };
-
-    let new_content = splice_region(&existing);
-    std::fs::write(&hook_path, &new_content)?;
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mut perms = std::fs::metadata(&hook_path)?.permissions();
-        perms.set_mode(0o755);
-        std::fs::set_permissions(&hook_path, perms)?;
-    }
-
-    let action = if existing.contains(REGION_BEGIN) {
-        "updated"
-    } else {
-        "installed"
-    };
+    let (hook_path, action) = install(&ctx.root, false)?;
     if ctx.json() {
         output::json(&serde_json::json!({ "hook": hook_path, "action": action }))?;
     } else {
@@ -57,6 +30,40 @@ pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
         );
     }
     Ok(Exit::Ok)
+}
+
+/// Add or refresh the rqtk region in the repository's pre-commit hook. Returns the hook's
+/// path and whether it was "installed" or "updated".
+pub fn install(
+    root: &Path,
+    dry_run: bool,
+) -> Result<(std::path::PathBuf, &'static str), Box<dyn Error>> {
+    let git_dir = find_git_dir(root)?;
+    let hooks_dir = git_dir.join("hooks");
+    let hook_path = hooks_dir.join("pre-commit");
+    let existing = if hook_path.exists() {
+        std::fs::read_to_string(&hook_path)?
+    } else {
+        format!("{DEFAULT_SHEBANG}\n")
+    };
+    let action = if existing.contains(REGION_BEGIN) {
+        "updated"
+    } else {
+        "installed"
+    };
+    if dry_run {
+        return Ok((hook_path, action));
+    }
+    std::fs::create_dir_all(&hooks_dir)?;
+    std::fs::write(&hook_path, splice_region(&existing))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = std::fs::metadata(&hook_path)?.permissions();
+        perms.set_mode(0o755);
+        std::fs::set_permissions(&hook_path, perms)?;
+    }
+    Ok((hook_path, action))
 }
 
 fn find_git_dir(start: &Path) -> Result<std::path::PathBuf, Box<dyn Error>> {

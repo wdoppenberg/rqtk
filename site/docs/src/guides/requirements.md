@@ -16,7 +16,7 @@ Requirements *satisfy* needs, *decompose* into child requirements through `trace
 rqtk add-stakeholder --name "Operator" --role "Runs the ground station"
 rqtk add-need --title "Fast recovery" \
   --statement "Operators need the unit back within seconds after a restart." \
-  --stakeholders STK-001
+  --stakeholders STK-0001
 rqtk add --category SYS --type Functional --title "Fast boot" \
   --statement "The system shall boot in under 5 seconds." \
   --rationale "Operators restart the unit during a pass." \
@@ -85,3 +85,13 @@ rqtk graph > trace.dot         # the whole graph, for Graphviz
 ## Configuration
 
 `.rqtk/config.toml` decides the vocabulary: categories and their hierarchy, requirement types, lifecycle states, priorities, verification methods, and which lint rules apply. See [Configuration](../reference/configuration.md).
+
+To add a category, add a table for it:
+
+```toml
+[categories.SW]
+name = "Software"
+level = 2
+```
+
+Requirement IDs are checked against `<prefix>-<CATEGORY>-<NUMBER>` for the configured categories (RQ001). Set `identification.id_pattern` only if your IDs follow another scheme; then new categories must be added to it too.

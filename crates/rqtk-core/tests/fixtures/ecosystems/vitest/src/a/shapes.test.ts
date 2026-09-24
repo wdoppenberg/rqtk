@@ -37,3 +37,12 @@ describe("grouped", () => {
 test("same title in two files", () => {
   expect(1).toBe(1);
 });
+
+it.each([
+  // rqtk: verifies VA-TS-08 case "1+1"
+  [1, 1, 2],
+  // rqtk: verifies VA-TS-09 case "2+2"
+  [2, 2, 5],
+])("adds %i+%i", (a, b, sum) => {
+  expect(a + b).toBe(sum);
+});

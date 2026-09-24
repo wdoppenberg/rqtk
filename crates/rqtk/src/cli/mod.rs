@@ -48,6 +48,9 @@ enum Command {
         /// Also create an example stakeholder and need.
         #[arg(long)]
         example: bool,
+        /// Also install the git pre-commit hook (see `rqtk install-hook`).
+        #[arg(long)]
+        hook: bool,
         /// Report the files that would be created without writing them.
         #[arg(long)]
         dry_run: bool,
@@ -380,6 +383,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
             force,
             agents,
             example,
+            hook,
             dry_run,
         } if agents => {
             let init = commands::init::execute(
@@ -388,6 +392,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
                     requirements_dir: requirements_dir.as_deref(),
                     force,
                     example,
+                    hook,
                     dry_run,
                 },
             )?;
@@ -409,6 +414,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
             requirements_dir,
             force,
             example,
+            hook,
             dry_run,
             ..
         } => commands::init::run(
@@ -417,6 +423,7 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
                 requirements_dir: requirements_dir.as_deref(),
                 force,
                 example,
+                hook,
                 dry_run,
             },
         ),

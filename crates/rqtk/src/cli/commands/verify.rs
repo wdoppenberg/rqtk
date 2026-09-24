@@ -20,9 +20,14 @@ struct Report<'a> {
     changes: &'a [EvidenceChange],
     written: bool,
     up_to_date: bool,
+    /// Commit the evidence was recorded at; `None` before the first commit or outside git.
+    commit: Option<&'a str>,
     /// `verifies` annotations with no test declaration below them (RQ030); no result can
     /// ever match them.
     unattached_links: Vec<&'a SourceLink>,
+    /// Linked tests with no result in these files: normal for a partial run, otherwise a
+    /// sign the runner names them differently.
+    not_in_results: Vec<&'a SourceLink>,
 }
 
 /// Match JUnit results to `verifies` links and record the outcomes in `.rqtk/evidence.toml`.
@@ -51,6 +56,10 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     let any_ambiguous = runs.values().any(|r| !r.ambiguous.is_empty());
     let nothing_matched = !results.is_empty() && runs.is_empty();
     let unattached: Vec<&SourceLink> = links.iter().filter(|l| l.test_name.is_none()).collect();
+    let not_in_results: Vec<&SourceLink> = links
+        .iter()
+        .filter(|l| l.test_name.is_some() && !runs.contains_key(&l.activity))
+        .collect();
     let exit = Exit::findings_if(
         any_failed || any_ambiguous || nothing_matched || (args.check && !changes.is_empty()),
     );
@@ -62,7 +71,9 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
             changes: &changes,
             written: write,
             up_to_date: changes.is_empty(),
+            commit: commit.as_deref(),
             unattached_links: unattached,
+            not_in_results,
         })?;
         return Ok(exit);
     }
@@ -122,6 +133,13 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
             output::item(line);
         }
     }
+    if !not_in_results.is_empty() {
+        println!(
+            "\n  {} linked tests have no result in these files {}",
+            style(not_in_results.len()).bold(),
+            style("(expected for a partial run; `--json` lists them)").dim()
+        );
+    }
     if !changes.is_empty() {
         output::section("Evidence changes", "");
         for change in &changes {
@@ -145,6 +163,11 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
                 ("changes", &changes.len().to_string()),
             ],
         );
+        if commit.is_none() {
+            output::warning(
+                "no commit to record it against (no commits yet, or not a git repository); run `rqtk verify` again after committing",
+            );
+        }
     } else if args.check {
         output::failure(&format!(
             "{EVIDENCE_PATH} is out of date; run `rqtk verify` without --check and commit it"

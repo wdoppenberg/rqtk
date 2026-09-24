@@ -78,3 +78,38 @@ fn every_ecosystem_matches_its_expected_outcomes() {
     assert!(checked >= 9, "only {checked} fixtures found");
     assert!(failures.is_empty(), "\n{}", failures.join("\n"));
 }
+
+/// The test cases each activity's evidence names, for `results` in `dir`.
+fn evidence_tests(dir: &Path, results: &[&str]) -> BTreeMap<String, Vec<String>> {
+    let links = scan(dir, &ScanConfig::default()).unwrap();
+    let mut parsed = Vec::new();
+    for file in results {
+        parsed.extend(read_junit(&dir.join(file)).unwrap());
+    }
+    match_results(&links, &parsed)
+        .into_iter()
+        .map(|(activity, run)| (activity, run.tests))
+        .collect()
+}
+
+#[verifies("VA-CORE-006-03")]
+#[test]
+fn evidence_names_a_test_the_same_whichever_runner_reported_it() {
+    let root = fixtures();
+    // Same sources, run by Bun and by vitest, which name describe blocks differently.
+    assert_eq!(
+        evidence_tests(&root.join("bun"), &["junit.xml"]),
+        evidence_tests(&root.join("vitest"), &["junit.xml"]),
+    );
+    // One GoogleTest binary, reported by CTest and by GoogleTest itself.
+    let cpp = root.join("cpp");
+    let ctest = evidence_tests(&cpp, &["ctest.xml"]);
+    assert_eq!(ctest, evidence_tests(&cpp, &["gtest.xml"]));
+    assert_eq!(
+        ctest["VA-CPP-03"],
+        [
+            "tests/shapes_test.cpp::IsPositive/1",
+            "tests/shapes_test.cpp::IsPositive/2"
+        ]
+    );
+}

@@ -12,6 +12,9 @@ pub struct Report {
     /// directory name.
     project: String,
     warnings: Vec<String>,
+    /// The pre-commit hook, when `--hook` installed it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    hook: Option<PathBuf>,
 }
 
 #[derive(Default)]
@@ -20,6 +23,8 @@ pub struct InitArgs<'a> {
     pub force: bool,
     /// Also create an example stakeholder and need.
     pub example: bool,
+    /// Also install the git pre-commit hook.
+    pub hook: bool,
     pub dry_run: bool,
 }
 
@@ -50,7 +55,7 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, Box<dyn Error>>
         vec![(config_path, default_config_toml(req_dir, &project))];
     if args.example {
         files.push((
-            root.join(".rqtk/stakeholders/STK-001.toml"),
+            root.join(".rqtk/stakeholders/STK-0001.toml"),
             EXAMPLE_STAKEHOLDER_TOML.to_owned(),
         ));
         files.push((
@@ -59,9 +64,10 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, Box<dyn Error>>
         ));
     }
     let mut warnings = Vec::new();
-    if !root.ancestors().any(|dir| dir.join(".git").exists()) {
+    let in_git = root.ancestors().any(|dir| dir.join(".git").exists());
+    if !in_git {
         warnings.push(
-            "not inside a git repository: `verify`, `impact`, `diff` and `baseline` need git history"
+            "not inside a git repository: `impact`, `diff`, `log` and `baseline` need git history, and `verify` can't record a commit"
                 .to_owned(),
         );
     }
@@ -85,11 +91,23 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, Box<dyn Error>>
         .chain(&dirs)
         .map(|p| output::relative(p, root))
         .collect();
+    let hook = match (args.hook, in_git) {
+        (true, true) => Some(output::relative(
+            &super::install_hook::install(root, dry_run)?.0,
+            root,
+        )),
+        (true, false) => {
+            warnings.push("--hook: no git repository to install the pre-commit hook in".to_owned());
+            None
+        }
+        (false, _) => None,
+    };
     Ok(Report {
         created,
         dry_run,
         project,
         warnings,
+        hook,
     })
 }
 
@@ -143,13 +161,17 @@ pub fn print(report: &Report) {
         .collect();
     let mut pairs: Vec<(&str, &str)> = vec![("project", report.project.as_str())];
     pairs.extend(shown.iter().map(|p| ("create", p.as_str())));
+    let hook = report.hook.as_ref().map(|h| h.display().to_string());
+    if let Some(hook) = &hook {
+        pairs.push(("hook", hook.as_str()));
+    }
     output::success(label, &pairs);
     for warning in &report.warnings {
         output::warning(warning);
     }
 }
 
-const EXAMPLE_STAKEHOLDER_TOML: &str = r#"id = "STK-001"
+const EXAMPLE_STAKEHOLDER_TOML: &str = r#"id = "STK-0001"
 name = "Example Stakeholder"
 role = "System Engineer"
 organization = "Example Org"
@@ -165,7 +187,7 @@ sign_off_required = false
 const EXAMPLE_NEED_TOML: &str = r#"id = "NEED-0001"
 title = "Example Stakeholder Need"
 state = "Draft"
-stakeholders = ["STK-001"]
+stakeholders = ["STK-0001"]
 statement = "The system shall fulfil this example stakeholder need."
 rationale = "Example rationale."
 "#;
@@ -187,7 +209,6 @@ name = "{project}"
 version = "0.1.0"
 
 [identification]
-id_pattern = "^REQ-(SYS)-\\d{{4}}$"
 id_separator = "-"
 prefix = "REQ"
 zero_padding = 4
