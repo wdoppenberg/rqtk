@@ -332,15 +332,45 @@ where
         root: cli.repo_root.clone(),
         format: if cli.json { Format::Json } else { Format::Text },
     };
-    match run(&ctx, cli.command) {
-        Ok(Exit::Ok) => 0,
-        Ok(Exit::Findings) => 1,
-        Err(err) => {
+    quiet_broken_pipes();
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run(&ctx, cli.command)));
+    match outcome {
+        Ok(Ok(Exit::Ok)) => 0,
+        Ok(Ok(Exit::Findings)) => 1,
+        Ok(Err(err)) => {
             let usage = err.is::<Usage>();
             output::error(&ctx, &err.to_string(), usage);
             if usage { 2 } else { 3 }
         }
+        // The reader went away (`rqtk … | head`). Files are written before output is
+        // printed, so the command has done its work; there is nobody left to tell.
+        Err(payload) if is_broken_pipe(payload.as_ref()) => 0,
+        Err(payload) => std::panic::resume_unwind(payload),
     }
+}
+
+/// Whether a panic came from printing to a closed pipe.
+fn is_broken_pipe(payload: &(dyn std::any::Any + Send)) -> bool {
+    let message = payload
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| payload.downcast_ref::<&str>().copied())
+        .unwrap_or_default();
+    message.starts_with("failed printing to std")
+        && (message.contains("(os error 32)") || message.contains("(os error 232)"))
+}
+
+/// Silence the panic message for broken pipes; every other panic is reported as before.
+fn quiet_broken_pipes() {
+    static INSTALL: std::sync::Once = std::sync::Once::new();
+    INSTALL.call_once(|| {
+        let previous = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            if !is_broken_pipe(info.payload()) {
+                previous(info);
+            }
+        }));
+    });
 }
 
 fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {

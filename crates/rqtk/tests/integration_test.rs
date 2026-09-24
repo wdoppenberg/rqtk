@@ -3433,3 +3433,23 @@ fn json_output_only_grows() {
         broken.join("\n")
     );
 }
+
+#[verifies("VA-CLI-002-01")]
+#[test]
+fn a_closed_pipe_is_not_an_error() {
+    // `rqtk … | head`: the reader closes stdout before rqtk is done writing.
+    let mut child = std::process::Command::new(assert_cmd::cargo::cargo_bin("rqtk"))
+        .args(["explain"])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    drop(child.stdout.take());
+    let output = child.wait_with_output().unwrap();
+    assert_eq!(output.status.code(), Some(0));
+    assert!(
+        output.stderr.is_empty(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}

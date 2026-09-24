@@ -12,27 +12,45 @@ categories = ["command-line-utilities", "development-tools", "development-tools:
 readme = "../../README.md"
 
 [dependencies]
-rqtk-core = { workspace = true }
-rqtk-export = { workspace = true }
+rqtk-core = { workspace = true, optional = true }
+rqtk-export = { workspace = true, optional = true }
 rqtk-macros = { workspace = true, optional = true }
-rqtk-report = { workspace = true }
-serde = { workspace = true }
-serde_json = "1.0.145"
-toml = { workspace = true }
+rqtk-report = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+serde_json = { version = "1.0.145", optional = true }
+toml = { workspace = true, optional = true }
 clap = { version = "4.5.53", features = ["derive"], optional = true }
-regex = "1.12"
-semver = "1.0.27"
-sha2 = "0.10"
-console = "0.16"
-comfy-table = "7.2"
-chrono = "0.4.44"
+regex = { version = "1.12", optional = true }
+semver = { version = "1.0.27", optional = true }
+sha2 = { version = "0.10", optional = true }
+console = { version = "0.16", optional = true }
+comfy-table = { version = "7.2", optional = true }
+chrono = { version = "0.4.44", optional = true }
 
 [features]
 default = ["cli"]
 # The command-line tool (the `rqtk` binary).
-cli = ["dep:clap", "rqtk-export/clap"]
-# `rqtk::verifies` and `rqtk::requirements_docs`: link Rust tests and docs to requirements.
+cli = [
+    "lib",
+    "dep:clap",
+    "rqtk-export/clap",
+    "dep:rqtk-report",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:toml",
+    "dep:regex",
+    "dep:semver",
+    "dep:sha2",
+    "dep:console",
+    "dep:comfy-table",
+    "dep:chrono",
+]
+# `rqtk::core` and `rqtk::export`: the library crates the tool is built from.
+lib = ["dep:rqtk-core", "dep:rqtk-export"]
+# `rqtk::verifies`: link Rust tests to verification activities. Light: no git, no CLI.
 macros = ["dep:rqtk-macros"]
+# `rqtk::requirements_docs`: a rustdoc page of the requirements (builds all of rqtk-core).
+requirements-docs = ["macros", "rqtk-macros/docs"]
 
 [package.metadata.docs.rs]
 all-features = true

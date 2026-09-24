@@ -1,10 +1,9 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use rqtk_core::verification::{
-    build_requirements_doc_from_manifest_dir, build_verification_doc,
-    find_activity_from_manifest_dir,
-};
+mod lookup;
+
+use lookup::{find_activity_from_manifest_dir, verification_doc};
 use syn::parse::{Parse, ParseStream};
 use syn::{Ident, LitStr, Token, parse_macro_input};
 
@@ -57,7 +56,7 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     match find_activity_from_manifest_dir(&id_value) {
         Ok(Some(info)) => {
-            let doc = build_verification_doc(&id_value, &info);
+            let doc = verification_doc(&id_value, &info);
             // `include_bytes!` makes Cargo rebuild when the requirement file changes, so the
             // check and the injected docs never go stale.
             let path = info.path.display().to_string();
@@ -109,7 +108,8 @@ pub fn verifies(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// The macro loads and validates requirements by walking up from `CARGO_MANIFEST_DIR`
 /// until `.rqtk/config.toml` is found. Generation fails with a compile error if requirements
-/// are missing or invalid.
+/// are missing or invalid. Requires the `docs` feature, which builds all of `rqtk-core`.
+#[cfg(feature = "docs")]
 #[proc_macro_attribute]
 pub fn requirements_docs(attr: TokenStream, item: TokenStream) -> TokenStream {
     if !attr.is_empty() {
@@ -117,7 +117,7 @@ pub fn requirements_docs(attr: TokenStream, item: TokenStream) -> TokenStream {
         return TokenStream::from(syn::Error::new(Span::call_site(), msg).to_compile_error());
     }
 
-    match build_requirements_doc_from_manifest_dir() {
+    match rqtk_core::verification::build_requirements_doc_from_manifest_dir() {
         Ok(doc) => {
             let item_ts: proc_macro2::TokenStream = item.into();
             TokenStream::from(quote! {

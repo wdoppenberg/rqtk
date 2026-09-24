@@ -18,6 +18,9 @@ pyo3 = { version = "0.28.3", features = ["extension-module", "abi3-py39"] }
 rqtk = { path = "../rqtk", default-features = false, features = ["cli"] }
 rqtk-core = { workspace = true, features = ["verification-lookup"] }
 
+[build-dependencies]
+pyo3-build-config = "0.28.3"
+
 [lib]
 # Not `rqtk`: that name would collide with the rqtk binary's outputs (rqtk.exe, rqtk.pdb) on
 # Windows. Python imports it as `rqtk._rqtk` (see pyproject.toml).

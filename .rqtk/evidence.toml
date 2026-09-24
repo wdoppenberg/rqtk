@@ -26,12 +26,13 @@ requirement = "RQTK-CLI-0002"
 requirement_hash = "v1:32634e55f978836f04e0859579ac573cbc3c8d2049384627ddee47a87862f7e7"
 outcome = "passed"
 tests = [
+    "integration::a_closed_pipe_is_not_an_error",
     "integration::exit_codes_distinguish_findings_usage_and_errors",
     "integration::lint_exits_1_when_rationale_missing",
     "integration::lint_exits_zero_on_valid_project",
 ]
-commit = "dbd12c08fe5a647577a13d3ab493e2d85a3db4c6"
-tests_hash = "1a8f40a882c758ef+dbea4b2abb989af2+ed249ff9233a404f"
+commit = "814a09989ef5c332a517eb7b58cd37df2f80e2f4"
+tests_hash = "1a8f40a882c758ef+c7453651cd16c081+dbea4b2abb989af2+ed249ff9233a404f"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"

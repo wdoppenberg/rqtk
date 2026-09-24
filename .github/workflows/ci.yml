@@ -32,6 +32,7 @@ jobs:
       - run: cargo check -p rqtk-py
       # `rqtk` as a test dependency: the macros without the CLI.
       - run: cargo check -p rqtk --lib --no-default-features --features macros
+      - run: cargo check -p rqtk --lib --no-default-features --features requirements-docs
 
       # rqtk tracks its own requirements: every file lints, the committed evidence matches
       # this test run, and every requirement is verified against its current wording.

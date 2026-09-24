@@ -13,11 +13,16 @@ categories = ["development-tools::testing"]
 [lib]
 proc-macro = true
 
+[features]
+# `#[requirements_docs]`, which loads and validates the whole requirement set with rqtk-core.
+docs = ["dep:rqtk-core"]
+
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-rqtk-core = { workspace = true, features = ["verification-lookup"] }
+rqtk-core = { workspace = true, features = ["verification-lookup"], optional = true }
 syn = { version = "2", features = ["full"] }
+toml = { workspace = true }
 
 [dev-dependencies]
 trybuild = "1"
