@@ -7,11 +7,12 @@ cd "$repo_root"
 
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace --exclude rqtk-py
+cargo test --workspace --exclude rqtk-py --doc
 
-# Ensure content hashes are current, then lint the project requirements.
+# Ensure content hashes are current, then run the tests and check the project requirements:
+# every file lints, the committed evidence matches this run, and everything is verified.
 cargo run -p rqtk -- --repo-root . rehash
-cargo run -p rqtk -- --repo-root . lint
+scripts/verify-requirements.sh
 
 cargo run -p rqtk-core --bin generate_schemas
 

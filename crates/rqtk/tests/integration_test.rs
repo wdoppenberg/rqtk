@@ -3564,3 +3564,16 @@ fn a_closed_pipe_is_not_an_error() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+#[test]
+fn own_requirements_carry_the_released_version() {
+    // rqtk tracks its own requirements; `rqtk report` prints this version in its header.
+    let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let config = fs::read_to_string(workspace_root.join(".rqtk/config.toml")).unwrap();
+    let expected = format!("version = \"{}\"", env!("CARGO_PKG_VERSION"));
+    assert!(
+        config.lines().any(|line| line == expected),
+        "[project] version in .rqtk/config.toml should be {}",
+        env!("CARGO_PKG_VERSION")
+    );
+}

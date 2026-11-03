@@ -1,0 +1,10 @@
+{
+  "requirements-review/SKILL.md": "16ab00d1c720606473973656e7302201a0fc0e3dc96ff56784b755b6fa08d8b2",
+  "requirements-review/agents/openai.yaml": "e84ca1a37afb0ea5761737e18ab125152db44324c4d8e58207e4809acd3751aa",
+  "rqtk-requirements/SKILL.md": "a31a0025ef719b8ba7f9df8d88c16ed65636a497251cf9310678c6d10dfd05c4",
+  "rqtk-requirements/agents/openai.yaml": "b209e310ffdc1bc71d009c5d0bcf14ce5bd3402363c4e6205a2a0060e3472366",
+  "rqtk-verification/SKILL.md": "11a1a3aa0d07799ebf4771e90cc32fb47d1661917393c3a48d251595d6d60133",
+  "rqtk-verification/agents/openai.yaml": "26750d76c279e552f360f1b7e499ba8e51b62045ad40a1749bbf9217f03d4c10",
+  "to-requirements/SKILL.md": "d21ae092eb1a52932ee953eeff5a9c6a4fb4b4f06d002c5df365aabce69195ec",
+  "to-requirements/agents/openai.yaml": "c70a36a9970e33ca79b44225e545f24f01c0c8ea81f40f2cfa1ce96878572570"
+}
