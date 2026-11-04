@@ -145,8 +145,8 @@ fn stage(
     let err = |msg: String| RqtkError::Interface(format!("`{alias}`: {msg}"));
     let temp = tempfile::tempdir()
         .map_err(|e| err(format!("cannot create a temporary directory: {e}")))?;
-    let repo = fetch(&source.git, &temp.path().join("repo.git")).map_err(&err)?;
-    let (commit, ref_kind) = resolve_ref(&repo, &source.reference).map_err(&err)?;
+    let repo = fetch(&source.git, &temp.path().join("repo.git")).map_err(err)?;
+    let (commit, ref_kind) = resolve_ref(&repo, &source.reference).map_err(err)?;
     let mut warnings = Vec::new();
     if in_own_history(repo_root, commit) {
         warnings.push(format!(
@@ -155,7 +155,7 @@ fn stage(
         ));
     }
     let work = temp.path().join("work");
-    let symlinks = extract(&repo, commit, &work).map_err(&err)?;
+    let symlinks = extract(&repo, commit, &work).map_err(err)?;
 
     // The provider's format must be one this rqtk reads.
     let config_path = work.join(".rqtk/config.toml");
