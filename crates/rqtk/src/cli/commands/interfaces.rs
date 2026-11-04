@@ -129,6 +129,13 @@ pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
             allow_file_url: args.allow_file_url,
         },
     )?;
+    for warning in sources.iter().flat_map(|s| &s.warnings) {
+        if ctx.json() {
+            eprintln!("warning: {warning}");
+        } else {
+            output::warning(warning);
+        }
+    }
     if ctx.json() {
         output::json(&SyncReport {
             sources: &sources,

@@ -92,6 +92,12 @@ From then on:
 
 `rqtk context users:USR-SYS-0007` shows a vendored requirement and who consumes it. Commands that change requirements (`review`, `open`, `add-activity`) refuse vendored IDs, and no command except `interfaces sync` and `interfaces remove` writes under `.rqtk/vendor/`.
 
+## Cycles and self-references
+
+Two systems may consume each other, for example an API in one direction and a webhook back, and longer rings work the same way. Each side pins the other independently and `sync` never follows a provider's own dependencies, so a cycle can't loop. A change makes only its direct consumers Suspect. It travels further only when one of them changes *its own* interface and publishes a new version, so nothing echoes back to where it started. Cross-repository cycles are not trace cycles: [RQ017](../reference/lint-rules.md#rq017) only looks at links within one repository.
+
+An alias that points back at the repository itself, or at a fork of it, is almost always a mistake. `sync` warns when the commit a provider resolves to is already in your own history, but still syncs.
+
 ## Keeping the snapshot honest
 
 Lint checks the snapshot against the lockfile and the config:

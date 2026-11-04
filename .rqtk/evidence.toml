@@ -372,6 +372,21 @@ NEED-0006 = "v1:9d80504b623bd828020f488f356fc72155d780b82211de951559dec997de7b2b
 RQTK-SYS-0006 = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
 
 [[activity]]
+id = "VA-CLI-0025-01"
+requirement = "RQTK-CLI-0025"
+requirement_hash = "v1:1bbd1638c946db893205d9498d7b0c7c3d3a69c24068cabbeb306bb4531e58b9"
+outcome = "passed"
+tests = ["crates/rqtk/tests/interfaces.rs::syncing_a_repository_into_itself_warns"]
+commit = "ce3dcd4a3ba650b7d3e7832b97e8ce8692231c24"
+tests_hash = "3479de929711a866"
+
+[activity.upstream]
+NEED-0004 = "v1:204d60a5b67fdedb914ace53324abae2c271f879b1b81382c32ed43e49d142c5"
+NEED-0005 = "v1:aa0cfa26404a1023670b07753530d9e3bd9a2b706ac970a634f3024479e392a3"
+NEED-0006 = "v1:9d80504b623bd828020f488f356fc72155d780b82211de951559dec997de7b2b"
+RQTK-SYS-0006 = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
+
+[[activity]]
 id = "VA-CLI-003-01"
 requirement = "RQTK-CLI-0003"
 requirement_hash = "v1:cd579338d20c6adc939988bc01c7680b5d174ad01c2ea372d18a72244c8ddff6"
@@ -633,9 +648,9 @@ id = "VA-CORE-0010-01"
 requirement = "RQTK-CORE-0010"
 requirement_hash = "v1:dad88638fbb8b0400f8bd9b6bd499c04185f8c9b45b992c8abd349644be355f4"
 outcome = "passed"
-tests = ["crates/rqtk/tests/interfaces.rs::consumer_pins_syncs_and_traces_to_a_provider"]
-commit = "9ea28811d9f9bf2f2fc0223a24fb7712f9f2ea2f"
-tests_hash = "2082c9ea0eba9f20"
+tests = ["crates/rqtk/tests/e2e_interfaces.rs::systems_expose_and_consume_interfaces_through_releases"]
+commit = "ce3dcd4a3ba650b7d3e7832b97e8ce8692231c24"
+tests_hash = "a0ecb750199b7711"
 
 [activity.upstream]
 NEED-0004 = "v1:204d60a5b67fdedb914ace53324abae2c271f879b1b81382c32ed43e49d142c5"
@@ -1136,6 +1151,36 @@ NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf
 RQTK-SYS-0002 = "v1:d8ba087f281bf257ed210576167c9189e8af1012e9a629a5341620eadef6e191"
 
 [[activity]]
+id = "VA-CORE-0030-01"
+requirement = "RQTK-CORE-0030"
+requirement_hash = "v1:58dfd54bf93122c338783fc223a8ba3408bc3163b4dedf5d5feb4338b7a9300a"
+outcome = "passed"
+tests = ["crates/rqtk/tests/e2e_interfaces.rs::systems_expose_and_consume_interfaces_through_releases"]
+commit = "ce3dcd4a3ba650b7d3e7832b97e8ce8692231c24"
+tests_hash = "5887e1928e8c657e"
+
+[activity.upstream]
+NEED-0004 = "v1:204d60a5b67fdedb914ace53324abae2c271f879b1b81382c32ed43e49d142c5"
+NEED-0005 = "v1:aa0cfa26404a1023670b07753530d9e3bd9a2b706ac970a634f3024479e392a3"
+NEED-0006 = "v1:9d80504b623bd828020f488f356fc72155d780b82211de951559dec997de7b2b"
+RQTK-SYS-0006 = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
+
+[[activity]]
+id = "VA-CORE-0030-02"
+requirement = "RQTK-CORE-0030"
+requirement_hash = "v1:58dfd54bf93122c338783fc223a8ba3408bc3163b4dedf5d5feb4338b7a9300a"
+outcome = "passed"
+tests = ["crates/rqtk/tests/e2e_interfaces.rs::systems_expose_and_consume_interfaces_through_releases"]
+commit = "ce3dcd4a3ba650b7d3e7832b97e8ce8692231c24"
+tests_hash = "f52bc06f14a6f078"
+
+[activity.upstream]
+NEED-0004 = "v1:204d60a5b67fdedb914ace53324abae2c271f879b1b81382c32ed43e49d142c5"
+NEED-0005 = "v1:aa0cfa26404a1023670b07753530d9e3bd9a2b706ac970a634f3024479e392a3"
+NEED-0006 = "v1:9d80504b623bd828020f488f356fc72155d780b82211de951559dec997de7b2b"
+RQTK-SYS-0006 = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
+
+[[activity]]
 id = "VA-CORE-004-01"
 requirement = "RQTK-CORE-0004"
 requirement_hash = "v1:32f6856143c332184a5243980128da32bbdcb4cf604f36013910460a76e47146"
@@ -1240,9 +1285,9 @@ id = "VA-SYS-0006-01"
 requirement = "RQTK-SYS-0006"
 requirement_hash = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
 outcome = "passed"
-tests = ["crates/rqtk/tests/interfaces.rs::consumer_pins_syncs_and_traces_to_a_provider"]
-commit = "9ea28811d9f9bf2f2fc0223a24fb7712f9f2ea2f"
-tests_hash = "72333b76e48a1cfb"
+tests = ["crates/rqtk/tests/e2e_interfaces.rs::systems_expose_and_consume_interfaces_through_releases"]
+commit = "ce3dcd4a3ba650b7d3e7832b97e8ce8692231c24"
+tests_hash = "37947c53a1ca5cab"
 
 [activity.upstream]
 NEED-0004 = "v1:204d60a5b67fdedb914ace53324abae2c271f879b1b81382c32ed43e49d142c5"

@@ -26,6 +26,10 @@ All notable changes to the `rqtk` command line. The format follows
   `report`, `coverage` and `impact` show consumed interfaces as read-only `alias:ID` nodes;
   the provider's status never counts toward the consumer's coverage. `rqtk context
   <alias>:<ID>` briefs a vendored requirement.
+- `consumes` links may form cycles across repositories (an API one way, a webhook back);
+  a change makes only direct consumers Suspect and never echoes back to its origin. `sync`
+  warns when a provider's commit is already in the consumer's own history (the repository
+  itself or a fork).
 - Lint rules RQ032–RQ043 for spec files, OpenAPI documents, `consumes` links, vendored
   snapshots, config/lockfile drift and branch pins.
 

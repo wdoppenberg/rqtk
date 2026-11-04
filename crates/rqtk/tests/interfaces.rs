@@ -329,34 +329,38 @@ fn passing_test(repo: &Repo, activity: &str, name: &str) -> PathBuf {
 
 // ── end to end ──────────────────────────────────────────────────────────────
 
-#[verifies("VA-SYS-0006-01")]
-#[verifies("VA-CORE-0010-01")]
+// The end-to-end journey is in `e2e_interfaces.rs`.
+
+#[verifies("VA-CLI-0025-01")]
 #[test]
-fn consumer_pins_syncs_and_traces_to_a_provider() {
+fn syncing_a_repository_into_itself_warns() {
     let p = provider();
-    let c = consumer(&p, "v1");
-    sync(&c).success();
-    assert!(lint_codes(&c.root).is_empty(), "{:?}", lint_codes(&c.root));
-
-    let context = json(rqtk(&c.root).args(["context", "REQ-SYS-0001"]));
-    let consumed = &context["consumes"][0];
-    assert_eq!(consumed["id"], "users:USR-SYS-0001");
-    assert_eq!(consumed["resolved"], true);
-    assert_eq!(consumed["title"], "Title of USR-SYS-0001");
-
-    // A contract change upstream is reported against the consumer.
-    p.write("api/openapi.yaml", &API.replace("A user", "The user"))
-        .commit("v2")
-        .tag("v2");
-    let config = c
-        .read(".rqtk/config.toml")
-        .replace("ref = \"v1\"", "ref = \"v2\"");
-    c.write(".rqtk/config.toml", &config);
-    git(&c.root, &["add", "-A"]);
-    git(&c.root, &["commit", "-q", "-m", "pin v1"]);
-    sync(&c).success();
-    let impact = json(rqtk(&c.root).args(["impact", "HEAD"]));
-    assert_eq!(impact["interfaces"][0]["id"], "users:USR-SYS-0001");
+    rqtk(&p.root)
+        .args([
+            "interfaces",
+            "add",
+            "me",
+            &p.url(),
+            "--ref",
+            "v1",
+            "--allow-file-url",
+        ])
+        .assert()
+        .success();
+    rqtk(&p.root)
+        .args(["interfaces", "sync", "--allow-file-url"])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("this repository or a fork of it"));
+    let report = json(rqtk(&p.root).args(["interfaces", "sync", "--allow-file-url"]));
+    let warnings = report["sources"][0]["warnings"].as_array().unwrap();
+    assert_eq!(warnings.len(), 1, "{report}");
+    assert!(warnings[0].as_str().unwrap().contains("`me`"));
+    // A separate provider is not flagged.
+    let other = provider();
+    let c = consumer(&other, "v1");
+    let report = json(rqtk(&c.root).args(["interfaces", "sync", "--allow-file-url"]));
+    assert_eq!(report["sources"][0]["warnings"], serde_json::json!([]));
 }
 
 // ── provider side ───────────────────────────────────────────────────────────

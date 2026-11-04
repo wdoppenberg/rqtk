@@ -49,6 +49,8 @@ pub struct SyncedSource {
     pub files: usize,
     /// Whether the snapshot differs from the one it replaced.
     pub changed: bool,
+    /// Things worth a second look that did not stop the sync.
+    pub warnings: Vec<String>,
 }
 
 /// Sync the declared interface sources of the repository at `repo_root`.
@@ -65,16 +67,17 @@ pub fn sync(repo_root: &Path, options: &SyncOptions) -> Result<Vec<SyncedSource>
 
     let staging = repo_root.join(STAGING_DIR);
     remove_dir(&staging)?;
-    let result = stage_all(&staging, &targets, &old_lock).and_then(|staged| {
+    let result = stage_all(repo_root, &staging, &targets, &old_lock).and_then(|staged| {
         let mut lock = old_lock.clone();
         lock.version = LOCK_VERSION;
-        for (alias, locked, _) in &staged {
+        for (alias, locked, _, _) in &staged {
             lock.sources.insert(alias.clone(), locked.clone());
         }
         swap_in(repo_root, &staging, &staged, &lock)?;
         Ok(staged
             .into_iter()
-            .map(|(alias, locked, changed)| SyncedSource {
+            .map(|(alias, locked, changed, warnings)| SyncedSource {
+                warnings,
                 requirements: locked.requirements.len(),
                 files: locked.files.len(),
                 alias,
@@ -114,9 +117,10 @@ fn targets(
     Ok(targets)
 }
 
-type Staged = Vec<(String, LockedSource, bool)>;
+type Staged = Vec<(String, LockedSource, bool, Vec<String>)>;
 
 fn stage_all(
+    repo_root: &Path,
     staging: &Path,
     targets: &[(String, InterfaceSource)],
     old: &Lockfile,
@@ -124,20 +128,32 @@ fn stage_all(
     let mut staged = Vec::new();
     for (alias, source) in targets {
         let dir = staging.join(alias);
-        let locked = stage(alias, source, &dir)?;
+        let (locked, warnings) = stage(repo_root, alias, source, &dir)?;
         let changed = old.sources.get(alias) != Some(&locked);
-        staged.push((alias.clone(), locked, changed));
+        staged.push((alias.clone(), locked, changed, warnings));
     }
     Ok(staged)
 }
 
 /// Fetch `source` and write its snapshot into `dir`.
-fn stage(alias: &str, source: &InterfaceSource, dir: &Path) -> Result<LockedSource, RqtkError> {
+fn stage(
+    repo_root: &Path,
+    alias: &str,
+    source: &InterfaceSource,
+    dir: &Path,
+) -> Result<(LockedSource, Vec<String>), RqtkError> {
     let err = |msg: String| RqtkError::Interface(format!("`{alias}`: {msg}"));
     let temp = tempfile::tempdir()
         .map_err(|e| err(format!("cannot create a temporary directory: {e}")))?;
     let repo = fetch(&source.git, &temp.path().join("repo.git")).map_err(&err)?;
     let (commit, ref_kind) = resolve_ref(&repo, &source.reference).map_err(&err)?;
+    let mut warnings = Vec::new();
+    if in_own_history(repo_root, commit) {
+        warnings.push(format!(
+            "`{alias}` resolves to commit {} that is already in this repository's history: it points at this repository or a fork of it, which is almost always a mistake",
+            &commit.to_string()[..12]
+        ));
+    }
     let work = temp.path().join("work");
     let symlinks = extract(&repo, commit, &work).map_err(&err)?;
 
@@ -264,14 +280,20 @@ fn stage(alias: &str, source: &InterfaceSource, dir: &Path) -> Result<LockedSour
         .into_iter()
         .map(|(id, v): (RequirementId, _)| (id.0, v.hash))
         .collect();
-    Ok(LockedSource {
+    let locked = LockedSource {
         git: source.git.clone(),
         reference: source.reference.clone(),
         ref_kind,
         commit: commit.to_string(),
         requirements,
         files: hash_tree(dir),
-    })
+    };
+    Ok((locked, warnings))
+}
+
+/// Whether `commit` is in the object database of the repository containing `repo_root`.
+fn in_own_history(repo_root: &Path, commit: gix::ObjectId) -> bool {
+    gix::discover(repo_root).is_ok_and(|repo| repo.has_object(commit))
 }
 
 /// Whether spec `pattern` (a path or glob) names root-relative `path`.
@@ -306,7 +328,7 @@ fn swap_in(
     })?;
     let mut moved: Vec<&str> = Vec::new();
     let outcome = (|| {
-        for (alias, _, _) in staged {
+        for (alias, _, _, _) in staged {
             let live = vendor.join(alias);
             if live.exists() {
                 rename(&live, &backups.join(alias))?;
