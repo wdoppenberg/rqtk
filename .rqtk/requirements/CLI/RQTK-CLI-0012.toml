@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0012"
+title = "Direct dependencies only"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk interfaces sync shall vendor only the aliases declared by the consumer and ignore the provider's own vendored interfaces."
+rationale = "Keeps the dependency graph explicit; a consumer that needs a transitive interface declares it."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "A provider's .rqtk/vendor/ is not copied into the consumer."
+
+[[verification.activities]]
+id = "VA-CLI-0012-01"
+name = "Provider vendor directory is ignored"

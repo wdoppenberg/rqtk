@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0010"
+title = "Consumes links"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall accept a `consumes` trace link of the form `<alias>:<ID>` from a requirement to an interface requirement in the vendored snapshot of that alias."
+rationale = "Qualifying remote IDs by a local alias prevents collisions with local IDs and with other providers."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A consumes link to a vendored interface requirement resolves and appears in the requirement's traceability."
+
+[[verification.activities]]
+id = "VA-CORE-0010-01"
+name = "Consumes link resolves to a vendored requirement"

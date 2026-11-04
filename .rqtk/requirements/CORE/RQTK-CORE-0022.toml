@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0022"
+title = "Glob spec paths"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "For a spec entry whose format is not openapi, rqtk shall accept a glob as its path and treat every matching file as part of the spec."
+rationale = "rqtk does not follow protobuf imports or other cross-file references, so multi-file definitions must be listed explicitly; a glob keeps that practical."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "proto/**/*.proto matches every proto file below proto/, and each matched file is hashed and vendored."
+
+[[verification.activities]]
+id = "VA-CORE-0022-01"
+name = "Glob matches are hashed and vendored"

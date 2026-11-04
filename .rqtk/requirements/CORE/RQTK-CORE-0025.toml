@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0025"
+title = "No remote or escaping OpenAPI references"
+category = "CORE"
+type = "Constraint"
+state = "Draft"
+priority = "Critical"
+statement = "rqtk shall report an error for an OpenAPI `$ref` to an absolute URL or to a file outside the repository, and shall never fetch it."
+rationale = "A provider may be an untrusted party; following its references must not make the consumer fetch URLs or read files outside the provider's content."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "An https: ref, a file: ref and a ../ ref escaping the repository each produce an error, and no network request or out-of-tree read happens."
+
+[[verification.activities]]
+id = "VA-CORE-0025-01"
+name = "Absolute URL refs are rejected unfetched"
+
+[[verification.activities]]
+id = "VA-CORE-0025-02"
+name = "Escaping relative refs are rejected"

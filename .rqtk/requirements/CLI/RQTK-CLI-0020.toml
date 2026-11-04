@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0020"
+title = "Vendored size limits"
+category = "CLI"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "rqtk interfaces sync shall abort when a file it would vendor exceeds 10 MiB or an alias's vendored content exceeds 100 MiB in total."
+rationale = "An untrusted provider must not be able to exhaust the consumer's disk or repository size; real interface definitions are far below these limits."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "An oversized file and an oversized alias each abort sync with an error naming the alias and the file or total size."
+
+[[verification.activities]]
+id = "VA-CLI-0020-01"
+name = "Oversized file aborts sync"
+
+[[verification.activities]]
+id = "VA-CLI-0020-02"
+name = "Oversized alias aborts sync"

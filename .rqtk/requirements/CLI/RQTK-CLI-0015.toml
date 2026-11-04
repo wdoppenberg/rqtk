@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0015"
+title = "Vendored requirements in views"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk context, trace, graph, report and coverage shall show vendored interface requirements as read-only `<alias>:<ID>` nodes with their provider verification status, without counting that status toward the consumer's coverage result."
+rationale = "Consumers need to see the contract and whether the provider verified it, but the provider's evidence is not the consumer's to gate on."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Each command renders consumed interfaces with alias-qualified IDs and provider status; coverage --strict ignores provider status."
+
+[[verification.activities]]
+id = "VA-CLI-0015-01"
+name = "Views render alias-qualified nodes"
+
+[[verification.activities]]
+id = "VA-CLI-0015-02"
+name = "Provider status does not gate coverage"

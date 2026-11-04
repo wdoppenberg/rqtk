@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0019"
+title = "Atomic sync"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk interfaces sync shall either update `.rqtk/vendor/` and `.rqtk/interfaces.lock` completely or leave both unchanged."
+rationale = "A sync interrupted by a network failure or a rejected provider must not leave a half-written snapshot that lint then reports as tampering."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "A sync that fails at any point leaves the vendor directory and lockfile byte-identical to before."
+
+[[verification.activities]]
+id = "VA-CLI-0019-01"
+name = "Failed sync leaves vendor and lockfile unchanged"

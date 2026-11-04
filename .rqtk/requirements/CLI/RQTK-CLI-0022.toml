@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0022"
+title = "Sync a single alias"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Low"
+statement = "rqtk interfaces sync <alias> shall update only that alias's vendored snapshot and lockfile entry."
+rationale = "Updating one provider must not pull unrelated upstream changes into the same review."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Syncing one alias leaves every other alias's vendor directory and lockfile entry unchanged."
+
+[[verification.activities]]
+id = "VA-CLI-0022-01"
+name = "Single-alias sync leaves other aliases unchanged"

@@ -1,0 +1,9 @@
+id = "NEED-0006"
+title = "Know when a consumed interface changes"
+state = "Draft"
+stakeholders = [
+    "STK-001",
+    "STK-003",
+]
+statement = "Engineers need to learn which of their requirements are affected when an interface they consume changes."
+rationale = "An upstream contract change silently invalidates consumer assumptions unless it is surfaced for review."

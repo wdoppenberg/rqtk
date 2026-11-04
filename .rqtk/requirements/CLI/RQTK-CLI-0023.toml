@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0023"
+title = "Impact of interface updates"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk impact shall list the consumer requirements whose consumed interface requirements changed in `.rqtk/interfaces.lock` since the given revision."
+rationale = "After a sync, the reviewer of that change needs to see which local requirements it puts under review."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0006"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "After a sync that changes one consumed requirement, impact lists exactly the consumer requirements that consume it."
+
+[[verification.activities]]
+id = "VA-CLI-0023-01"
+name = "impact lists consumers of changed interfaces"

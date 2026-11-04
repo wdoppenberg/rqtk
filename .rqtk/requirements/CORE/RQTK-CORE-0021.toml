@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0021"
+title = "Vendored content is never executed"
+category = "CORE"
+type = "Constraint"
+state = "Draft"
+priority = "Critical"
+statement = "rqtk shall not execute, load as code, or pass to a shell any vendored file or field."
+rationale = "A provider may be an untrusted party; vendoring its interface must not give it code execution in the consumer's environment."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Inspection"
+level = "System"
+phase = "Development"
+success_criteria = "Code inspection shows vendored data flows only into TOML parsing, hashing, display and comparison."
+
+[[verification.activities]]
+id = "VA-CORE-0021-01"
+name = "Inspect vendored data flow"

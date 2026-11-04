@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0011"
+title = "Sync interfaces"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk interfaces sync shall fetch each declared alias at its ref and write its interface requirements and every file their spec entries match or reference to `.rqtk/vendor/<alias>/`, recording the resolved commit SHA and every file hash in `.rqtk/interfaces.lock`."
+rationale = "A committed snapshot plus lockfile makes upstream changes reviewable diffs and keeps lint offline."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "After sync, vendor/<alias>/ holds only the provider's interface requirements, their spec files including every file an OpenAPI $ref points to, and status.toml; the lockfile matches them."
+
+[[verification.activities]]
+id = "VA-CLI-0011-01"
+name = "Sync vendors requirements, specs and status"
+
+[[verification.activities]]
+id = "VA-CLI-0011-02"
+name = "Lockfile records SHA and hashes"
