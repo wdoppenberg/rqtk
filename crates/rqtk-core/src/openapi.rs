@@ -7,6 +7,7 @@
 //! beyond a fixed budget, and both parsers reject nesting deeper than 128 levels.
 
 use crate::spec::{SpecProblem, normalize};
+use percent_encoding::percent_decode_str;
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
@@ -216,25 +217,9 @@ fn check_version(doc: &Value) -> Result<(), String> {
 /// `#/a/b` (percent-decoded) → `/a/b`; `#` or `` → the whole document. `None` for anything
 /// that is not a fragment holding a JSON pointer.
 fn fragment_pointer(fragment: &str) -> Option<String> {
-    let pointer = percent_decode(fragment.strip_prefix('#').unwrap_or(fragment))?;
-    (pointer.is_empty() || pointer.starts_with('/')).then_some(pointer)
-}
-
-fn percent_decode(s: &str) -> Option<String> {
-    let bytes = s.as_bytes();
-    let mut out = Vec::with_capacity(bytes.len());
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'%' {
-            let hex = s.get(i + 1..i + 3)?;
-            out.push(u8::from_str_radix(hex, 16).ok()?);
-            i += 3;
-        } else {
-            out.push(bytes[i]);
-            i += 1;
-        }
-    }
-    String::from_utf8(out).ok()
+    let encoded = fragment.strip_prefix('#').unwrap_or(fragment);
+    let pointer = percent_decode_str(encoded).decode_utf8().ok()?;
+    (pointer.is_empty() || pointer.starts_with('/')).then(|| pointer.into_owned())
 }
 
 fn collect_refs(node: &Value, out: &mut Vec<String>) {
@@ -485,6 +470,17 @@ components:
             assert_eq!(r.problems.len(), 1, "{element}: {:?}", r.problems);
             assert_eq!(r.problems[0].code, "RQ037");
         }
+    }
+
+    #[test]
+    fn element_pointers_are_percent_decoded() {
+        assert_eq!(
+            fragment_pointer("#/paths/~1users~1%7Bid%7D/get").as_deref(),
+            Some("/paths/~1users~1{id}/get")
+        );
+        assert_eq!(fragment_pointer("#").as_deref(), Some(""));
+        assert_eq!(fragment_pointer("#paths"), None);
+        assert_eq!(fragment_pointer("#/%FF"), None, "not UTF-8");
     }
 
     // rqtk: verifies VA-CORE-0027-01

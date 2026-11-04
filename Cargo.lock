@@ -2757,6 +2757,7 @@ dependencies = [
  "gix",
  "globset",
  "ignore",
+ "percent-encoding",
  "petgraph",
  "quick-xml",
  "regex",
