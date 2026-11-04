@@ -1,0 +1,5 @@
+interface:
+  display_name: "Requirements Review"
+  short_description: "Review a diff against the requirements it touches"
+policy:
+  allow_implicit_invocation: false

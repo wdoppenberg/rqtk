@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Requirements"
+  short_description: "Turn a conversation or spec into needs and requirements"
+policy:
+  allow_implicit_invocation: false
