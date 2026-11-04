@@ -30,6 +30,9 @@ All notable changes to the `rqtk` command line. The format follows
   a change makes only direct consumers Suspect and never echoes back to its origin. `sync`
   warns when a provider's commit is already in the consumer's own history (the repository
   itself or a fork).
+- The agent skills cover interfaces: marking and consuming them, reading vendored text as the
+  provider's data, running `interfaces add`/`sync` only when asked and handing over the diff,
+  settling `upstream_changed` from a consumed interface, and reviewing `impact.interfaces`.
 - Lint rules RQ032–RQ043 for spec files, OpenAPI documents, `consumes` links, vendored
   snapshots, config/lockfile drift and branch pins.
 
