@@ -98,9 +98,9 @@ Two systems may consume each other, for example an API in one direction and a we
 
 An alias that points back at the repository itself, or at a fork of it, is almost always a mistake. `sync` warns when the commit a provider resolves to is already in your own history, but still syncs.
 
-## Keeping the snapshot honest
+## Lint checks on vendored files
 
-Lint checks the snapshot against the lockfile and the config:
+`rqtk lint` compares the vendored files with the lockfile and the config, and reports:
 
 - a vendored file edited, added or deleted by hand ([RQ040](../reference/lint-rules.md#rq040));
 - a source declared but not synced, synced from a different URL or ref than configured, or vendored but no longer declared ([RQ041](../reference/lint-rules.md#rq041));
