@@ -1,0 +1,42 @@
+schema_version = 1
+
+[project]
+name = "users"
+version = "1.0.0"
+description = "Owns user accounts. Exposes the users API."
+
+[identification]
+prefix = "USR"
+zero_padding = 4
+
+[categories.SYS]
+name = "System"
+level = 1
+is_root = true
+
+[types]
+allowed = ["Functional", "Interface"]
+
+[verification]
+methods = ["Test"]
+levels = ["System"]
+phases = ["Development"]
+
+[lifecycle]
+states = ["Draft", "Approved"]
+default_state = "Draft"
+
+[priority]
+levels = ["High", "Medium"]
+
+[criticality]
+levels = ["Non-Critical"]
+
+[validation]
+require_rationale = true
+require_verification_method = true
+forbid_orphans = false
+forbid_circular_traces = true
+allow_tbd = false
+allow_tbr = false
+shall_keywords = ["shall"]

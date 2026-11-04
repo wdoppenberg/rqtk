@@ -1,0 +1,23 @@
+id = "RQTK-CLI-0021"
+title = "Vendored text is escaped in reports"
+category = "CLI"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "rqtk report shall render vendored requirement text as literal text, escaping Markdown and HTML."
+rationale = "A provider controls the text of its requirements; it must not inject markup, links or spreadsheet formulas into the consumer's reports."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Vendored text containing Markdown, HTML and links appears literally in the report."
+
+[[verification.activities]]
+id = "VA-CLI-0021-01"
+name = "Markdown and HTML are escaped"
+

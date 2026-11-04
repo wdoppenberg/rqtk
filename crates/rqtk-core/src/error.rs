@@ -46,6 +46,8 @@ pub enum RqtkError {
     Git(String),
     #[error("baseline `{0}` not found — create it with `rqtk baseline {0}`")]
     BaselineNotFound(String),
+    #[error("{0}")]
+    Interface(String),
     #[error("invalid baseline name `{0}`: must be non-empty and contain no `/` or whitespace")]
     InvalidBaselineName(String),
 }

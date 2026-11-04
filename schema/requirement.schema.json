@@ -60,6 +60,10 @@
       },
       "type": "object"
     },
+    "ConsumedRef": {
+      "description": "A `consumes` link: `<alias>:<ID>`, naming an interface requirement in the vendored\nsnapshot of the interface source `alias`.",
+      "type": "string"
+    },
     "ExternalTrace": {
       "additionalProperties": false,
       "properties": {
@@ -74,6 +78,19 @@
         "type",
         "ref"
       ],
+      "type": "object"
+    },
+    "Interface": {
+      "additionalProperties": false,
+      "description": "`[interface]`: the requirement is an interface, specified by these definition files.",
+      "properties": {
+        "specs": {
+          "items": {
+            "$ref": "#/$defs/SpecEntry"
+          },
+          "type": "array"
+        }
+      },
       "type": "object"
     },
     "NeedId": {
@@ -145,6 +162,32 @@
       },
       "type": "object"
     },
+    "SpecEntry": {
+      "additionalProperties": false,
+      "description": "One `[[interface.specs]]` entry.",
+      "properties": {
+        "element": {
+          "description": "The part of the definition the requirement governs: a JSON pointer such as\n`#/paths/~1users~1{id}/get` for OpenAPI; free-form for other formats.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "format": {
+          "description": "`openapi`, `protobuf`, `asyncapi`, `jsonschema` or `other`.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Repository-relative path. For formats other than `openapi`, a glob such as\n`proto/**/*.proto` is accepted.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "path"
+      ],
+      "type": "object"
+    },
     "StakeholderId": {
       "description": "Identifier of a stakeholder, e.g. `STK-001`.",
       "type": "string"
@@ -155,6 +198,13 @@
         "conflicts_with": {
           "items": {
             "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "consumes": {
+          "description": "Interface requirements of other repositories this requirement relies on, as\n`<alias>:<ID>`.",
+          "items": {
+            "$ref": "#/$defs/ConsumedRef"
           },
           "type": "array"
         },
@@ -374,6 +424,17 @@
     },
     "id": {
       "$ref": "#/$defs/RequirementId"
+    },
+    "interface": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Interface"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Marks the requirement as an interface that other repositories can consume, and names\nthe definition files (OpenAPI, protobuf, …) that specify it."
     },
     "keywords": {
       "items": {

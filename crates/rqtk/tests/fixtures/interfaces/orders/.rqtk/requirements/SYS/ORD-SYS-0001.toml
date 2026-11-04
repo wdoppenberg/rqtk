@@ -1,0 +1,27 @@
+id = "ORD-SYS-0001"
+title = "Get an order with its customer"
+category = "SYS"
+type = "Interface"
+state = "Approved"
+priority = "High"
+statement = "The order service shall return the order with a given ID, including its customer's name, from GET /orders/{id}."
+rationale = "The storefront shows orders without a second call to the user service."
+
+[trace]
+consumes = ["users:USR-SYS-0001"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "GET /orders/{id} returns the order and the customer's name as the user service reports it."
+
+[[verification.activities]]
+id = "VA-SYS-0001-01"
+name = "GET /orders/{id} includes the customer"
+
+[interface]
+[[interface.specs]]
+format = "openapi"
+path = "api/openapi.yaml"
+element = "#/paths/~1orders~1{id}/get"

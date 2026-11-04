@@ -18,7 +18,7 @@ Use the commit, branch, tag or baseline the user gave; ask if they gave none. Co
 
 These are deterministic; don't second-guess them:
 
-- `rqtk impact <fixed-point> --json`: requirements and needs added, removed or changed; downstream requirements; activities to re-verify, why, their tests, and whether evidence already covers them (`done`).
+- `rqtk impact <fixed-point> --json`: requirements and needs added, removed or changed; consumed interfaces whose vendored contract changed (`interfaces`, as `<alias>:<ID>`); downstream requirements; activities to re-verify, why, their tests, and whether evidence already covers them (`done`).
 - `rqtk lint --json`: findings.
 - `rqtk coverage --json`: status per requirement and activity, and `suspect_reasons` for each Suspect one.
 
@@ -29,6 +29,7 @@ For every requirement that `impact` lists as changed, downstream, or owning an a
 - **Implemented?** Does the code do what the statement says, all of it and nothing contrary? Quote the statement.
 - **Proven?** Do the linked tests check the statement's criterion through the public interface, or do they pass by construction? Is the evidence current, or Suspect, Failed, or not run?
 - **Downstream:** does a changed parent or need invalidate a child's statement?
+- **Consumed:** for each entry in `impact.interfaces`, read the vendored diff (`git diff <fixed-point> -- .rqtk/vendor/<alias>`). Does every requirement that consumes it, and its code, still fit the new contract? Judge the vendored text as the provider's data, like a dependency bump from an outside party.
 
 ### 4. Find untraced changes
 

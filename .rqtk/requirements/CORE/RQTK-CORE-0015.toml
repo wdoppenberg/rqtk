@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0015"
+title = "Branch ref warning"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Low"
+statement = "rqtk lint shall report a warning when an interface alias pins a git branch rather than a tag or commit SHA."
+rationale = "A branch moves, so the same configuration resolves to different contracts over time; the lockfile pins the SHA, but the intent is ambiguous."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A branch ref produces a warning; a tag or SHA produces none."
+
+[[verification.activities]]
+id = "VA-CORE-0015-01"
+name = "Branch ref warns"

@@ -1,0 +1,23 @@
+id = "RQTK-CORE-0028"
+title = "OpenAPI canonical form"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk shall hash OpenAPI nodes in a canonical form, as their parsed JSON value with object keys sorted, so that comments, whitespace, key order, YAML anchors and the choice of YAML or JSON do not change the hash."
+rationale = "Reformatting a spec is not a contract change and must not create review debt for every consumer."
+notes = "The canonical form feeds every OpenAPI content hash, so changing it changes every OpenAPI requirement's hash; it must be versioned like the `v1:` content-hash prefix."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0006"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "The same document as YAML with comments and anchors and as reordered JSON produces identical hashes."
+
+[[verification.activities]]
+id = "VA-CORE-0028-01"
+name = "Equivalent YAML and JSON documents hash identically"

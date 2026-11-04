@@ -1,0 +1,9 @@
+id = "NEED-0004"
+title = "Expose interfaces"
+state = "Draft"
+stakeholders = [
+    "STK-001",
+    "STK-003",
+]
+statement = "Engineers need to codify the interfaces their system exposes, using the definition formats they already use, alongside the requirements that govern them."
+rationale = "Interfaces are contracts other systems depend on; keeping the definition next to its requirements keeps both reviewed together."

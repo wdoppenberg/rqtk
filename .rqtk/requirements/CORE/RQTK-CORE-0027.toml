@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0027"
+title = "OpenAPI element hashing"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "For an openapi spec entry, rqtk shall include in the requirement's content hash the canonical form of its element, or of the whole document when it has none, together with every node that element references transitively."
+rationale = "Only a change to the operation a requirement governs, or to a schema it uses, should put that requirement under review; including referenced nodes keeps shared schema changes from going unnoticed."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0006"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Editing GET /users/{id} or its User schema changes that requirement's hash; editing an unrelated operation does not."
+
+[[verification.activities]]
+id = "VA-CORE-0027-01"
+name = "Changes to the element or its references change the hash"
+
+[[verification.activities]]
+id = "VA-CORE-0027-02"
+name = "Unrelated changes leave the hash unchanged"

@@ -50,6 +50,7 @@ rationale = "Operators restart the unit during a pass."
 [trace]
 satisfies = ["NEED-0001"]
 # parents, derived_from, refines, depends_on, conflicts_with, related: all by ID
+# consumes = ["users:USR-SYS-0007"]: an interface of another repository
 
 [verification]
 method = "Test"

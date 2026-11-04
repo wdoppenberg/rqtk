@@ -1,0 +1,25 @@
+id = "RQTK-CORE-0017"
+title = "Offline lint and coverage"
+category = "CORE"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "rqtk lint and rqtk coverage shall read interfaces only from the committed vendored snapshot, without network access."
+rationale = "CI must stay hermetic and reproducible, without credentials for provider repositories."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Inspection"
+level = "System"
+phase = "Development"
+success_criteria = "lint and coverage succeed with networking disabled on a repository with vendored interfaces."
+
+[[verification.activities]]
+id = "VA-CORE-0017-01"
+name = "Lint and coverage run offline"
+procedure = "Inspected every network entry point: gix clone and fetch are only in rqtk_core::sync, behind the `network` feature, and only `rqtk interfaces sync` calls it. Lint and coverage load the vendored snapshot from files (rqtk_core::vendor::load) and never call sync."
+status = "Passed"
+executed_at = "2026-11-04"

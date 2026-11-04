@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0011"
+title = "Unresolved consumes links"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk lint shall report an error when a `consumes` link names an alias that is not declared or a requirement that is absent from that alias's vendored snapshot."
+rationale = "A requirement removed upstream breaks every consumer that depends on it; this must surface at lint time."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Unknown alias and unknown ID each produce one located error."
+
+[[verification.activities]]
+id = "VA-CORE-0011-01"
+name = "Unknown alias is an error"
+
+[[verification.activities]]
+id = "VA-CORE-0011-02"
+name = "Requirement removed upstream is an error"

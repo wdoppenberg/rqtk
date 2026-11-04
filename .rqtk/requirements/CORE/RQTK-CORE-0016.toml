@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0016"
+title = "Provider-independent validation"
+category = "CORE"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk shall validate vendored requirements against its built-in schema for the provider's schema version and never against the consumer's configuration."
+rationale = "Each provider has its own ID pattern, types and custom fields; the consumer's policy does not apply to someone else's requirements."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A vendored requirement using a type or ID pattern the consumer forbids produces no lint finding."
+
+[[verification.activities]]
+id = "VA-CORE-0016-01"
+name = "Consumer policy ignored for vendored requirements"

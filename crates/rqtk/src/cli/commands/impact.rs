@@ -23,6 +23,7 @@ pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {
     output::section("Impact", &format!("since {base}"));
     changes("Requirements", &impact.requirements);
     changes("Needs", &impact.needs);
+    changes("Consumed interfaces", &impact.interfaces);
     if !impact.downstream.is_empty() {
         output::section("Downstream", "(depend on a changed item; review them)");
         for d in &impact.downstream {

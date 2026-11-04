@@ -96,6 +96,20 @@ pub struct Config {
     pub validation: ValidationRules,
     #[serde(default)]
     pub scan: ScanConfig,
+    /// Interface sources this repository consumes, by alias: `[interfaces.<alias>]`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub interfaces: BTreeMap<String, InterfaceSource>,
+}
+
+/// A provider repository whose interface requirements this repository consumes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InterfaceSource {
+    /// Git URL of the provider repository (`https://…` or `ssh://…` / `user@host:path`).
+    pub git: String,
+    /// Tag, commit SHA or branch to pin. The lockfile records the commit it resolved to.
+    #[serde(rename = "ref")]
+    pub reference: String,
 }
 
 impl Config {
@@ -325,6 +339,9 @@ pub struct Requirement {
     pub validation: Option<ValidationSpec>,
     pub risk: Option<Risk>,
     pub allocation: Option<Allocation>,
+    /// Marks the requirement as an interface that other repositories can consume, and names
+    /// the definition files (OpenAPI, protobuf, …) that specify it.
+    pub interface: Option<Interface>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     #[schemars(with = "std::collections::BTreeMap<String, serde_json::Value>")]
     pub custom: BTreeMap<String, toml::Value>,
@@ -334,7 +351,17 @@ impl Requirement {
     /// Fingerprint of the fields that change what the requirement demands or how it is
     /// verified: id, statement, parameters, structural links and verification method/level/phase.
     /// Administrative fields (title, status, approval, allocation, risk, custom, …) are excluded.
+    ///
+    /// For an interface requirement this covers its spec entries but not the content of the
+    /// files they name; [`Self::compute_content_hash_with`] adds that.
     pub fn compute_content_hash(&self) -> String {
+        self.compute_content_hash_with(None)
+    }
+
+    /// [`Self::compute_content_hash`], plus `spec_digest`: the digest of the interface's
+    /// definition files (see [`crate::spec`]). Requirements without an `[interface]` table
+    /// hash the same with or without it.
+    pub fn compute_content_hash_with(&self, spec_digest: Option<&str>) -> String {
         let mut h = ContentHasher::default();
         h.field("id", &self.id.0);
         h.field("statement", &self.statement);
@@ -353,6 +380,9 @@ impl Requirement {
         for n in &self.trace.satisfies {
             h.field("satisfies", &n.0);
         }
+        for c in &self.trace.consumes {
+            h.field("consumes", &c.0);
+        }
         h.field("verification.method", &self.verification.method);
         h.field("verification.level", &self.verification.level);
         h.field("verification.phase", &self.verification.phase);
@@ -366,7 +396,62 @@ impl Requirement {
                 &param.tolerance.map(|t| t.to_string()).unwrap_or_default(),
             );
         }
+        if let Some(interface) = &self.interface {
+            for spec in &interface.specs {
+                h.field("interface.format", &spec.format);
+                h.field("interface.path", &spec.path);
+                h.field("interface.element", spec.element.as_deref().unwrap_or(""));
+            }
+            h.field("interface.digest", spec_digest.unwrap_or(""));
+        }
         h.finish()
+    }
+}
+
+/// `[interface]`: the requirement is an interface, specified by these definition files.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Interface {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub specs: Vec<SpecEntry>,
+}
+
+/// One `[[interface.specs]]` entry.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SpecEntry {
+    /// `openapi`, `protobuf`, `asyncapi`, `jsonschema` or `other`.
+    pub format: String,
+    /// Repository-relative path. For formats other than `openapi`, a glob such as
+    /// `proto/**/*.proto` is accepted.
+    pub path: String,
+    /// The part of the definition the requirement governs: a JSON pointer such as
+    /// `#/paths/~1users~1{id}/get` for OpenAPI; free-form for other formats.
+    pub element: Option<String>,
+}
+
+/// The spec formats rqtk knows. Only `openapi` is parsed; the others are hashed as files.
+pub const SPEC_FORMATS: &[&str] = &["openapi", "protobuf", "asyncapi", "jsonschema", "other"];
+
+/// A `consumes` link: `<alias>:<ID>`, naming an interface requirement in the vendored
+/// snapshot of the interface source `alias`.
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(transparent)]
+pub struct ConsumedRef(pub String);
+
+impl ConsumedRef {
+    /// The alias and the requirement ID, or `None` when the link has no `:`.
+    pub fn split(&self) -> Option<(&str, RequirementId)> {
+        let (alias, id) = self.0.split_once(':')?;
+        Some((alias, RequirementId(id.to_owned())))
+    }
+}
+
+impl Display for ConsumedRef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
     }
 }
 
@@ -413,6 +498,10 @@ pub struct Traceability {
     pub related: Vec<RequirementId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub external: Vec<ExternalTrace>,
+    /// Interface requirements of other repositories this requirement relies on, as
+    /// `<alias>:<ID>`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub consumes: Vec<ConsumedRef>,
 }
 
 impl Traceability {
@@ -425,6 +514,7 @@ impl Traceability {
             && self.depends_on.is_empty()
             && self.related.is_empty()
             && self.external.is_empty()
+            && self.consumes.is_empty()
     }
 
     /// Every requirement-to-requirement link, labelled with its field name.
@@ -664,18 +754,27 @@ mod opt_date {
 /// SHA-256 over tagged, length-prefixed fields, so that no two distinct field sets
 /// (e.g. `parents = ["AB"]` vs `parents = ["A", "B"]`) share an encoding.
 #[derive(Default)]
-struct ContentHasher(Sha256);
+pub(crate) struct ContentHasher(Sha256);
 
 impl ContentHasher {
-    fn field(&mut self, tag: &str, value: &str) {
+    pub(crate) fn field(&mut self, tag: &str, value: &str) {
+        self.bytes(tag, value.as_bytes());
+    }
+
+    pub(crate) fn bytes(&mut self, tag: &str, value: &[u8]) {
         self.0.update(tag.as_bytes());
         self.0.update([0u8]);
         self.0.update((value.len() as u64).to_le_bytes());
-        self.0.update(value.as_bytes());
+        self.0.update(value);
     }
 
     fn finish(self) -> String {
         format!("{CONTENT_HASH_PREFIX}{:x}", self.0.finalize())
+    }
+
+    /// The bare hex digest, without the content-hash version prefix.
+    pub(crate) fn finish_hex(self) -> String {
+        format!("{:x}", self.0.finalize())
     }
 }
 
@@ -774,6 +873,31 @@ phase = "Development"
         let a = requirement("");
         let b = requirement("notes = \"reworded\"\nkeywords = [\"x\"]\n");
         assert_eq!(a.compute_content_hash(), b.compute_content_hash());
+    }
+
+    // rqtk: verifies VA-CORE-0007-02
+    #[test]
+    fn interface_spec_entries_round_trip() {
+        let req = requirement(
+            "[[interface.specs]]\nformat = \"openapi\"\npath = \"api/openapi.yaml\"\nelement = \"#/paths/~1users/get\"\n\n[[interface.specs]]\nformat = \"protobuf\"\npath = \"proto/**/*.proto\"\n",
+        );
+        let text = toml::to_string_pretty(&req).unwrap();
+        let back: Requirement = toml::from_str(&text).unwrap();
+        assert_eq!(back.interface, req.interface);
+        let specs = &back.interface.unwrap().specs;
+        assert_eq!(specs.len(), 2);
+        assert_eq!(specs[0].element.as_deref(), Some("#/paths/~1users/get"));
+        assert_eq!(specs[1].path, "proto/**/*.proto");
+        assert_eq!(specs[1].element, None);
+    }
+
+    #[test]
+    fn requirements_without_an_interface_hash_as_before() {
+        let req = requirement("");
+        assert_eq!(
+            req.compute_content_hash(),
+            req.compute_content_hash_with(Some("x"))
+        );
     }
 
     #[test]

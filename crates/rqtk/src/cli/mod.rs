@@ -269,6 +269,48 @@ enum Command {
     /// Agent skills for working with rqtk in coding agents (Claude Code, Codex, …).
     #[command(subcommand)]
     Skills(SkillsCommand),
+    /// Consume interface requirements published by other repositories.
+    ///
+    /// A provider marks requirements as interfaces with an `[interface]` table. A consumer
+    /// declares the provider under an alias, syncs it into `.rqtk/vendor/<alias>/` (pinned in
+    /// `.rqtk/interfaces.lock`), and traces to it with `consumes = ["<alias>:<ID>"]`.
+    #[command(subcommand)]
+    Interfaces(InterfacesCommand),
+}
+
+#[derive(Debug, Subcommand)]
+enum InterfacesCommand {
+    /// Declare a provider repository under an alias in `.rqtk/config.toml`.
+    Add {
+        /// Local name for the provider, used in `consumes = ["<alias>:<ID>"]`.
+        alias: String,
+        /// Git URL of the provider: `https://…`, `ssh://…` or `user@host:path`.
+        url: String,
+        /// Tag, commit SHA or branch to pin. Prefer a tag or SHA: a branch moves.
+        #[arg(long = "ref")]
+        reference: String,
+        /// Accept a `file://` URL or a local path.
+        #[arg(long)]
+        allow_file_url: bool,
+        /// Report what would be written without writing.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Fetch declared providers and vendor their interface requirements.
+    ///
+    /// Writes `.rqtk/vendor/<alias>/` and `.rqtk/interfaces.lock`, all or nothing. Review the
+    /// diff before committing: the content comes from the provider.
+    Sync {
+        /// Sync only this alias.
+        alias: Option<String>,
+        /// Accept `file://` URLs and local paths.
+        #[arg(long)]
+        allow_file_url: bool,
+    },
+    /// Remove a provider: its config entry, lockfile entry and vendored snapshot.
+    Remove { alias: String },
+    /// List declared providers with the commit they are pinned to.
+    List,
 }
 
 #[derive(Debug, Subcommand)]
@@ -557,6 +599,36 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
         Command::Report { output } => commands::report::run(ctx, output),
         Command::Schema { kind } => commands::schema::run(ctx, kind.as_deref()),
         Command::Explain { code } => commands::explain::run(ctx, code.as_deref()),
+        Command::Interfaces(InterfacesCommand::Add {
+            alias,
+            url,
+            reference,
+            allow_file_url,
+            dry_run,
+        }) => commands::interfaces::add(
+            ctx,
+            commands::interfaces::AddArgs {
+                alias,
+                url,
+                reference,
+                allow_file_url,
+                dry_run,
+            },
+        ),
+        Command::Interfaces(InterfacesCommand::Sync {
+            alias,
+            allow_file_url,
+        }) => commands::interfaces::sync(
+            ctx,
+            commands::interfaces::SyncArgs {
+                alias,
+                allow_file_url,
+            },
+        ),
+        Command::Interfaces(InterfacesCommand::Remove { alias }) => {
+            commands::interfaces::remove(ctx, &alias)
+        }
+        Command::Interfaces(InterfacesCommand::List) => commands::interfaces::list(ctx),
         Command::Skills(SkillsCommand::List) => commands::skills::list(ctx),
         Command::Skills(SkillsCommand::Install {
             targets,

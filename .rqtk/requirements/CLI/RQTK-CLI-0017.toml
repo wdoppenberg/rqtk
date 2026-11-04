@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0017"
+title = "Remove an interface source"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk interfaces remove <alias> shall delete the alias from `.rqtk/config.toml`, its entry in `.rqtk/interfaces.lock` and `.rqtk/vendor/<alias>/`."
+rationale = "Dropping a dependency must not leave orphaned vendored content behind; consumes links to it then surface as lint errors."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "After remove, no trace of the alias remains in config, lockfile or vendor directory, and lint reports each consumes link that still names it."
+
+[[verification.activities]]
+id = "VA-CLI-0017-01"
+name = "remove deletes config, lockfile entry and vendor directory"

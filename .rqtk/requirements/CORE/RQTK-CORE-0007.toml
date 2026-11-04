@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0007"
+title = "Interface declaration"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall treat a requirement as an interface if and only if it contains an `[interface]` table listing spec entries, each with a format, a repository-relative path or glob, and an optional element pointer."
+rationale = "Type names are configurable per project, so the marker must be structural; one spec file is usually shared by many requirements, each pointing at one element."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Requirements with an [interface] table are interfaces regardless of type; spec entries round-trip with format, path and element."
+
+[[verification.activities]]
+id = "VA-CORE-0007-01"
+name = "Interface detected by table, not by type"
+
+[[verification.activities]]
+id = "VA-CORE-0007-02"
+name = "Spec entries round-trip"

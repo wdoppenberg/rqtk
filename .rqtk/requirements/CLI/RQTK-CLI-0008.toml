@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0008"
+title = "Contained spec paths"
+category = "CLI"
+type = "Constraint"
+state = "Draft"
+priority = "Critical"
+statement = "rqtk interfaces sync shall reject a provider spec path that is absolute or resolves outside the provider repository, without writing any file."
+rationale = "An untrusted provider could otherwise use a crafted path to read or overwrite files outside the vendor directory."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Absolute paths and paths containing .. that escape the repository abort the sync and leave .rqtk/vendor/ unchanged."
+
+[[verification.activities]]
+id = "VA-CLI-0008-01"
+name = "Escaping spec path aborts sync"

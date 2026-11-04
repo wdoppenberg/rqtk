@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0026"
+title = "OpenAPI element pointers"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk lint shall report an error when the element pointer of an openapi spec entry does not resolve to a node in the parsed document."
+rationale = "An unchecked pointer silently detaches a requirement from the operation it governs."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A pointer to an existing operation produces no finding; a misspelled path or method produces one located error."
+
+[[verification.activities]]
+id = "VA-CORE-0026-01"
+name = "Unresolvable element pointer is an error"

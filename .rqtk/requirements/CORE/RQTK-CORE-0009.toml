@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0009"
+title = "Spec file lint"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk lint shall report an error when an interface spec path or glob matches no file or its format is not one of openapi, protobuf, asyncapi, jsonschema or other."
+rationale = "A contract pointing at a missing file or an unknown format cannot be hashed or consumed reliably."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A path or glob matching nothing and an unknown format each produce one located error."
+
+[[verification.activities]]
+id = "VA-CORE-0009-01"
+name = "Missing spec path is an error"
+
+[[verification.activities]]
+id = "VA-CORE-0009-02"
+name = "Unknown spec format is an error"

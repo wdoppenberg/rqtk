@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0016"
+title = "Vendored IDs are read-only"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk review, open and add-activity shall refuse an `<alias>:<ID>` target with a usage error."
+rationale = "Vendored requirements belong to the provider; changing them locally would fork the contract."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Each command exits with code 2 and names the alias when given an alias-qualified ID."
+
+[[verification.activities]]
+id = "VA-CLI-0016-01"
+name = "Mutating commands refuse alias IDs"

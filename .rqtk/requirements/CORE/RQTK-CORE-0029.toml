@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0029"
+title = "Bounded OpenAPI parsing"
+category = "CORE"
+type = "Constraint"
+state = "Draft"
+priority = "Critical"
+statement = "rqtk shall abort parsing an OpenAPI document whose YAML alias expansion or nesting depth exceeds a fixed limit."
+rationale = "A provider may be an untrusted party; an alias bomb or deeply nested document must not exhaust the consumer's memory or stack."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A billion-laughs document and a document nested 10,000 levels deep each fail fast with an error and bounded memory."
+
+[[verification.activities]]
+id = "VA-CORE-0029-01"
+name = "Alias bomb is rejected"
+
+[[verification.activities]]
+id = "VA-CORE-0029-02"
+name = "Excessive nesting is rejected"
