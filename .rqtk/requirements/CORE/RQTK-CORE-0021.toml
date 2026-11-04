@@ -20,3 +20,6 @@ success_criteria = "Code inspection shows vendored data flows only into TOML par
 [[verification.activities]]
 id = "VA-CORE-0021-01"
 name = "Inspect vendored data flow"
+procedure = "Traced vendored data: it is parsed as TOML (vendor::load_snapshot), read and parsed as YAML or JSON and hashed (spec::resolve, openapi), compared (status, lint) and displayed (context, coverage, graph with DOT escaping, report with Markdown and HTML escaping, terminal output with control characters removed). The only process spawns (git diff in impact, git add/commit in baseline, $EDITOR in open) take no vendored values, and open refuses vendored IDs."
+status = "Passed"
+executed_at = "2026-11-04"

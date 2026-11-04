@@ -15,10 +15,17 @@ exclude = ["tests/fixtures/ecosystems"]
 
 [features]
 verification-lookup = []
+# `rqtk interfaces sync`: fetch provider repositories over https and ssh.
+network = [
+    "gix/blocking-network-client",
+    "gix/blocking-http-transport-reqwest-rust-tls",
+    "dep:tempfile",
+]
 
 [dependencies]
 chrono = { version = "0.4.42", features = ["serde"] }
 gix = "0.83.0"
+globset = "0.4"
 ignore = "0.4"
 petgraph = "0.8.3"
 quick-xml = "0.41"
@@ -31,6 +38,8 @@ sha2 = "0.10"
 thiserror = "2.0.17"
 toml = { workspace = true }
 toml_edit = "0.25"
+tempfile = { version = "3", optional = true }
+yaml_serde = "0.10.7"
 
 [dev-dependencies]
 gix = "0.83.0"

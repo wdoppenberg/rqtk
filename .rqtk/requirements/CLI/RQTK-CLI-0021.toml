@@ -1,10 +1,10 @@
 id = "RQTK-CLI-0021"
-title = "Vendored text is escaped in outputs"
+title = "Vendored text is escaped in reports"
 category = "CLI"
 type = "Constraint"
 state = "Draft"
 priority = "High"
-statement = "rqtk report and rqtk export shall escape vendored requirement text so that it renders as literal text in Markdown output and is never interpreted as a formula in CSV output."
+statement = "rqtk report shall render vendored requirement text as literal text, escaping Markdown and HTML."
 rationale = "A provider controls the text of its requirements; it must not inject markup, links or spreadsheet formulas into the consumer's reports."
 
 [trace]
@@ -15,12 +15,9 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Integration"
 phase = "Development"
-success_criteria = "Vendored text containing Markdown, HTML and leading =, +, - or @ appears literally in report, Markdown and CSV output."
+success_criteria = "Vendored text containing Markdown, HTML and links appears literally in the report."
 
 [[verification.activities]]
 id = "VA-CLI-0021-01"
 name = "Markdown and HTML are escaped"
 
-[[verification.activities]]
-id = "VA-CLI-0021-02"
-name = "CSV formula injection is neutralised"

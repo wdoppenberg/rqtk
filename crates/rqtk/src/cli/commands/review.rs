@@ -26,6 +26,7 @@ struct Report<'a> {
 /// upstream changes again. A requirement whose own tests haven't been rerun stays Suspect.
 pub fn run(ctx: &Ctx, args: ReviewArgs) -> Result<Exit, Box<dyn Error>> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
+    super::refuse_vendored(&set, &args.id, "review")?;
     let id = RequirementId(args.id.clone());
     if !set.requirements().contains_key(&id) {
         return Err(Usage(format!("no requirement with ID `{}`", args.id)).into());

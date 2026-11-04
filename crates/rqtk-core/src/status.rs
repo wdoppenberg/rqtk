@@ -107,7 +107,7 @@ impl RequirementSet<Validated> {
         self.requirements
             .iter()
             .map(|(id, req)| {
-                let hash = req.compute_content_hash();
+                let hash = self.content_hash(id);
                 let review = evidence
                     .reviews
                     .get(id)
@@ -172,8 +172,9 @@ impl RequirementSet<Validated> {
             .collect()
     }
 
-    /// Content hashes of everything a requirement depends on: its ancestors (transitively)
-    /// and the needs it and its ancestors satisfy, keyed by ID.
+    /// Content hashes of everything a requirement depends on: its ancestors (transitively),
+    /// the needs it and its ancestors satisfy, and the vendored interface requirements they
+    /// consume (keyed `<alias>:<ID>`), keyed by ID.
     pub fn upstream_hashes(&self, id: &RequirementId) -> BTreeMap<String, String> {
         let mut out = BTreeMap::new();
         let mut stack = vec![id.clone()];
@@ -186,7 +187,12 @@ impl RequirementSet<Validated> {
                 continue;
             };
             if current != *id {
-                out.insert(current.to_string(), req.compute_content_hash());
+                out.insert(current.to_string(), self.content_hash(&current));
+            }
+            for consumed in &req.trace.consumes {
+                if let Some(v) = self.consumed(consumed) {
+                    out.insert(consumed.to_string(), v.hash.clone());
+                }
             }
             for need in &req.trace.satisfies {
                 if let Some(n) = self.needs.get(need) {

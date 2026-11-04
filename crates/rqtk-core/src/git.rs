@@ -628,6 +628,27 @@ impl GitContext {
             .map_err(|e| RqtkError::Git(e.to_string()))
     }
 
+    /// The text of repository-relative file `rel` at `spec`, or `None` if it does not exist
+    /// there.
+    pub fn file_at_ref(&self, spec: &str, rel: &Path) -> Result<Option<String>, RqtkError> {
+        let tree = self
+            .repo()?
+            .find_object(self.resolve_ref_tree_id(spec)?)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        let Some(entry) = tree
+            .lookup_entry_by_path(rel)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+        else {
+            return Ok(None);
+        };
+        let obj = self
+            .repo()?
+            .find_object(entry.oid().to_owned())
+            .map_err(|e| RqtkError::Git(e.to_string()))?;
+        Ok(Some(String::from_utf8_lossy(&obj.data).into_owned()))
+    }
+
     /// Parse every `.toml` file below `dir` as a `T`, as it exists at `spec` (a branch, tag,
     /// `HEAD`, or bare baseline name). A directory absent at that ref yields nothing.
     pub fn items_at_ref<T: DeserializeOwned>(

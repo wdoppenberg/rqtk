@@ -20,3 +20,6 @@ success_criteria = "lint and coverage succeed with networking disabled on a repo
 [[verification.activities]]
 id = "VA-CORE-0017-01"
 name = "Lint and coverage run offline"
+procedure = "Inspected every network entry point: gix clone and fetch are only in rqtk_core::sync, behind the `network` feature, and only `rqtk interfaces sync` calls it. Lint and coverage load the vendored snapshot from files (rqtk_core::vendor::load) and never call sync."
+status = "Passed"
+executed_at = "2026-11-04"

@@ -4,7 +4,7 @@ category = "CLI"
 type = "Functional"
 state = "Draft"
 priority = "Medium"
-statement = "rqtk rehash, review, open and add-activity shall refuse an `<alias>:<ID>` target with a usage error."
+statement = "rqtk review, open and add-activity shall refuse an `<alias>:<ID>` target with a usage error."
 rationale = "Vendored requirements belong to the provider; changing them locally would fork the contract."
 
 [trace]

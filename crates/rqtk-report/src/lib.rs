@@ -52,6 +52,7 @@ pub fn render_report(input: &ReportInput<'_>) -> String {
     write_categories(&mut out, input);
     write_stakeholders(&mut out, set);
     write_needs(&mut out, set);
+    write_consumed(&mut out, set);
     write_trace_matrix(&mut out, set);
     write_verification_matrix(&mut out, input);
     write_verification_summary(&mut out, set, &closure);
@@ -453,6 +454,28 @@ fn write_needs(out: &mut String, set: &RequirementSet<Validated>) {
     out.push('\n');
 }
 
+/// Vendored interface requirements this repository consumes. Their text comes from the
+/// provider, so it is rendered as literal text: no Markdown, HTML or links of its own.
+fn write_consumed(out: &mut String, set: &RequirementSet<Validated>) {
+    let consumed = set.consumed_interfaces();
+    if consumed.is_empty() {
+        return;
+    }
+    out.push_str("## Consumed interfaces\n\nInterface requirements of other repositories, vendored at a pinned commit. Their text is the provider's; the provider status is informational and not counted above.\n\n| Interface | Title | Statement | Provider status | Consumed by |\n|---|---|---|---|---|\n");
+    for (c, consumers) in consumed {
+        let _ = writeln!(
+            out,
+            "| `{}` | {} | {} | {} | {} |",
+            c.id.replace('`', "'"),
+            literal(c.title.as_deref().unwrap_or("(not vendored)")),
+            literal(c.statement.as_deref().unwrap_or("")),
+            literal(c.provider_status.as_deref().unwrap_or("unknown")),
+            id_list(&consumers)
+        );
+    }
+    out.push('\n');
+}
+
 fn write_trace_matrix(out: &mut String, set: &RequirementSet<Validated>) {
     out.push_str("## Traceability matrix\n\n| ID | Title | Category | Parents | Satisfies |\n|---|---|---|---|---|\n");
     for id in ordered_ids(set) {
@@ -578,6 +601,27 @@ fn cell(s: &str) -> String {
     inline(s).replace('|', "\\|")
 }
 
+/// Text from an untrusted source, rendered literally inside a Markdown table cell: HTML
+/// special characters become entities and every Markdown punctuation character is escaped.
+fn literal(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in inline(s).chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\\' | '`' | '*' | '_' | '{' | '}' | '[' | ']' | '(' | ')' | '#' | '+' | '-' | '.'
+            | '!' | '|' | '~' | '=' | '@' | ':' => {
+                out.push('\\');
+                out.push(c);
+            }
+            c => out.push(c),
+        }
+    }
+    out
+}
+
 fn push_quote(out: &mut String, text: &str) {
     for line in text.trim().lines() {
         let _ = writeln!(out, "> {line}");
@@ -592,6 +636,18 @@ mod tests {
     #[test]
     fn cell_escapes_pipes_and_newlines() {
         assert_eq!(cell("a | b\nc"), "a \\| b c");
+    }
+
+    // rqtk: verifies VA-CLI-0021-01
+    #[test]
+    fn literal_escapes_markdown_and_html() {
+        let hostile = "<img src=x onerror=alert(1)> [click](https://evil) **bold** `code` | cell";
+        let out = literal(hostile);
+        assert!(!out.contains('<') && !out.contains('>'), "{out}");
+        assert!(out.contains("\\[click\\]\\(https\\:"), "{out}");
+        assert!(out.contains("\\*\\*bold\\*\\*"), "{out}");
+        assert!(out.contains("\\`code\\`"), "{out}");
+        assert!(out.contains("\\|"), "{out}");
     }
 
     #[test]
