@@ -389,11 +389,41 @@ impl RequirementSet<Validated> {
         evidence: &Evidence,
         changed_files: &[PathBuf],
     ) -> Result<Impact, RqtkError> {
-        let base_reqs: BTreeMap<RequirementId, Requirement> = self
-            .git
-            .items_at_ref::<Requirement>(base, &self.root)?
-            .into_iter()
+        // A requirement whose file is byte-for-byte the same at `base` is unchanged, unless an
+        // interface's spec files changed: only the other files are parsed.
+        let base_blobs = self.git.blobs_at(base, &self.root)?;
+        // Paths as git has them: relative to the work tree, computed from one canonical prefix.
+        let prefix = self.git.relative(&self.root);
+        let in_git = |path: &Path| prefix.join(path.strip_prefix(&self.root).unwrap_or(path));
+        let unchanged: BTreeSet<&RequirementId> = self
+            .files_by_id
+            .iter()
+            .filter(|(id, path)| {
+                self.requirements[*id].interface.is_none()
+                    && self
+                        .blob_ids
+                        .get(*path)
+                        .is_some_and(|oid| base_blobs.get(&in_git(path)) == Some(oid))
+            })
+            .map(|(id, _)| id)
+            .collect();
+        let unchanged_paths: BTreeSet<PathBuf> = unchanged
+            .iter()
+            .map(|id| in_git(&self.files_by_id[*id]))
+            .collect();
+        let base_reqs: BTreeMap<RequirementId, Requirement> = base_blobs
+            .iter()
+            .filter(|(path, _)| {
+                path.extension().is_some_and(|e| e == "toml") && !unchanged_paths.contains(*path)
+            })
+            .filter_map(|(_, oid)| self.git.parse_blob::<Requirement>(*oid))
             .map(|r| (r.id.clone(), r))
+            .collect();
+        let current_reqs: BTreeMap<RequirementId, Requirement> = self
+            .requirements
+            .iter()
+            .filter(|(id, _)| !unchanged.contains(id))
+            .map(|(id, r)| (id.clone(), r.clone()))
             .collect();
         let base_needs: BTreeMap<NeedId, Need> = self
             .git
@@ -402,11 +432,19 @@ impl RequirementSet<Validated> {
             .map(|n| (n.id.clone(), n))
             .collect();
 
-        let base_files = self.git.spec_files_at(base, &self.repo_root)?;
+        // Spec files at `base` are read only when an interface requirement is compared.
+        let base_files = if base_reqs.values().any(|r| r.interface.is_some()) {
+            Some(self.git.spec_files_at(base, &self.repo_root)?)
+        } else {
+            None
+        };
         let requirements = compare(
             &base_reqs,
-            &self.requirements,
-            |_, r| crate::git::hash_in(r, &base_files),
+            &current_reqs,
+            |_, r| match &base_files {
+                Some(files) => crate::git::hash_in(r, files),
+                None => r.compute_content_hash(None),
+            },
             |id, _| self.content_hash(id),
         );
         let needs = compare(
@@ -470,16 +508,23 @@ impl RequirementSet<Validated> {
             .map(|c| c.id.as_str())
             .collect();
         let changed_files: BTreeSet<&Path> = changed_files.iter().map(PathBuf::as_path).collect();
+        let mut links_of: BTreeMap<&str, Vec<&SourceLink>> = BTreeMap::new();
+        for l in links {
+            links_of.entry(l.activity.as_str()).or_default().push(l);
+        }
         let mut reverify = Vec::new();
         for (req_id, req) in &self.requirements {
             for activity in &req.verification.activities {
+                let linked: Vec<&SourceLink> = links_of
+                    .get(activity.id.as_str())
+                    .cloned()
+                    .unwrap_or_default();
                 let mut reasons = Vec::new();
                 if changed_reqs.contains(req_id.0.as_str()) {
                     reasons.push(ReverifyReason::RequirementChanged);
                 }
-                let test_files: BTreeSet<&Path> = links
+                let test_files: BTreeSet<&Path> = linked
                     .iter()
-                    .filter(|l| l.activity == activity.id)
                     .map(|l| l.path.as_path())
                     .filter(|p| changed_files.contains(p))
                     .collect();
@@ -487,8 +532,6 @@ impl RequirementSet<Validated> {
                     path: p.to_path_buf(),
                 }));
                 if !reasons.is_empty() {
-                    let linked: Vec<&SourceLink> =
-                        links.iter().filter(|l| l.activity == activity.id).collect();
                     let tests = linked
                         .iter()
                         .map(|l| {
@@ -531,9 +574,23 @@ impl RequirementSet<Validated> {
 }
 
 impl RequirementSet<Validated> {
+    /// Requirements added, removed and modified between revisions `from` and `to`.
+    pub fn diff(&self, from: &str, to: &str) -> Result<crate::git::RequirementDiff, RqtkError> {
+        // Blobs loaded here need no second read to tell whether they are interfaces.
+        let known = self
+            .files_by_id
+            .iter()
+            .filter_map(|(id, path)| {
+                let oid = self.blob_ids.get(path)?;
+                Some((*oid, self.requirements[id].interface.is_some()))
+            })
+            .collect();
+        self.git
+            .diff_refs(from, to, &self.root, &self.repo_root, &known)
+    }
+
     /// Vendored interface requirements whose hash in the lockfile differs from `base`.
     fn interface_changes(&self, base: &str) -> Result<Vec<ItemChange>, RqtkError> {
-        use crate::spec::SpecFiles as _;
         let hashes = |lock: Option<&crate::vendor::Lockfile>| -> BTreeMap<String, String> {
             lock.into_iter()
                 .flat_map(|l| &l.sources)
@@ -546,15 +603,13 @@ impl RequirementSet<Validated> {
         };
         let base_lock = match self
             .git
-            .spec_files_at(base, &self.repo_root)?
-            .read(crate::vendor::LOCK_PATH)
+            .read_at(base, &self.repo_root, crate::vendor::LOCK_PATH)?
         {
-            Ok(Some(bytes)) => Some(
+            Some(bytes) => Some(
                 crate::vendor::Lockfile::parse(&String::from_utf8_lossy(&bytes))
                     .map_err(|e| crate::vendor::Lockfile::unreadable(&format!("at {base}: {e}")))?,
             ),
-            Ok(None) => None,
-            Err(e) => return Err(crate::vendor::Lockfile::unreadable(&e.to_string())),
+            None => None,
         };
         let before = hashes(base_lock.as_ref());
         let after = hashes(self.vendored.lock.as_ref());

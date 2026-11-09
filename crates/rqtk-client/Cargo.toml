@@ -26,3 +26,6 @@ tempfile = "3"
 
 [dev-dependencies]
 rqtk-macros = { path = "../rqtk-macros" }
+toml = { workspace = true }
+public-api = "0.52"
+rustdoc-json = "0.9"

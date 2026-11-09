@@ -15,7 +15,7 @@ satisfies = ["NEED-0007"]
 method = "Test"
 level = "System"
 phase = "Development"
-success_criteria = "The benchmark on the generated fixture stays under both limits on the CI runner."
+success_criteria = "The benchmark on the generated fixture stays under both limits in an optimised build on the CI runner (a CI step runs it with --release); unoptimised test runs, whose results are recorded as evidence, hold it to limits ten times as loose."
 
 [[verification.activities]]
 id = "VA-CLIENT-0020-01"

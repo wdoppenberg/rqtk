@@ -1,0 +1,1883 @@
+pub mod rqtk_client
+pub use rqtk_client::ActivityEvidence
+pub use rqtk_client::ActivityState
+pub use rqtk_client::ActivityStatus
+pub use rqtk_client::ChangeKind
+pub use rqtk_client::ClosureStatus
+pub use rqtk_client::Config
+pub use rqtk_client::ConsumedSummary
+pub use rqtk_client::Context
+pub use rqtk_client::Diagnostic
+pub use rqtk_client::Direction
+pub use rqtk_client::Downstream
+pub use rqtk_client::EntityRef
+pub use rqtk_client::Impact
+pub use rqtk_client::InterfaceContext
+pub use rqtk_client::ItemChange
+pub use rqtk_client::Location
+pub use rqtk_client::Need
+pub use rqtk_client::NeedContext
+pub use rqtk_client::Outcome
+pub use rqtk_client::Requirement
+pub use rqtk_client::RequirementContext
+pub use rqtk_client::RequirementVerification
+pub use rqtk_client::Reverify
+pub use rqtk_client::ReverifyReason
+pub use rqtk_client::Severity
+pub use rqtk_client::SourceLink
+pub use rqtk_client::Stakeholder
+pub use rqtk_client::StakeholderContext
+pub use rqtk_client::Summary
+pub use rqtk_client::SuspectReason
+pub use rqtk_client::TraceLink
+pub use rqtk_client::VerificationActivity
+pub mod rqtk_client::schemas
+pub fn rqtk_client::schemas::document_schema<T: schemars::JsonSchema>(&str) -> serde_json::value::Value
+pub fn rqtk_client::schemas::output_schema<T: schemars::JsonSchema>() -> serde_json::value::Value
+pub fn rqtk_client::schemas::pin_schema_field(serde_json::value::Value, &str) -> serde_json::value::Value
+pub fn rqtk_client::schemas::type_schemas() -> alloc::vec::Vec<(&'static str, serde_json::value::Value)>
+pub fn rqtk_client::schemas::view_schemas() -> alloc::vec::Vec<(&'static str, serde_json::value::Value)>
+pub mod rqtk_client::views
+pub enum rqtk_client::views::Modification
+pub rqtk_client::views::Modification::Cosmetic
+pub rqtk_client::views::Modification::Semantic
+impl core::clone::Clone for rqtk_client::views::Modification
+pub fn rqtk_client::views::Modification::clone(&self) -> rqtk_client::views::Modification
+impl core::cmp::Eq for rqtk_client::views::Modification
+impl core::cmp::PartialEq for rqtk_client::views::Modification
+pub fn rqtk_client::views::Modification::eq(&self, &rqtk_client::views::Modification) -> bool
+impl core::fmt::Debug for rqtk_client::views::Modification
+pub fn rqtk_client::views::Modification::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for rqtk_client::views::Modification
+impl core::marker::StructuralPartialEq for rqtk_client::views::Modification
+impl schemars::JsonSchema for rqtk_client::views::Modification
+pub fn rqtk_client::views::Modification::inline_schema() -> bool
+pub fn rqtk_client::views::Modification::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::Modification::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::Modification::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::Modification
+pub fn rqtk_client::views::Modification::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::Modification
+impl core::marker::Send for rqtk_client::views::Modification
+impl core::marker::Sync for rqtk_client::views::Modification
+impl core::marker::Unpin for rqtk_client::views::Modification
+impl core::marker::UnsafeUnpin for rqtk_client::views::Modification
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::Modification
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::Modification
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::views::Modification where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::views::Modification::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::views::Modification where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::views::Modification where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::views::Modification where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::views::Modification::equivalent(&self, &K) -> bool
+pub fn rqtk_client::views::Modification::equivalent(&self, &K) -> bool
+pub fn rqtk_client::views::Modification::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::views::Modification where U: core::convert::From<T>
+pub fn rqtk_client::views::Modification::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::Modification where U: core::convert::Into<T>
+pub type rqtk_client::views::Modification::Error = core::convert::Infallible
+pub fn rqtk_client::views::Modification::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::Modification where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::Modification::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::Modification::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::Modification where T: core::clone::Clone
+pub type rqtk_client::views::Modification::Owned = T
+pub fn rqtk_client::views::Modification::clone_into(&self, &mut T)
+pub fn rqtk_client::views::Modification::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::Modification where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::Modification::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::Modification where T: ?core::marker::Sized
+pub fn rqtk_client::views::Modification::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::Modification where T: ?core::marker::Sized
+pub fn rqtk_client::views::Modification::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::Modification where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::Modification::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::Modification
+pub fn rqtk_client::views::Modification::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::Modification
+pub type rqtk_client::views::Modification::Init = T
+pub const rqtk_client::views::Modification::ALIGN: usize
+pub unsafe fn rqtk_client::views::Modification::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::Modification::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::Modification::drop(usize)
+pub unsafe fn rqtk_client::views::Modification::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::Modification where T: core::clone::Clone
+pub fn rqtk_client::views::Modification::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::Modification where T: ?core::marker::Sized
+pub fn rqtk_client::views::Modification::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::Modification::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::Modification
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::Modification
+impl<T> typenum::type_operators::Same for rqtk_client::views::Modification
+pub type rqtk_client::views::Modification::Output = T
+pub struct rqtk_client::views::BaselineEntry
+pub rqtk_client::views::BaselineEntry::message: alloc::string::String
+pub rqtk_client::views::BaselineEntry::name: alloc::string::String
+pub rqtk_client::views::BaselineEntry::tag: alloc::string::String
+pub rqtk_client::views::BaselineEntry::timestamp: core::option::Option<alloc::string::String>
+impl core::clone::Clone for rqtk_client::views::BaselineEntry
+pub fn rqtk_client::views::BaselineEntry::clone(&self) -> rqtk_client::views::BaselineEntry
+impl core::fmt::Debug for rqtk_client::views::BaselineEntry
+pub fn rqtk_client::views::BaselineEntry::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::BaselineEntry
+pub fn rqtk_client::views::BaselineEntry::inline_schema() -> bool
+pub fn rqtk_client::views::BaselineEntry::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::BaselineEntry::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::BaselineEntry::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::BaselineEntry
+pub fn rqtk_client::views::BaselineEntry::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::BaselineEntry
+impl core::marker::Send for rqtk_client::views::BaselineEntry
+impl core::marker::Sync for rqtk_client::views::BaselineEntry
+impl core::marker::Unpin for rqtk_client::views::BaselineEntry
+impl core::marker::UnsafeUnpin for rqtk_client::views::BaselineEntry
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::BaselineEntry
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::BaselineEntry
+impl<T, U> core::convert::Into<U> for rqtk_client::views::BaselineEntry where U: core::convert::From<T>
+pub fn rqtk_client::views::BaselineEntry::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::BaselineEntry where U: core::convert::Into<T>
+pub type rqtk_client::views::BaselineEntry::Error = core::convert::Infallible
+pub fn rqtk_client::views::BaselineEntry::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::BaselineEntry where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::BaselineEntry::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::BaselineEntry::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::BaselineEntry where T: core::clone::Clone
+pub type rqtk_client::views::BaselineEntry::Owned = T
+pub fn rqtk_client::views::BaselineEntry::clone_into(&self, &mut T)
+pub fn rqtk_client::views::BaselineEntry::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::BaselineEntry where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::BaselineEntry::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::BaselineEntry where T: ?core::marker::Sized
+pub fn rqtk_client::views::BaselineEntry::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::BaselineEntry where T: ?core::marker::Sized
+pub fn rqtk_client::views::BaselineEntry::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::BaselineEntry where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::BaselineEntry::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::BaselineEntry
+pub fn rqtk_client::views::BaselineEntry::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::BaselineEntry
+pub type rqtk_client::views::BaselineEntry::Init = T
+pub const rqtk_client::views::BaselineEntry::ALIGN: usize
+pub unsafe fn rqtk_client::views::BaselineEntry::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::BaselineEntry::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::BaselineEntry::drop(usize)
+pub unsafe fn rqtk_client::views::BaselineEntry::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::BaselineEntry where T: core::clone::Clone
+pub fn rqtk_client::views::BaselineEntry::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::BaselineEntry where T: ?core::marker::Sized
+pub fn rqtk_client::views::BaselineEntry::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::BaselineEntry::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::BaselineEntry
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::BaselineEntry
+impl<T> typenum::type_operators::Same for rqtk_client::views::BaselineEntry
+pub type rqtk_client::views::BaselineEntry::Output = T
+pub struct rqtk_client::views::BaselinesDoc
+pub rqtk_client::views::BaselinesDoc::baselines: alloc::vec::Vec<rqtk_client::views::BaselineEntry>
+pub rqtk_client::views::BaselinesDoc::schema: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::BaselinesDoc
+pub fn rqtk_client::views::BaselinesDoc::clone(&self) -> rqtk_client::views::BaselinesDoc
+impl core::fmt::Debug for rqtk_client::views::BaselinesDoc
+pub fn rqtk_client::views::BaselinesDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::BaselinesDoc
+pub fn rqtk_client::views::BaselinesDoc::inline_schema() -> bool
+pub fn rqtk_client::views::BaselinesDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::BaselinesDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::BaselinesDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::BaselinesDoc
+pub fn rqtk_client::views::BaselinesDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::BaselinesDoc
+impl core::marker::Send for rqtk_client::views::BaselinesDoc
+impl core::marker::Sync for rqtk_client::views::BaselinesDoc
+impl core::marker::Unpin for rqtk_client::views::BaselinesDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::BaselinesDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::BaselinesDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::BaselinesDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::BaselinesDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::BaselinesDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::BaselinesDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::BaselinesDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::BaselinesDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::BaselinesDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::BaselinesDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::BaselinesDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::BaselinesDoc where T: core::clone::Clone
+pub type rqtk_client::views::BaselinesDoc::Owned = T
+pub fn rqtk_client::views::BaselinesDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::BaselinesDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::BaselinesDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::BaselinesDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::BaselinesDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::BaselinesDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::BaselinesDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::BaselinesDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::BaselinesDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::BaselinesDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::BaselinesDoc
+pub fn rqtk_client::views::BaselinesDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::BaselinesDoc
+pub type rqtk_client::views::BaselinesDoc::Init = T
+pub const rqtk_client::views::BaselinesDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::BaselinesDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::BaselinesDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::BaselinesDoc::drop(usize)
+pub unsafe fn rqtk_client::views::BaselinesDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::BaselinesDoc where T: core::clone::Clone
+pub fn rqtk_client::views::BaselinesDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::BaselinesDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::BaselinesDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::BaselinesDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::BaselinesDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::BaselinesDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::BaselinesDoc
+pub type rqtk_client::views::BaselinesDoc::Output = T
+pub struct rqtk_client::views::Commit
+pub rqtk_client::views::Commit::author: alloc::string::String
+pub rqtk_client::views::Commit::hash: alloc::string::String
+pub rqtk_client::views::Commit::message: alloc::string::String
+pub rqtk_client::views::Commit::timestamp: core::option::Option<alloc::string::String>
+impl core::clone::Clone for rqtk_client::views::Commit
+pub fn rqtk_client::views::Commit::clone(&self) -> rqtk_client::views::Commit
+impl core::fmt::Debug for rqtk_client::views::Commit
+pub fn rqtk_client::views::Commit::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::Commit
+pub fn rqtk_client::views::Commit::inline_schema() -> bool
+pub fn rqtk_client::views::Commit::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::Commit::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::Commit::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::Commit
+pub fn rqtk_client::views::Commit::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::Commit
+impl core::marker::Send for rqtk_client::views::Commit
+impl core::marker::Sync for rqtk_client::views::Commit
+impl core::marker::Unpin for rqtk_client::views::Commit
+impl core::marker::UnsafeUnpin for rqtk_client::views::Commit
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::Commit
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::Commit
+impl<T, U> core::convert::Into<U> for rqtk_client::views::Commit where U: core::convert::From<T>
+pub fn rqtk_client::views::Commit::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::Commit where U: core::convert::Into<T>
+pub type rqtk_client::views::Commit::Error = core::convert::Infallible
+pub fn rqtk_client::views::Commit::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::Commit where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::Commit::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::Commit::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::Commit where T: core::clone::Clone
+pub type rqtk_client::views::Commit::Owned = T
+pub fn rqtk_client::views::Commit::clone_into(&self, &mut T)
+pub fn rqtk_client::views::Commit::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::Commit where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::Commit::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::Commit where T: ?core::marker::Sized
+pub fn rqtk_client::views::Commit::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::Commit where T: ?core::marker::Sized
+pub fn rqtk_client::views::Commit::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::Commit where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::Commit::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::Commit
+pub fn rqtk_client::views::Commit::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::Commit
+pub type rqtk_client::views::Commit::Init = T
+pub const rqtk_client::views::Commit::ALIGN: usize
+pub unsafe fn rqtk_client::views::Commit::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::Commit::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::Commit::drop(usize)
+pub unsafe fn rqtk_client::views::Commit::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::Commit where T: core::clone::Clone
+pub fn rqtk_client::views::Commit::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::Commit where T: ?core::marker::Sized
+pub fn rqtk_client::views::Commit::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::Commit::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::Commit
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::Commit
+impl<T> typenum::type_operators::Same for rqtk_client::views::Commit
+pub type rqtk_client::views::Commit::Output = T
+pub struct rqtk_client::views::ConsumedStatus
+pub rqtk_client::views::ConsumedStatus::consumers: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::views::ConsumedStatus::interface: rqtk_core::query::ConsumedSummary
+impl core::clone::Clone for rqtk_client::views::ConsumedStatus
+pub fn rqtk_client::views::ConsumedStatus::clone(&self) -> rqtk_client::views::ConsumedStatus
+impl core::fmt::Debug for rqtk_client::views::ConsumedStatus
+pub fn rqtk_client::views::ConsumedStatus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::ConsumedStatus
+pub fn rqtk_client::views::ConsumedStatus::inline_schema() -> bool
+pub fn rqtk_client::views::ConsumedStatus::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::ConsumedStatus::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::ConsumedStatus::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::ConsumedStatus
+pub fn rqtk_client::views::ConsumedStatus::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::ConsumedStatus
+impl core::marker::Send for rqtk_client::views::ConsumedStatus
+impl core::marker::Sync for rqtk_client::views::ConsumedStatus
+impl core::marker::Unpin for rqtk_client::views::ConsumedStatus
+impl core::marker::UnsafeUnpin for rqtk_client::views::ConsumedStatus
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::ConsumedStatus
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::ConsumedStatus
+impl<T, U> core::convert::Into<U> for rqtk_client::views::ConsumedStatus where U: core::convert::From<T>
+pub fn rqtk_client::views::ConsumedStatus::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::ConsumedStatus where U: core::convert::Into<T>
+pub type rqtk_client::views::ConsumedStatus::Error = core::convert::Infallible
+pub fn rqtk_client::views::ConsumedStatus::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::ConsumedStatus where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::ConsumedStatus::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::ConsumedStatus::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::ConsumedStatus where T: core::clone::Clone
+pub type rqtk_client::views::ConsumedStatus::Owned = T
+pub fn rqtk_client::views::ConsumedStatus::clone_into(&self, &mut T)
+pub fn rqtk_client::views::ConsumedStatus::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::ConsumedStatus where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::ConsumedStatus::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::ConsumedStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::ConsumedStatus::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::ConsumedStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::ConsumedStatus::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::ConsumedStatus where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::ConsumedStatus::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::ConsumedStatus
+pub fn rqtk_client::views::ConsumedStatus::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::ConsumedStatus
+pub type rqtk_client::views::ConsumedStatus::Init = T
+pub const rqtk_client::views::ConsumedStatus::ALIGN: usize
+pub unsafe fn rqtk_client::views::ConsumedStatus::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::ConsumedStatus::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::ConsumedStatus::drop(usize)
+pub unsafe fn rqtk_client::views::ConsumedStatus::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::ConsumedStatus where T: core::clone::Clone
+pub fn rqtk_client::views::ConsumedStatus::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::ConsumedStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::ConsumedStatus::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::ConsumedStatus::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::ConsumedStatus
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::ConsumedStatus
+impl<T> typenum::type_operators::Same for rqtk_client::views::ConsumedStatus
+pub type rqtk_client::views::ConsumedStatus::Output = T
+pub struct rqtk_client::views::ContextDoc
+pub rqtk_client::views::ContextDoc::context: rqtk_core::query::Context
+pub rqtk_client::views::ContextDoc::schema: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::ContextDoc
+pub fn rqtk_client::views::ContextDoc::clone(&self) -> rqtk_client::views::ContextDoc
+impl core::fmt::Debug for rqtk_client::views::ContextDoc
+pub fn rqtk_client::views::ContextDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::ContextDoc
+pub fn rqtk_client::views::ContextDoc::inline_schema() -> bool
+pub fn rqtk_client::views::ContextDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::ContextDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::ContextDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::ContextDoc
+pub fn rqtk_client::views::ContextDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::ContextDoc
+impl core::marker::Send for rqtk_client::views::ContextDoc
+impl core::marker::Sync for rqtk_client::views::ContextDoc
+impl core::marker::Unpin for rqtk_client::views::ContextDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::ContextDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::ContextDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::ContextDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::ContextDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::ContextDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::ContextDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::ContextDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::ContextDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::ContextDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::ContextDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::ContextDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::ContextDoc where T: core::clone::Clone
+pub type rqtk_client::views::ContextDoc::Owned = T
+pub fn rqtk_client::views::ContextDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::ContextDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::ContextDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::ContextDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::ContextDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::ContextDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::ContextDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::ContextDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::ContextDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::ContextDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::ContextDoc
+pub fn rqtk_client::views::ContextDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::ContextDoc
+pub type rqtk_client::views::ContextDoc::Init = T
+pub const rqtk_client::views::ContextDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::ContextDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::ContextDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::ContextDoc::drop(usize)
+pub unsafe fn rqtk_client::views::ContextDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::ContextDoc where T: core::clone::Clone
+pub fn rqtk_client::views::ContextDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::ContextDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::ContextDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::ContextDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::ContextDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::ContextDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::ContextDoc
+pub type rqtk_client::views::ContextDoc::Output = T
+pub struct rqtk_client::views::CoverageDoc
+pub rqtk_client::views::CoverageDoc::consumed: alloc::vec::Vec<rqtk_client::views::ConsumedStatus>
+pub rqtk_client::views::CoverageDoc::needs: alloc::vec::Vec<rqtk_client::views::NeedStatus>
+pub rqtk_client::views::CoverageDoc::requirements: alloc::vec::Vec<rqtk_client::views::RequirementStatus>
+pub rqtk_client::views::CoverageDoc::schema: alloc::string::String
+pub rqtk_client::views::CoverageDoc::summary: alloc::collections::btree::map::BTreeMap<rqtk_core::status::ClosureStatus, usize>
+pub rqtk_client::views::CoverageDoc::unsatisfied_needs: usize
+impl core::clone::Clone for rqtk_client::views::CoverageDoc
+pub fn rqtk_client::views::CoverageDoc::clone(&self) -> rqtk_client::views::CoverageDoc
+impl core::fmt::Debug for rqtk_client::views::CoverageDoc
+pub fn rqtk_client::views::CoverageDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::CoverageDoc
+pub fn rqtk_client::views::CoverageDoc::inline_schema() -> bool
+pub fn rqtk_client::views::CoverageDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::CoverageDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::CoverageDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::CoverageDoc
+pub fn rqtk_client::views::CoverageDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::CoverageDoc
+impl core::marker::Send for rqtk_client::views::CoverageDoc
+impl core::marker::Sync for rqtk_client::views::CoverageDoc
+impl core::marker::Unpin for rqtk_client::views::CoverageDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::CoverageDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::CoverageDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::CoverageDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::CoverageDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::CoverageDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::CoverageDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::CoverageDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::CoverageDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::CoverageDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::CoverageDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::CoverageDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::CoverageDoc where T: core::clone::Clone
+pub type rqtk_client::views::CoverageDoc::Owned = T
+pub fn rqtk_client::views::CoverageDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::CoverageDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::CoverageDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::CoverageDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::CoverageDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::CoverageDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::CoverageDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::CoverageDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::CoverageDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::CoverageDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::CoverageDoc
+pub fn rqtk_client::views::CoverageDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::CoverageDoc
+pub type rqtk_client::views::CoverageDoc::Init = T
+pub const rqtk_client::views::CoverageDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::CoverageDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::CoverageDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::CoverageDoc::drop(usize)
+pub unsafe fn rqtk_client::views::CoverageDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::CoverageDoc where T: core::clone::Clone
+pub fn rqtk_client::views::CoverageDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::CoverageDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::CoverageDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::CoverageDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::CoverageDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::CoverageDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::CoverageDoc
+pub type rqtk_client::views::CoverageDoc::Output = T
+pub struct rqtk_client::views::DiffDoc
+pub rqtk_client::views::DiffDoc::added: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::views::DiffDoc::from: alloc::string::String
+pub rqtk_client::views::DiffDoc::modified: alloc::vec::Vec<rqtk_client::views::Modified>
+pub rqtk_client::views::DiffDoc::removed: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::views::DiffDoc::schema: alloc::string::String
+pub rqtk_client::views::DiffDoc::to: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::DiffDoc
+pub fn rqtk_client::views::DiffDoc::clone(&self) -> rqtk_client::views::DiffDoc
+impl core::fmt::Debug for rqtk_client::views::DiffDoc
+pub fn rqtk_client::views::DiffDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::DiffDoc
+pub fn rqtk_client::views::DiffDoc::inline_schema() -> bool
+pub fn rqtk_client::views::DiffDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::DiffDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::DiffDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::DiffDoc
+pub fn rqtk_client::views::DiffDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::DiffDoc
+impl core::marker::Send for rqtk_client::views::DiffDoc
+impl core::marker::Sync for rqtk_client::views::DiffDoc
+impl core::marker::Unpin for rqtk_client::views::DiffDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::DiffDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::DiffDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::DiffDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::DiffDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::DiffDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::DiffDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::DiffDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::DiffDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::DiffDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::DiffDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::DiffDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::DiffDoc where T: core::clone::Clone
+pub type rqtk_client::views::DiffDoc::Owned = T
+pub fn rqtk_client::views::DiffDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::DiffDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::DiffDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::DiffDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::DiffDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::DiffDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::DiffDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::DiffDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::DiffDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::DiffDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::DiffDoc
+pub fn rqtk_client::views::DiffDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::DiffDoc
+pub type rqtk_client::views::DiffDoc::Init = T
+pub const rqtk_client::views::DiffDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::DiffDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::DiffDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::DiffDoc::drop(usize)
+pub unsafe fn rqtk_client::views::DiffDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::DiffDoc where T: core::clone::Clone
+pub fn rqtk_client::views::DiffDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::DiffDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::DiffDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::DiffDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::DiffDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::DiffDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::DiffDoc
+pub type rqtk_client::views::DiffDoc::Output = T
+pub struct rqtk_client::views::HistoryDoc
+pub rqtk_client::views::HistoryDoc::commits: alloc::vec::Vec<rqtk_client::views::Commit>
+pub rqtk_client::views::HistoryDoc::id: alloc::string::String
+pub rqtk_client::views::HistoryDoc::schema: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::HistoryDoc
+pub fn rqtk_client::views::HistoryDoc::clone(&self) -> rqtk_client::views::HistoryDoc
+impl core::fmt::Debug for rqtk_client::views::HistoryDoc
+pub fn rqtk_client::views::HistoryDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::HistoryDoc
+pub fn rqtk_client::views::HistoryDoc::inline_schema() -> bool
+pub fn rqtk_client::views::HistoryDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::HistoryDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::HistoryDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::HistoryDoc
+pub fn rqtk_client::views::HistoryDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::HistoryDoc
+impl core::marker::Send for rqtk_client::views::HistoryDoc
+impl core::marker::Sync for rqtk_client::views::HistoryDoc
+impl core::marker::Unpin for rqtk_client::views::HistoryDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::HistoryDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::HistoryDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::HistoryDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::HistoryDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::HistoryDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::HistoryDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::HistoryDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::HistoryDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::HistoryDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::HistoryDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::HistoryDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::HistoryDoc where T: core::clone::Clone
+pub type rqtk_client::views::HistoryDoc::Owned = T
+pub fn rqtk_client::views::HistoryDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::HistoryDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::HistoryDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::HistoryDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::HistoryDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::HistoryDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::HistoryDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::HistoryDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::HistoryDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::HistoryDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::HistoryDoc
+pub fn rqtk_client::views::HistoryDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::HistoryDoc
+pub type rqtk_client::views::HistoryDoc::Init = T
+pub const rqtk_client::views::HistoryDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::HistoryDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::HistoryDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::HistoryDoc::drop(usize)
+pub unsafe fn rqtk_client::views::HistoryDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::HistoryDoc where T: core::clone::Clone
+pub fn rqtk_client::views::HistoryDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::HistoryDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::HistoryDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::HistoryDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::HistoryDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::HistoryDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::HistoryDoc
+pub type rqtk_client::views::HistoryDoc::Output = T
+pub struct rqtk_client::views::ImpactDoc
+pub rqtk_client::views::ImpactDoc::impact: rqtk_core::query::Impact
+pub rqtk_client::views::ImpactDoc::schema: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::ImpactDoc
+pub fn rqtk_client::views::ImpactDoc::clone(&self) -> rqtk_client::views::ImpactDoc
+impl core::fmt::Debug for rqtk_client::views::ImpactDoc
+pub fn rqtk_client::views::ImpactDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::ImpactDoc
+pub fn rqtk_client::views::ImpactDoc::inline_schema() -> bool
+pub fn rqtk_client::views::ImpactDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::ImpactDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::ImpactDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::ImpactDoc
+pub fn rqtk_client::views::ImpactDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::ImpactDoc
+impl core::marker::Send for rqtk_client::views::ImpactDoc
+impl core::marker::Sync for rqtk_client::views::ImpactDoc
+impl core::marker::Unpin for rqtk_client::views::ImpactDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::ImpactDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::ImpactDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::ImpactDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::ImpactDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::ImpactDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::ImpactDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::ImpactDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::ImpactDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::ImpactDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::ImpactDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::ImpactDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::ImpactDoc where T: core::clone::Clone
+pub type rqtk_client::views::ImpactDoc::Owned = T
+pub fn rqtk_client::views::ImpactDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::ImpactDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::ImpactDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::ImpactDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::ImpactDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::ImpactDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::ImpactDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::ImpactDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::ImpactDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::ImpactDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::ImpactDoc
+pub fn rqtk_client::views::ImpactDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::ImpactDoc
+pub type rqtk_client::views::ImpactDoc::Init = T
+pub const rqtk_client::views::ImpactDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::ImpactDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::ImpactDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::ImpactDoc::drop(usize)
+pub unsafe fn rqtk_client::views::ImpactDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::ImpactDoc where T: core::clone::Clone
+pub fn rqtk_client::views::ImpactDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::ImpactDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::ImpactDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::ImpactDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::ImpactDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::ImpactDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::ImpactDoc
+pub type rqtk_client::views::ImpactDoc::Output = T
+pub struct rqtk_client::views::LintDoc
+pub rqtk_client::views::LintDoc::checked: usize
+pub rqtk_client::views::LintDoc::diagnostics: alloc::vec::Vec<rqtk_core::diagnostic::Diagnostic>
+pub rqtk_client::views::LintDoc::errors: usize
+pub rqtk_client::views::LintDoc::schema: alloc::string::String
+pub rqtk_client::views::LintDoc::warnings: usize
+impl core::clone::Clone for rqtk_client::views::LintDoc
+pub fn rqtk_client::views::LintDoc::clone(&self) -> rqtk_client::views::LintDoc
+impl core::fmt::Debug for rqtk_client::views::LintDoc
+pub fn rqtk_client::views::LintDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::LintDoc
+pub fn rqtk_client::views::LintDoc::inline_schema() -> bool
+pub fn rqtk_client::views::LintDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::LintDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::LintDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::LintDoc
+pub fn rqtk_client::views::LintDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::LintDoc
+impl core::marker::Send for rqtk_client::views::LintDoc
+impl core::marker::Sync for rqtk_client::views::LintDoc
+impl core::marker::Unpin for rqtk_client::views::LintDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::LintDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::LintDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::LintDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::LintDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::LintDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::LintDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::LintDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::LintDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::LintDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::LintDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::LintDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::LintDoc where T: core::clone::Clone
+pub type rqtk_client::views::LintDoc::Owned = T
+pub fn rqtk_client::views::LintDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::LintDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::LintDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::LintDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::LintDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::LintDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::LintDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::LintDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::LintDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::LintDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::LintDoc
+pub fn rqtk_client::views::LintDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::LintDoc
+pub type rqtk_client::views::LintDoc::Init = T
+pub const rqtk_client::views::LintDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::LintDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::LintDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::LintDoc::drop(usize)
+pub unsafe fn rqtk_client::views::LintDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::LintDoc where T: core::clone::Clone
+pub fn rqtk_client::views::LintDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::LintDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::LintDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::LintDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::LintDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::LintDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::LintDoc
+pub type rqtk_client::views::LintDoc::Output = T
+pub struct rqtk_client::views::Modified
+pub rqtk_client::views::Modified::change: rqtk_client::views::Modification
+pub rqtk_client::views::Modified::id: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::Modified
+pub fn rqtk_client::views::Modified::clone(&self) -> rqtk_client::views::Modified
+impl core::fmt::Debug for rqtk_client::views::Modified
+pub fn rqtk_client::views::Modified::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::Modified
+pub fn rqtk_client::views::Modified::inline_schema() -> bool
+pub fn rqtk_client::views::Modified::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::Modified::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::Modified::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::Modified
+pub fn rqtk_client::views::Modified::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::Modified
+impl core::marker::Send for rqtk_client::views::Modified
+impl core::marker::Sync for rqtk_client::views::Modified
+impl core::marker::Unpin for rqtk_client::views::Modified
+impl core::marker::UnsafeUnpin for rqtk_client::views::Modified
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::Modified
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::Modified
+impl<T, U> core::convert::Into<U> for rqtk_client::views::Modified where U: core::convert::From<T>
+pub fn rqtk_client::views::Modified::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::Modified where U: core::convert::Into<T>
+pub type rqtk_client::views::Modified::Error = core::convert::Infallible
+pub fn rqtk_client::views::Modified::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::Modified where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::Modified::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::Modified::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::Modified where T: core::clone::Clone
+pub type rqtk_client::views::Modified::Owned = T
+pub fn rqtk_client::views::Modified::clone_into(&self, &mut T)
+pub fn rqtk_client::views::Modified::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::Modified where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::Modified::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::Modified where T: ?core::marker::Sized
+pub fn rqtk_client::views::Modified::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::Modified where T: ?core::marker::Sized
+pub fn rqtk_client::views::Modified::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::Modified where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::Modified::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::Modified
+pub fn rqtk_client::views::Modified::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::Modified
+pub type rqtk_client::views::Modified::Init = T
+pub const rqtk_client::views::Modified::ALIGN: usize
+pub unsafe fn rqtk_client::views::Modified::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::Modified::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::Modified::drop(usize)
+pub unsafe fn rqtk_client::views::Modified::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::Modified where T: core::clone::Clone
+pub fn rqtk_client::views::Modified::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::Modified where T: ?core::marker::Sized
+pub fn rqtk_client::views::Modified::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::Modified::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::Modified
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::Modified
+impl<T> typenum::type_operators::Same for rqtk_client::views::Modified
+pub type rqtk_client::views::Modified::Output = T
+pub struct rqtk_client::views::NeedStatus
+pub rqtk_client::views::NeedStatus::id: alloc::string::String
+pub rqtk_client::views::NeedStatus::satisfied_by: alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for rqtk_client::views::NeedStatus
+pub fn rqtk_client::views::NeedStatus::clone(&self) -> rqtk_client::views::NeedStatus
+impl core::fmt::Debug for rqtk_client::views::NeedStatus
+pub fn rqtk_client::views::NeedStatus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::NeedStatus
+pub fn rqtk_client::views::NeedStatus::inline_schema() -> bool
+pub fn rqtk_client::views::NeedStatus::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::NeedStatus::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::NeedStatus::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::NeedStatus
+pub fn rqtk_client::views::NeedStatus::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::NeedStatus
+impl core::marker::Send for rqtk_client::views::NeedStatus
+impl core::marker::Sync for rqtk_client::views::NeedStatus
+impl core::marker::Unpin for rqtk_client::views::NeedStatus
+impl core::marker::UnsafeUnpin for rqtk_client::views::NeedStatus
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::NeedStatus
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::NeedStatus
+impl<T, U> core::convert::Into<U> for rqtk_client::views::NeedStatus where U: core::convert::From<T>
+pub fn rqtk_client::views::NeedStatus::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::NeedStatus where U: core::convert::Into<T>
+pub type rqtk_client::views::NeedStatus::Error = core::convert::Infallible
+pub fn rqtk_client::views::NeedStatus::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::NeedStatus where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::NeedStatus::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::NeedStatus::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::NeedStatus where T: core::clone::Clone
+pub type rqtk_client::views::NeedStatus::Owned = T
+pub fn rqtk_client::views::NeedStatus::clone_into(&self, &mut T)
+pub fn rqtk_client::views::NeedStatus::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::NeedStatus where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::NeedStatus::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::NeedStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::NeedStatus::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::NeedStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::NeedStatus::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::NeedStatus where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::NeedStatus::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::NeedStatus
+pub fn rqtk_client::views::NeedStatus::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::NeedStatus
+pub type rqtk_client::views::NeedStatus::Init = T
+pub const rqtk_client::views::NeedStatus::ALIGN: usize
+pub unsafe fn rqtk_client::views::NeedStatus::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::NeedStatus::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::NeedStatus::drop(usize)
+pub unsafe fn rqtk_client::views::NeedStatus::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::NeedStatus where T: core::clone::Clone
+pub fn rqtk_client::views::NeedStatus::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::NeedStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::NeedStatus::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::NeedStatus::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::NeedStatus
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::NeedStatus
+impl<T> typenum::type_operators::Same for rqtk_client::views::NeedStatus
+pub type rqtk_client::views::NeedStatus::Output = T
+pub struct rqtk_client::views::RequirementStatus
+pub rqtk_client::views::RequirementStatus::id: alloc::string::String
+pub rqtk_client::views::RequirementStatus::verification: rqtk_core::status::RequirementVerification
+impl core::clone::Clone for rqtk_client::views::RequirementStatus
+pub fn rqtk_client::views::RequirementStatus::clone(&self) -> rqtk_client::views::RequirementStatus
+impl core::fmt::Debug for rqtk_client::views::RequirementStatus
+pub fn rqtk_client::views::RequirementStatus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::RequirementStatus
+pub fn rqtk_client::views::RequirementStatus::inline_schema() -> bool
+pub fn rqtk_client::views::RequirementStatus::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::RequirementStatus::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::RequirementStatus::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::RequirementStatus
+pub fn rqtk_client::views::RequirementStatus::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::RequirementStatus
+impl core::marker::Send for rqtk_client::views::RequirementStatus
+impl core::marker::Sync for rqtk_client::views::RequirementStatus
+impl core::marker::Unpin for rqtk_client::views::RequirementStatus
+impl core::marker::UnsafeUnpin for rqtk_client::views::RequirementStatus
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::RequirementStatus
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::RequirementStatus
+impl<T, U> core::convert::Into<U> for rqtk_client::views::RequirementStatus where U: core::convert::From<T>
+pub fn rqtk_client::views::RequirementStatus::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::RequirementStatus where U: core::convert::Into<T>
+pub type rqtk_client::views::RequirementStatus::Error = core::convert::Infallible
+pub fn rqtk_client::views::RequirementStatus::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::RequirementStatus where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::RequirementStatus::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::RequirementStatus::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::RequirementStatus where T: core::clone::Clone
+pub type rqtk_client::views::RequirementStatus::Owned = T
+pub fn rqtk_client::views::RequirementStatus::clone_into(&self, &mut T)
+pub fn rqtk_client::views::RequirementStatus::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::RequirementStatus where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::RequirementStatus::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::RequirementStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::RequirementStatus::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::RequirementStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::RequirementStatus::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::RequirementStatus where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::RequirementStatus::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::RequirementStatus
+pub fn rqtk_client::views::RequirementStatus::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::RequirementStatus
+pub type rqtk_client::views::RequirementStatus::Init = T
+pub const rqtk_client::views::RequirementStatus::ALIGN: usize
+pub unsafe fn rqtk_client::views::RequirementStatus::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::RequirementStatus::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::RequirementStatus::drop(usize)
+pub unsafe fn rqtk_client::views::RequirementStatus::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::RequirementStatus where T: core::clone::Clone
+pub fn rqtk_client::views::RequirementStatus::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::RequirementStatus where T: ?core::marker::Sized
+pub fn rqtk_client::views::RequirementStatus::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::RequirementStatus::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::RequirementStatus
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::RequirementStatus
+impl<T> typenum::type_operators::Same for rqtk_client::views::RequirementStatus
+pub type rqtk_client::views::RequirementStatus::Output = T
+pub struct rqtk_client::views::TraceDoc
+pub rqtk_client::views::TraceDoc::ancestors: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::views::TraceDoc::consumes: alloc::vec::Vec<rqtk_core::query::ConsumedSummary>
+pub rqtk_client::views::TraceDoc::descendants: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::views::TraceDoc::id: alloc::string::String
+pub rqtk_client::views::TraceDoc::schema: alloc::string::String
+impl core::clone::Clone for rqtk_client::views::TraceDoc
+pub fn rqtk_client::views::TraceDoc::clone(&self) -> rqtk_client::views::TraceDoc
+impl core::fmt::Debug for rqtk_client::views::TraceDoc
+pub fn rqtk_client::views::TraceDoc::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::views::TraceDoc
+pub fn rqtk_client::views::TraceDoc::inline_schema() -> bool
+pub fn rqtk_client::views::TraceDoc::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::views::TraceDoc::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::views::TraceDoc::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::views::TraceDoc
+pub fn rqtk_client::views::TraceDoc::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::views::TraceDoc
+impl core::marker::Send for rqtk_client::views::TraceDoc
+impl core::marker::Sync for rqtk_client::views::TraceDoc
+impl core::marker::Unpin for rqtk_client::views::TraceDoc
+impl core::marker::UnsafeUnpin for rqtk_client::views::TraceDoc
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::views::TraceDoc
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::views::TraceDoc
+impl<T, U> core::convert::Into<U> for rqtk_client::views::TraceDoc where U: core::convert::From<T>
+pub fn rqtk_client::views::TraceDoc::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::views::TraceDoc where U: core::convert::Into<T>
+pub type rqtk_client::views::TraceDoc::Error = core::convert::Infallible
+pub fn rqtk_client::views::TraceDoc::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::views::TraceDoc where U: core::convert::TryFrom<T>
+pub type rqtk_client::views::TraceDoc::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::views::TraceDoc::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::views::TraceDoc where T: core::clone::Clone
+pub type rqtk_client::views::TraceDoc::Owned = T
+pub fn rqtk_client::views::TraceDoc::clone_into(&self, &mut T)
+pub fn rqtk_client::views::TraceDoc::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::views::TraceDoc where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::views::TraceDoc::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::views::TraceDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::TraceDoc::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::views::TraceDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::TraceDoc::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::views::TraceDoc where T: core::clone::Clone
+pub unsafe fn rqtk_client::views::TraceDoc::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::views::TraceDoc
+pub fn rqtk_client::views::TraceDoc::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::views::TraceDoc
+pub type rqtk_client::views::TraceDoc::Init = T
+pub const rqtk_client::views::TraceDoc::ALIGN: usize
+pub unsafe fn rqtk_client::views::TraceDoc::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::views::TraceDoc::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::views::TraceDoc::drop(usize)
+pub unsafe fn rqtk_client::views::TraceDoc::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::views::TraceDoc where T: core::clone::Clone
+pub fn rqtk_client::views::TraceDoc::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::views::TraceDoc where T: ?core::marker::Sized
+pub fn rqtk_client::views::TraceDoc::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::views::TraceDoc::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::views::TraceDoc
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::views::TraceDoc
+impl<T> typenum::type_operators::Same for rqtk_client::views::TraceDoc
+pub type rqtk_client::views::TraceDoc::Output = T
+pub const rqtk_client::views::SCHEMA_VERSION: u32
+pub fn rqtk_client::views::schema_id(&str) -> alloc::string::String
+pub enum rqtk_client::ErrorCode
+pub rqtk_client::ErrorCode::Git
+pub rqtk_client::ErrorCode::InvalidConfig
+pub rqtk_client::ErrorCode::Io
+pub rqtk_client::ErrorCode::NotARepository
+pub rqtk_client::ErrorCode::NotFound
+pub rqtk_client::ErrorCode::RefNotFound
+pub rqtk_client::ErrorCode::RemoteFailed
+pub rqtk_client::ErrorCode::RemoteRefused
+pub rqtk_client::ErrorCode::UnsupportedSchema
+impl rqtk_client::ErrorCode
+pub const rqtk_client::ErrorCode::ALL: [rqtk_client::ErrorCode; 9]
+pub fn rqtk_client::ErrorCode::as_str(self) -> &'static str
+impl core::clone::Clone for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::clone(&self) -> rqtk_client::ErrorCode
+impl core::cmp::Eq for rqtk_client::ErrorCode
+impl core::cmp::PartialEq for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::eq(&self, &rqtk_client::ErrorCode) -> bool
+impl core::fmt::Debug for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for rqtk_client::ErrorCode
+impl core::marker::StructuralPartialEq for rqtk_client::ErrorCode
+impl schemars::JsonSchema for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::inline_schema() -> bool
+pub fn rqtk_client::ErrorCode::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::ErrorCode::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::ErrorCode::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::ErrorCode
+impl core::marker::Send for rqtk_client::ErrorCode
+impl core::marker::Sync for rqtk_client::ErrorCode
+impl core::marker::Unpin for rqtk_client::ErrorCode
+impl core::marker::UnsafeUnpin for rqtk_client::ErrorCode
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::ErrorCode
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::ErrorCode
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::ErrorCode where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::ErrorCode where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::ErrorCode where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::ErrorCode where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::equivalent(&self, &K) -> bool
+pub fn rqtk_client::ErrorCode::equivalent(&self, &K) -> bool
+pub fn rqtk_client::ErrorCode::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::ErrorCode where U: core::convert::From<T>
+pub fn rqtk_client::ErrorCode::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::ErrorCode where U: core::convert::Into<T>
+pub type rqtk_client::ErrorCode::Error = core::convert::Infallible
+pub fn rqtk_client::ErrorCode::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::ErrorCode where U: core::convert::TryFrom<T>
+pub type rqtk_client::ErrorCode::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::ErrorCode::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::ErrorCode where T: core::clone::Clone
+pub type rqtk_client::ErrorCode::Owned = T
+pub fn rqtk_client::ErrorCode::clone_into(&self, &mut T)
+pub fn rqtk_client::ErrorCode::to_owned(&self) -> T
+impl<T> alloc::string::ToString for rqtk_client::ErrorCode where T: core::fmt::Display + ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for rqtk_client::ErrorCode where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::ErrorCode where T: ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::ErrorCode where T: ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::ErrorCode where T: core::clone::Clone
+pub unsafe fn rqtk_client::ErrorCode::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::ErrorCode
+pub fn rqtk_client::ErrorCode::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::ErrorCode
+pub type rqtk_client::ErrorCode::Init = T
+pub const rqtk_client::ErrorCode::ALIGN: usize
+pub unsafe fn rqtk_client::ErrorCode::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::ErrorCode::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::ErrorCode::drop(usize)
+pub unsafe fn rqtk_client::ErrorCode::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::ErrorCode where T: core::clone::Clone
+pub fn rqtk_client::ErrorCode::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::ErrorCode where T: ?core::marker::Sized
+pub fn rqtk_client::ErrorCode::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::ErrorCode::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::ErrorCode
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::ErrorCode
+impl<T> typenum::type_operators::Same for rqtk_client::ErrorCode
+pub type rqtk_client::ErrorCode::Output = T
+pub enum rqtk_client::LinkKind
+pub rqtk_client::LinkKind::Activities
+pub rqtk_client::LinkKind::ConflictsWith
+pub rqtk_client::LinkKind::Consumes
+pub rqtk_client::LinkKind::DependsOn
+pub rqtk_client::LinkKind::DerivedFrom
+pub rqtk_client::LinkKind::Parents
+pub rqtk_client::LinkKind::Refines
+pub rqtk_client::LinkKind::Related
+pub rqtk_client::LinkKind::Satisfies
+pub rqtk_client::LinkKind::Stakeholders
+impl core::clone::Clone for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::clone(&self) -> rqtk_client::LinkKind
+impl core::cmp::Eq for rqtk_client::LinkKind
+impl core::cmp::Ord for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::cmp(&self, &rqtk_client::LinkKind) -> core::cmp::Ordering
+impl core::cmp::PartialEq for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::eq(&self, &rqtk_client::LinkKind) -> bool
+impl core::cmp::PartialOrd for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::partial_cmp(&self, &rqtk_client::LinkKind) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for rqtk_client::LinkKind
+impl core::marker::StructuralPartialEq for rqtk_client::LinkKind
+impl schemars::JsonSchema for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::inline_schema() -> bool
+pub fn rqtk_client::LinkKind::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::LinkKind::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::LinkKind::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::LinkKind
+impl core::marker::Send for rqtk_client::LinkKind
+impl core::marker::Sync for rqtk_client::LinkKind
+impl core::marker::Unpin for rqtk_client::LinkKind
+impl core::marker::UnsafeUnpin for rqtk_client::LinkKind
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::LinkKind
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::LinkKind
+impl<N> petgraph::graphmap::NodeTrait for rqtk_client::LinkKind where N: core::marker::Copy + core::cmp::Ord + core::hash::Hash
+impl<Q, K> equivalent::Comparable<K> for rqtk_client::LinkKind where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::LinkKind::compare(&self, &K) -> core::cmp::Ordering
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::LinkKind where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::LinkKind::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::LinkKind where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::LinkKind where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::LinkKind where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::LinkKind::equivalent(&self, &K) -> bool
+pub fn rqtk_client::LinkKind::equivalent(&self, &K) -> bool
+pub fn rqtk_client::LinkKind::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::LinkKind where U: core::convert::From<T>
+pub fn rqtk_client::LinkKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::LinkKind where U: core::convert::Into<T>
+pub type rqtk_client::LinkKind::Error = core::convert::Infallible
+pub fn rqtk_client::LinkKind::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::LinkKind where U: core::convert::TryFrom<T>
+pub type rqtk_client::LinkKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::LinkKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::LinkKind where T: core::clone::Clone
+pub type rqtk_client::LinkKind::Owned = T
+pub fn rqtk_client::LinkKind::clone_into(&self, &mut T)
+pub fn rqtk_client::LinkKind::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::LinkKind where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::LinkKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::LinkKind where T: ?core::marker::Sized
+pub fn rqtk_client::LinkKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::LinkKind where T: ?core::marker::Sized
+pub fn rqtk_client::LinkKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::LinkKind where T: core::clone::Clone
+pub unsafe fn rqtk_client::LinkKind::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::LinkKind
+pub fn rqtk_client::LinkKind::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::LinkKind
+pub type rqtk_client::LinkKind::Init = T
+pub const rqtk_client::LinkKind::ALIGN: usize
+pub unsafe fn rqtk_client::LinkKind::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::LinkKind::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::LinkKind::drop(usize)
+pub unsafe fn rqtk_client::LinkKind::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::LinkKind where T: core::clone::Clone
+pub fn rqtk_client::LinkKind::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::LinkKind where T: ?core::marker::Sized
+pub fn rqtk_client::LinkKind::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::LinkKind::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::LinkKind
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::LinkKind
+impl<T> typenum::type_operators::Same for rqtk_client::LinkKind
+pub type rqtk_client::LinkKind::Output = T
+pub enum rqtk_client::Origin
+pub rqtk_client::Origin::Checkout
+pub rqtk_client::Origin::Checkout::path: std::path::PathBuf
+pub rqtk_client::Origin::Ref
+pub rqtk_client::Origin::Ref::path: std::path::PathBuf
+pub rqtk_client::Origin::Ref::reference: alloc::string::String
+pub rqtk_client::Origin::Remote
+pub rqtk_client::Origin::Remote::reference: alloc::string::String
+pub rqtk_client::Origin::Remote::url: alloc::string::String
+impl core::clone::Clone for rqtk_client::Origin
+pub fn rqtk_client::Origin::clone(&self) -> rqtk_client::Origin
+impl core::cmp::Eq for rqtk_client::Origin
+impl core::cmp::PartialEq for rqtk_client::Origin
+pub fn rqtk_client::Origin::eq(&self, &rqtk_client::Origin) -> bool
+impl core::fmt::Debug for rqtk_client::Origin
+pub fn rqtk_client::Origin::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for rqtk_client::Origin
+impl schemars::JsonSchema for rqtk_client::Origin
+pub fn rqtk_client::Origin::inline_schema() -> bool
+pub fn rqtk_client::Origin::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::Origin::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::Origin::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::Origin
+pub fn rqtk_client::Origin::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::Origin
+impl core::marker::Send for rqtk_client::Origin
+impl core::marker::Sync for rqtk_client::Origin
+impl core::marker::Unpin for rqtk_client::Origin
+impl core::marker::UnsafeUnpin for rqtk_client::Origin
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::Origin
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::Origin
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::Origin where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Origin::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Origin where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Origin where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Origin where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Origin::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Origin::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Origin::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::Origin where U: core::convert::From<T>
+pub fn rqtk_client::Origin::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::Origin where U: core::convert::Into<T>
+pub type rqtk_client::Origin::Error = core::convert::Infallible
+pub fn rqtk_client::Origin::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::Origin where U: core::convert::TryFrom<T>
+pub type rqtk_client::Origin::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::Origin::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::Origin where T: core::clone::Clone
+pub type rqtk_client::Origin::Owned = T
+pub fn rqtk_client::Origin::clone_into(&self, &mut T)
+pub fn rqtk_client::Origin::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::Origin where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::Origin::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::Origin where T: ?core::marker::Sized
+pub fn rqtk_client::Origin::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::Origin where T: ?core::marker::Sized
+pub fn rqtk_client::Origin::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::Origin where T: core::clone::Clone
+pub unsafe fn rqtk_client::Origin::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::Origin
+pub fn rqtk_client::Origin::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::Origin
+pub type rqtk_client::Origin::Init = T
+pub const rqtk_client::Origin::ALIGN: usize
+pub unsafe fn rqtk_client::Origin::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::Origin::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::Origin::drop(usize)
+pub unsafe fn rqtk_client::Origin::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::Origin where T: core::clone::Clone
+pub fn rqtk_client::Origin::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::Origin where T: ?core::marker::Sized
+pub fn rqtk_client::Origin::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::Origin::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::Origin
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::Origin
+impl<T> typenum::type_operators::Same for rqtk_client::Origin
+pub type rqtk_client::Origin::Output = T
+pub struct rqtk_client::ActivityEntry
+pub rqtk_client::ActivityEntry::activity: rqtk_core::model::VerificationActivity
+pub rqtk_client::ActivityEntry::evidence: core::option::Option<rqtk_core::evidence::ActivityEvidence>
+pub rqtk_client::ActivityEntry::id: alloc::string::String
+pub rqtk_client::ActivityEntry::requirement: alloc::string::String
+pub rqtk_client::ActivityEntry::state: rqtk_core::status::ActivityState
+pub rqtk_client::ActivityEntry::tests: alloc::vec::Vec<rqtk_core::scan::SourceLink>
+impl core::clone::Clone for rqtk_client::ActivityEntry
+pub fn rqtk_client::ActivityEntry::clone(&self) -> rqtk_client::ActivityEntry
+impl core::fmt::Debug for rqtk_client::ActivityEntry
+pub fn rqtk_client::ActivityEntry::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::ActivityEntry
+pub fn rqtk_client::ActivityEntry::inline_schema() -> bool
+pub fn rqtk_client::ActivityEntry::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::ActivityEntry::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::ActivityEntry::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::ActivityEntry
+pub fn rqtk_client::ActivityEntry::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::ActivityEntry
+impl core::marker::Send for rqtk_client::ActivityEntry
+impl core::marker::Sync for rqtk_client::ActivityEntry
+impl core::marker::Unpin for rqtk_client::ActivityEntry
+impl core::marker::UnsafeUnpin for rqtk_client::ActivityEntry
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::ActivityEntry
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::ActivityEntry
+impl<T, U> core::convert::Into<U> for rqtk_client::ActivityEntry where U: core::convert::From<T>
+pub fn rqtk_client::ActivityEntry::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::ActivityEntry where U: core::convert::Into<T>
+pub type rqtk_client::ActivityEntry::Error = core::convert::Infallible
+pub fn rqtk_client::ActivityEntry::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::ActivityEntry where U: core::convert::TryFrom<T>
+pub type rqtk_client::ActivityEntry::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::ActivityEntry::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::ActivityEntry where T: core::clone::Clone
+pub type rqtk_client::ActivityEntry::Owned = T
+pub fn rqtk_client::ActivityEntry::clone_into(&self, &mut T)
+pub fn rqtk_client::ActivityEntry::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::ActivityEntry where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::ActivityEntry::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::ActivityEntry where T: ?core::marker::Sized
+pub fn rqtk_client::ActivityEntry::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::ActivityEntry where T: ?core::marker::Sized
+pub fn rqtk_client::ActivityEntry::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::ActivityEntry where T: core::clone::Clone
+pub unsafe fn rqtk_client::ActivityEntry::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::ActivityEntry
+pub fn rqtk_client::ActivityEntry::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::ActivityEntry
+pub type rqtk_client::ActivityEntry::Init = T
+pub const rqtk_client::ActivityEntry::ALIGN: usize
+pub unsafe fn rqtk_client::ActivityEntry::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::ActivityEntry::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::ActivityEntry::drop(usize)
+pub unsafe fn rqtk_client::ActivityEntry::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::ActivityEntry where T: core::clone::Clone
+pub fn rqtk_client::ActivityEntry::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::ActivityEntry where T: ?core::marker::Sized
+pub fn rqtk_client::ActivityEntry::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::ActivityEntry::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::ActivityEntry
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::ActivityEntry
+impl<T> typenum::type_operators::Same for rqtk_client::ActivityEntry
+pub type rqtk_client::ActivityEntry::Output = T
+pub struct rqtk_client::Error
+pub rqtk_client::Error::code: rqtk_client::ErrorCode
+pub rqtk_client::Error::message: alloc::string::String
+impl rqtk_client::Error
+pub fn rqtk_client::Error::new(rqtk_client::ErrorCode, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for rqtk_client::Error
+pub fn rqtk_client::Error::clone(&self) -> rqtk_client::Error
+impl core::cmp::Eq for rqtk_client::Error
+impl core::cmp::PartialEq for rqtk_client::Error
+pub fn rqtk_client::Error::eq(&self, &rqtk_client::Error) -> bool
+impl core::convert::From<rqtk_core::error::RqtkError> for rqtk_client::Error
+pub fn rqtk_client::Error::from(rqtk_core::error::RqtkError) -> Self
+impl core::error::Error for rqtk_client::Error
+impl core::fmt::Debug for rqtk_client::Error
+pub fn rqtk_client::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for rqtk_client::Error
+pub fn rqtk_client::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for rqtk_client::Error
+impl schemars::JsonSchema for rqtk_client::Error
+pub fn rqtk_client::Error::inline_schema() -> bool
+pub fn rqtk_client::Error::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::Error::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::Error::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::Error
+pub fn rqtk_client::Error::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::Error
+impl core::marker::Send for rqtk_client::Error
+impl core::marker::Sync for rqtk_client::Error
+impl core::marker::Unpin for rqtk_client::Error
+impl core::marker::UnsafeUnpin for rqtk_client::Error
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::Error
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::Error
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::Error where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Error::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Error where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Error where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Error where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Error::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Error::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Error::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::Error where U: core::convert::From<T>
+pub fn rqtk_client::Error::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::Error where U: core::convert::Into<T>
+pub type rqtk_client::Error::Error = core::convert::Infallible
+pub fn rqtk_client::Error::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::Error where U: core::convert::TryFrom<T>
+pub type rqtk_client::Error::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::Error where T: core::clone::Clone
+pub type rqtk_client::Error::Owned = T
+pub fn rqtk_client::Error::clone_into(&self, &mut T)
+pub fn rqtk_client::Error::to_owned(&self) -> T
+impl<T> alloc::string::ToString for rqtk_client::Error where T: core::fmt::Display + ?core::marker::Sized
+pub fn rqtk_client::Error::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for rqtk_client::Error where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::Error::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::Error where T: ?core::marker::Sized
+pub fn rqtk_client::Error::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::Error where T: ?core::marker::Sized
+pub fn rqtk_client::Error::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::Error where T: core::clone::Clone
+pub unsafe fn rqtk_client::Error::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::Error
+pub fn rqtk_client::Error::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::Error
+pub type rqtk_client::Error::Init = T
+pub const rqtk_client::Error::ALIGN: usize
+pub unsafe fn rqtk_client::Error::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::Error::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::Error::drop(usize)
+pub unsafe fn rqtk_client::Error::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::Error where T: core::clone::Clone
+pub fn rqtk_client::Error::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> gix_error::exn::ext::ErrorExt for rqtk_client::Error where T: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::Error where T: ?core::marker::Sized
+pub fn rqtk_client::Error::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::Error::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::Error
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::Error
+impl<T> typenum::type_operators::Same for rqtk_client::Error
+pub type rqtk_client::Error::Output = T
+pub struct rqtk_client::Filter
+pub rqtk_client::Filter::ancestor: core::option::Option<alloc::string::String>
+pub rqtk_client::Filter::category: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::Filter::consumes: core::option::Option<alloc::string::String>
+pub rqtk_client::Filter::priority: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::Filter::req_type: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::Filter::state: alloc::vec::Vec<alloc::string::String>
+pub rqtk_client::Filter::status: alloc::vec::Vec<rqtk_core::status::ClosureStatus>
+pub rqtk_client::Filter::text: core::option::Option<alloc::string::String>
+impl core::clone::Clone for rqtk_client::Filter
+pub fn rqtk_client::Filter::clone(&self) -> rqtk_client::Filter
+impl core::cmp::Eq for rqtk_client::Filter
+impl core::cmp::PartialEq for rqtk_client::Filter
+pub fn rqtk_client::Filter::eq(&self, &rqtk_client::Filter) -> bool
+impl core::default::Default for rqtk_client::Filter
+pub fn rqtk_client::Filter::default() -> rqtk_client::Filter
+impl core::fmt::Debug for rqtk_client::Filter
+pub fn rqtk_client::Filter::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for rqtk_client::Filter
+impl schemars::JsonSchema for rqtk_client::Filter
+pub fn rqtk_client::Filter::inline_schema() -> bool
+pub fn rqtk_client::Filter::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::Filter::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::Filter::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::Filter
+pub fn rqtk_client::Filter::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for rqtk_client::Filter where rqtk_client::Filter: core::default::Default
+pub fn rqtk_client::Filter::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for rqtk_client::Filter
+impl core::marker::Send for rqtk_client::Filter
+impl core::marker::Sync for rqtk_client::Filter
+impl core::marker::Unpin for rqtk_client::Filter
+impl core::marker::UnsafeUnpin for rqtk_client::Filter
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::Filter
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::Filter
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::Filter where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Filter::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Filter where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Filter where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Filter where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Filter::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Filter::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Filter::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::Filter where U: core::convert::From<T>
+pub fn rqtk_client::Filter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::Filter where U: core::convert::Into<T>
+pub type rqtk_client::Filter::Error = core::convert::Infallible
+pub fn rqtk_client::Filter::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::Filter where U: core::convert::TryFrom<T>
+pub type rqtk_client::Filter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::Filter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::Filter where T: core::clone::Clone
+pub type rqtk_client::Filter::Owned = T
+pub fn rqtk_client::Filter::clone_into(&self, &mut T)
+pub fn rqtk_client::Filter::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::Filter where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::Filter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::Filter where T: ?core::marker::Sized
+pub fn rqtk_client::Filter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::Filter where T: ?core::marker::Sized
+pub fn rqtk_client::Filter::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::Filter where T: core::clone::Clone
+pub unsafe fn rqtk_client::Filter::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::Filter
+pub fn rqtk_client::Filter::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::Filter
+pub type rqtk_client::Filter::Init = T
+pub const rqtk_client::Filter::ALIGN: usize
+pub unsafe fn rqtk_client::Filter::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::Filter::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::Filter::drop(usize)
+pub unsafe fn rqtk_client::Filter::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::Filter where T: core::clone::Clone
+pub fn rqtk_client::Filter::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> serde_core::de::DeserializeOwned for rqtk_client::Filter where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::Filter where T: ?core::marker::Sized
+pub fn rqtk_client::Filter::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::Filter::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::Filter
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::Filter
+impl<T> typenum::type_operators::Same for rqtk_client::Filter
+pub type rqtk_client::Filter::Output = T
+pub struct rqtk_client::Link
+pub rqtk_client::Link::direction: rqtk_core::query::Direction
+pub rqtk_client::Link::id: alloc::string::String
+pub rqtk_client::Link::kind: rqtk_client::LinkKind
+impl core::clone::Clone for rqtk_client::Link
+pub fn rqtk_client::Link::clone(&self) -> rqtk_client::Link
+impl core::cmp::Eq for rqtk_client::Link
+impl core::cmp::Ord for rqtk_client::Link
+pub fn rqtk_client::Link::cmp(&self, &rqtk_client::Link) -> core::cmp::Ordering
+impl core::cmp::PartialEq for rqtk_client::Link
+pub fn rqtk_client::Link::eq(&self, &rqtk_client::Link) -> bool
+impl core::cmp::PartialOrd for rqtk_client::Link
+pub fn rqtk_client::Link::partial_cmp(&self, &rqtk_client::Link) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for rqtk_client::Link
+pub fn rqtk_client::Link::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for rqtk_client::Link
+impl schemars::JsonSchema for rqtk_client::Link
+pub fn rqtk_client::Link::inline_schema() -> bool
+pub fn rqtk_client::Link::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::Link::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::Link::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::Link
+pub fn rqtk_client::Link::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::Link
+impl core::marker::Send for rqtk_client::Link
+impl core::marker::Sync for rqtk_client::Link
+impl core::marker::Unpin for rqtk_client::Link
+impl core::marker::UnsafeUnpin for rqtk_client::Link
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::Link
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::Link
+impl<Q, K> equivalent::Comparable<K> for rqtk_client::Link where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Link::compare(&self, &K) -> core::cmp::Ordering
+impl<Q, K> equivalent::Equivalent<K> for rqtk_client::Link where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Link::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Link where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Link where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for rqtk_client::Link where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn rqtk_client::Link::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Link::equivalent(&self, &K) -> bool
+pub fn rqtk_client::Link::equivalent(&self, &K) -> bool
+impl<T, U> core::convert::Into<U> for rqtk_client::Link where U: core::convert::From<T>
+pub fn rqtk_client::Link::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::Link where U: core::convert::Into<T>
+pub type rqtk_client::Link::Error = core::convert::Infallible
+pub fn rqtk_client::Link::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::Link where U: core::convert::TryFrom<T>
+pub type rqtk_client::Link::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::Link::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::Link where T: core::clone::Clone
+pub type rqtk_client::Link::Owned = T
+pub fn rqtk_client::Link::clone_into(&self, &mut T)
+pub fn rqtk_client::Link::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::Link where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::Link::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::Link where T: ?core::marker::Sized
+pub fn rqtk_client::Link::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::Link where T: ?core::marker::Sized
+pub fn rqtk_client::Link::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::Link where T: core::clone::Clone
+pub unsafe fn rqtk_client::Link::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::Link
+pub fn rqtk_client::Link::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::Link
+pub type rqtk_client::Link::Init = T
+pub const rqtk_client::Link::ALIGN: usize
+pub unsafe fn rqtk_client::Link::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::Link::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::Link::drop(usize)
+pub unsafe fn rqtk_client::Link::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::Link where T: core::clone::Clone
+pub fn rqtk_client::Link::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::Link where T: ?core::marker::Sized
+pub fn rqtk_client::Link::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::Link::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::Link
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::Link
+impl<T> typenum::type_operators::Same for rqtk_client::Link
+pub type rqtk_client::Link::Output = T
+pub struct rqtk_client::NeedEntry
+pub rqtk_client::NeedEntry::id: alloc::string::String
+pub rqtk_client::NeedEntry::links: alloc::vec::Vec<rqtk_client::Link>
+pub rqtk_client::NeedEntry::need: rqtk_core::model::Need
+pub rqtk_client::NeedEntry::path: std::path::PathBuf
+pub rqtk_client::NeedEntry::satisfied: bool
+impl core::clone::Clone for rqtk_client::NeedEntry
+pub fn rqtk_client::NeedEntry::clone(&self) -> rqtk_client::NeedEntry
+impl core::fmt::Debug for rqtk_client::NeedEntry
+pub fn rqtk_client::NeedEntry::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::NeedEntry
+pub fn rqtk_client::NeedEntry::inline_schema() -> bool
+pub fn rqtk_client::NeedEntry::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::NeedEntry::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::NeedEntry::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::NeedEntry
+pub fn rqtk_client::NeedEntry::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::NeedEntry
+impl core::marker::Send for rqtk_client::NeedEntry
+impl core::marker::Sync for rqtk_client::NeedEntry
+impl core::marker::Unpin for rqtk_client::NeedEntry
+impl core::marker::UnsafeUnpin for rqtk_client::NeedEntry
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::NeedEntry
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::NeedEntry
+impl<T, U> core::convert::Into<U> for rqtk_client::NeedEntry where U: core::convert::From<T>
+pub fn rqtk_client::NeedEntry::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::NeedEntry where U: core::convert::Into<T>
+pub type rqtk_client::NeedEntry::Error = core::convert::Infallible
+pub fn rqtk_client::NeedEntry::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::NeedEntry where U: core::convert::TryFrom<T>
+pub type rqtk_client::NeedEntry::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::NeedEntry::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::NeedEntry where T: core::clone::Clone
+pub type rqtk_client::NeedEntry::Owned = T
+pub fn rqtk_client::NeedEntry::clone_into(&self, &mut T)
+pub fn rqtk_client::NeedEntry::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::NeedEntry where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::NeedEntry::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::NeedEntry where T: ?core::marker::Sized
+pub fn rqtk_client::NeedEntry::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::NeedEntry where T: ?core::marker::Sized
+pub fn rqtk_client::NeedEntry::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::NeedEntry where T: core::clone::Clone
+pub unsafe fn rqtk_client::NeedEntry::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::NeedEntry
+pub fn rqtk_client::NeedEntry::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::NeedEntry
+pub type rqtk_client::NeedEntry::Init = T
+pub const rqtk_client::NeedEntry::ALIGN: usize
+pub unsafe fn rqtk_client::NeedEntry::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::NeedEntry::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::NeedEntry::drop(usize)
+pub unsafe fn rqtk_client::NeedEntry::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::NeedEntry where T: core::clone::Clone
+pub fn rqtk_client::NeedEntry::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::NeedEntry where T: ?core::marker::Sized
+pub fn rqtk_client::NeedEntry::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::NeedEntry::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::NeedEntry
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::NeedEntry
+impl<T> typenum::type_operators::Same for rqtk_client::NeedEntry
+pub type rqtk_client::NeedEntry::Output = T
+pub struct rqtk_client::RemoteOptions
+pub rqtk_client::RemoteOptions::allow_file_url: bool
+impl core::clone::Clone for rqtk_client::RemoteOptions
+pub fn rqtk_client::RemoteOptions::clone(&self) -> rqtk_client::RemoteOptions
+impl core::default::Default for rqtk_client::RemoteOptions
+pub fn rqtk_client::RemoteOptions::default() -> rqtk_client::RemoteOptions
+impl core::fmt::Debug for rqtk_client::RemoteOptions
+pub fn rqtk_client::RemoteOptions::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for rqtk_client::RemoteOptions
+impl core::marker::Send for rqtk_client::RemoteOptions
+impl core::marker::Sync for rqtk_client::RemoteOptions
+impl core::marker::Unpin for rqtk_client::RemoteOptions
+impl core::marker::UnsafeUnpin for rqtk_client::RemoteOptions
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::RemoteOptions
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::RemoteOptions
+impl<T, U> core::convert::Into<U> for rqtk_client::RemoteOptions where U: core::convert::From<T>
+pub fn rqtk_client::RemoteOptions::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::RemoteOptions where U: core::convert::Into<T>
+pub type rqtk_client::RemoteOptions::Error = core::convert::Infallible
+pub fn rqtk_client::RemoteOptions::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::RemoteOptions where U: core::convert::TryFrom<T>
+pub type rqtk_client::RemoteOptions::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::RemoteOptions::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::RemoteOptions where T: core::clone::Clone
+pub type rqtk_client::RemoteOptions::Owned = T
+pub fn rqtk_client::RemoteOptions::clone_into(&self, &mut T)
+pub fn rqtk_client::RemoteOptions::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::RemoteOptions where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::RemoteOptions::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::RemoteOptions where T: ?core::marker::Sized
+pub fn rqtk_client::RemoteOptions::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::RemoteOptions where T: ?core::marker::Sized
+pub fn rqtk_client::RemoteOptions::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::RemoteOptions where T: core::clone::Clone
+pub unsafe fn rqtk_client::RemoteOptions::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::RemoteOptions
+pub fn rqtk_client::RemoteOptions::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::RemoteOptions
+pub type rqtk_client::RemoteOptions::Init = T
+pub const rqtk_client::RemoteOptions::ALIGN: usize
+pub unsafe fn rqtk_client::RemoteOptions::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::RemoteOptions::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::RemoteOptions::drop(usize)
+pub unsafe fn rqtk_client::RemoteOptions::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::RemoteOptions where T: core::clone::Clone
+pub fn rqtk_client::RemoteOptions::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::RemoteOptions where T: ?core::marker::Sized
+pub fn rqtk_client::RemoteOptions::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::RemoteOptions::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::RemoteOptions
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::RemoteOptions
+impl<T> typenum::type_operators::Same for rqtk_client::RemoteOptions
+pub type rqtk_client::RemoteOptions::Output = T
+pub struct rqtk_client::Repository
+impl rqtk_client::Repository
+pub fn rqtk_client::Repository::activities(&self) -> alloc::vec::Vec<rqtk_client::ActivityEntry>
+pub fn rqtk_client::Repository::baselines(&self) -> rqtk_client::Result<rqtk_client::views::BaselinesDoc>
+pub fn rqtk_client::Repository::config(&self) -> &rqtk_core::model::Config
+pub fn rqtk_client::Repository::context(&self, &str) -> rqtk_client::Result<rqtk_client::views::ContextDoc>
+pub fn rqtk_client::Repository::coverage(&self) -> rqtk_client::views::CoverageDoc
+pub fn rqtk_client::Repository::diff(&self, &str, &str) -> rqtk_client::Result<rqtk_client::views::DiffDoc>
+pub fn rqtk_client::Repository::find_requirements(&self, &rqtk_client::Filter) -> alloc::vec::Vec<rqtk_client::RequirementEntry>
+pub fn rqtk_client::Repository::history(&self, &str) -> rqtk_client::Result<rqtk_client::views::HistoryDoc>
+pub fn rqtk_client::Repository::impact(&self, &str) -> rqtk_client::Result<rqtk_client::views::ImpactDoc>
+pub fn rqtk_client::Repository::info(&self) -> rqtk_client::RepositoryInfo
+pub fn rqtk_client::Repository::lint(&self) -> rqtk_client::views::LintDoc
+pub fn rqtk_client::Repository::need(&self, &str) -> core::option::Option<rqtk_client::NeedEntry>
+pub fn rqtk_client::Repository::needs(&self) -> alloc::vec::Vec<rqtk_client::NeedEntry>
+pub fn rqtk_client::Repository::open(impl core::convert::AsRef<std::path::Path>) -> rqtk_client::Result<Self>
+pub fn rqtk_client::Repository::open_ref(impl core::convert::AsRef<std::path::Path>, &str) -> rqtk_client::Result<Self>
+pub fn rqtk_client::Repository::reload(&self) -> rqtk_client::Result<Self>
+pub fn rqtk_client::Repository::requirement(&self, &str) -> core::option::Option<rqtk_client::RequirementEntry>
+pub fn rqtk_client::Repository::requirements(&self) -> alloc::vec::Vec<rqtk_client::RequirementEntry>
+pub fn rqtk_client::Repository::stakeholder(&self, &str) -> core::option::Option<rqtk_client::StakeholderEntry>
+pub fn rqtk_client::Repository::stakeholders(&self) -> alloc::vec::Vec<rqtk_client::StakeholderEntry>
+pub fn rqtk_client::Repository::trace(&self, &str) -> rqtk_client::Result<rqtk_client::views::TraceDoc>
+impl rqtk_client::Repository
+pub fn rqtk_client::Repository::open_remote(&str, &str) -> rqtk_client::Result<Self>
+pub fn rqtk_client::Repository::open_remote_with(&str, &str, &rqtk_client::RemoteOptions) -> rqtk_client::Result<Self>
+impl core::fmt::Debug for rqtk_client::Repository
+pub fn rqtk_client::Repository::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for rqtk_client::Repository
+impl core::marker::Send for rqtk_client::Repository
+impl !core::marker::Sync for rqtk_client::Repository
+impl core::marker::Unpin for rqtk_client::Repository
+impl core::marker::UnsafeUnpin for rqtk_client::Repository
+impl !core::panic::unwind_safe::RefUnwindSafe for rqtk_client::Repository
+impl !core::panic::unwind_safe::UnwindSafe for rqtk_client::Repository
+impl<T, U> core::convert::Into<U> for rqtk_client::Repository where U: core::convert::From<T>
+pub fn rqtk_client::Repository::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::Repository where U: core::convert::Into<T>
+pub type rqtk_client::Repository::Error = core::convert::Infallible
+pub fn rqtk_client::Repository::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::Repository where U: core::convert::TryFrom<T>
+pub type rqtk_client::Repository::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::Repository::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for rqtk_client::Repository where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::Repository::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::Repository where T: ?core::marker::Sized
+pub fn rqtk_client::Repository::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::Repository where T: ?core::marker::Sized
+pub fn rqtk_client::Repository::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for rqtk_client::Repository
+pub fn rqtk_client::Repository::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::Repository
+pub type rqtk_client::Repository::Init = T
+pub const rqtk_client::Repository::ALIGN: usize
+pub unsafe fn rqtk_client::Repository::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::Repository::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::Repository::drop(usize)
+pub unsafe fn rqtk_client::Repository::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::Repository where T: ?core::marker::Sized
+pub fn rqtk_client::Repository::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::Repository::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::Repository
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::Repository
+impl<T> typenum::type_operators::Same for rqtk_client::Repository
+pub type rqtk_client::Repository::Output = T
+pub struct rqtk_client::RepositoryInfo
+pub rqtk_client::RepositoryInfo::commit: core::option::Option<alloc::string::String>
+pub rqtk_client::RepositoryInfo::origin: rqtk_client::Origin
+pub rqtk_client::RepositoryInfo::project: alloc::string::String
+impl core::clone::Clone for rqtk_client::RepositoryInfo
+pub fn rqtk_client::RepositoryInfo::clone(&self) -> rqtk_client::RepositoryInfo
+impl core::fmt::Debug for rqtk_client::RepositoryInfo
+pub fn rqtk_client::RepositoryInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::RepositoryInfo
+pub fn rqtk_client::RepositoryInfo::inline_schema() -> bool
+pub fn rqtk_client::RepositoryInfo::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::RepositoryInfo::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::RepositoryInfo::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::RepositoryInfo
+pub fn rqtk_client::RepositoryInfo::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::RepositoryInfo
+impl core::marker::Send for rqtk_client::RepositoryInfo
+impl core::marker::Sync for rqtk_client::RepositoryInfo
+impl core::marker::Unpin for rqtk_client::RepositoryInfo
+impl core::marker::UnsafeUnpin for rqtk_client::RepositoryInfo
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::RepositoryInfo
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::RepositoryInfo
+impl<T, U> core::convert::Into<U> for rqtk_client::RepositoryInfo where U: core::convert::From<T>
+pub fn rqtk_client::RepositoryInfo::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::RepositoryInfo where U: core::convert::Into<T>
+pub type rqtk_client::RepositoryInfo::Error = core::convert::Infallible
+pub fn rqtk_client::RepositoryInfo::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::RepositoryInfo where U: core::convert::TryFrom<T>
+pub type rqtk_client::RepositoryInfo::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::RepositoryInfo::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::RepositoryInfo where T: core::clone::Clone
+pub type rqtk_client::RepositoryInfo::Owned = T
+pub fn rqtk_client::RepositoryInfo::clone_into(&self, &mut T)
+pub fn rqtk_client::RepositoryInfo::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::RepositoryInfo where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::RepositoryInfo::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::RepositoryInfo where T: ?core::marker::Sized
+pub fn rqtk_client::RepositoryInfo::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::RepositoryInfo where T: ?core::marker::Sized
+pub fn rqtk_client::RepositoryInfo::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::RepositoryInfo where T: core::clone::Clone
+pub unsafe fn rqtk_client::RepositoryInfo::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::RepositoryInfo
+pub fn rqtk_client::RepositoryInfo::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::RepositoryInfo
+pub type rqtk_client::RepositoryInfo::Init = T
+pub const rqtk_client::RepositoryInfo::ALIGN: usize
+pub unsafe fn rqtk_client::RepositoryInfo::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::RepositoryInfo::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::RepositoryInfo::drop(usize)
+pub unsafe fn rqtk_client::RepositoryInfo::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::RepositoryInfo where T: core::clone::Clone
+pub fn rqtk_client::RepositoryInfo::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::RepositoryInfo where T: ?core::marker::Sized
+pub fn rqtk_client::RepositoryInfo::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::RepositoryInfo::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::RepositoryInfo
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::RepositoryInfo
+impl<T> typenum::type_operators::Same for rqtk_client::RepositoryInfo
+pub type rqtk_client::RepositoryInfo::Output = T
+pub struct rqtk_client::RequirementEntry
+pub rqtk_client::RequirementEntry::id: alloc::string::String
+pub rqtk_client::RequirementEntry::links: alloc::vec::Vec<rqtk_client::Link>
+pub rqtk_client::RequirementEntry::path: std::path::PathBuf
+pub rqtk_client::RequirementEntry::requirement: rqtk_core::model::Requirement
+pub rqtk_client::RequirementEntry::status: rqtk_core::status::ClosureStatus
+impl core::clone::Clone for rqtk_client::RequirementEntry
+pub fn rqtk_client::RequirementEntry::clone(&self) -> rqtk_client::RequirementEntry
+impl core::fmt::Debug for rqtk_client::RequirementEntry
+pub fn rqtk_client::RequirementEntry::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::RequirementEntry
+pub fn rqtk_client::RequirementEntry::inline_schema() -> bool
+pub fn rqtk_client::RequirementEntry::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::RequirementEntry::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::RequirementEntry::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::RequirementEntry
+pub fn rqtk_client::RequirementEntry::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::RequirementEntry
+impl core::marker::Send for rqtk_client::RequirementEntry
+impl core::marker::Sync for rqtk_client::RequirementEntry
+impl core::marker::Unpin for rqtk_client::RequirementEntry
+impl core::marker::UnsafeUnpin for rqtk_client::RequirementEntry
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::RequirementEntry
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::RequirementEntry
+impl<T, U> core::convert::Into<U> for rqtk_client::RequirementEntry where U: core::convert::From<T>
+pub fn rqtk_client::RequirementEntry::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::RequirementEntry where U: core::convert::Into<T>
+pub type rqtk_client::RequirementEntry::Error = core::convert::Infallible
+pub fn rqtk_client::RequirementEntry::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::RequirementEntry where U: core::convert::TryFrom<T>
+pub type rqtk_client::RequirementEntry::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::RequirementEntry::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::RequirementEntry where T: core::clone::Clone
+pub type rqtk_client::RequirementEntry::Owned = T
+pub fn rqtk_client::RequirementEntry::clone_into(&self, &mut T)
+pub fn rqtk_client::RequirementEntry::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::RequirementEntry where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::RequirementEntry::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::RequirementEntry where T: ?core::marker::Sized
+pub fn rqtk_client::RequirementEntry::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::RequirementEntry where T: ?core::marker::Sized
+pub fn rqtk_client::RequirementEntry::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::RequirementEntry where T: core::clone::Clone
+pub unsafe fn rqtk_client::RequirementEntry::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::RequirementEntry
+pub fn rqtk_client::RequirementEntry::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::RequirementEntry
+pub type rqtk_client::RequirementEntry::Init = T
+pub const rqtk_client::RequirementEntry::ALIGN: usize
+pub unsafe fn rqtk_client::RequirementEntry::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::RequirementEntry::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::RequirementEntry::drop(usize)
+pub unsafe fn rqtk_client::RequirementEntry::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::RequirementEntry where T: core::clone::Clone
+pub fn rqtk_client::RequirementEntry::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::RequirementEntry where T: ?core::marker::Sized
+pub fn rqtk_client::RequirementEntry::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::RequirementEntry::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::RequirementEntry
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::RequirementEntry
+impl<T> typenum::type_operators::Same for rqtk_client::RequirementEntry
+pub type rqtk_client::RequirementEntry::Output = T
+pub struct rqtk_client::StakeholderEntry
+pub rqtk_client::StakeholderEntry::id: alloc::string::String
+pub rqtk_client::StakeholderEntry::links: alloc::vec::Vec<rqtk_client::Link>
+pub rqtk_client::StakeholderEntry::path: std::path::PathBuf
+pub rqtk_client::StakeholderEntry::stakeholder: rqtk_core::model::Stakeholder
+impl core::clone::Clone for rqtk_client::StakeholderEntry
+pub fn rqtk_client::StakeholderEntry::clone(&self) -> rqtk_client::StakeholderEntry
+impl core::fmt::Debug for rqtk_client::StakeholderEntry
+pub fn rqtk_client::StakeholderEntry::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl schemars::JsonSchema for rqtk_client::StakeholderEntry
+pub fn rqtk_client::StakeholderEntry::inline_schema() -> bool
+pub fn rqtk_client::StakeholderEntry::json_schema(&mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
+pub fn rqtk_client::StakeholderEntry::schema_id() -> alloc::borrow::Cow<'static, str>
+pub fn rqtk_client::StakeholderEntry::schema_name() -> alloc::borrow::Cow<'static, str>
+impl serde_core::ser::Serialize for rqtk_client::StakeholderEntry
+pub fn rqtk_client::StakeholderEntry::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for rqtk_client::StakeholderEntry
+impl core::marker::Send for rqtk_client::StakeholderEntry
+impl core::marker::Sync for rqtk_client::StakeholderEntry
+impl core::marker::Unpin for rqtk_client::StakeholderEntry
+impl core::marker::UnsafeUnpin for rqtk_client::StakeholderEntry
+impl core::panic::unwind_safe::RefUnwindSafe for rqtk_client::StakeholderEntry
+impl core::panic::unwind_safe::UnwindSafe for rqtk_client::StakeholderEntry
+impl<T, U> core::convert::Into<U> for rqtk_client::StakeholderEntry where U: core::convert::From<T>
+pub fn rqtk_client::StakeholderEntry::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for rqtk_client::StakeholderEntry where U: core::convert::Into<T>
+pub type rqtk_client::StakeholderEntry::Error = core::convert::Infallible
+pub fn rqtk_client::StakeholderEntry::try_from(U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for rqtk_client::StakeholderEntry where U: core::convert::TryFrom<T>
+pub type rqtk_client::StakeholderEntry::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn rqtk_client::StakeholderEntry::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for rqtk_client::StakeholderEntry where T: core::clone::Clone
+pub type rqtk_client::StakeholderEntry::Owned = T
+pub fn rqtk_client::StakeholderEntry::clone_into(&self, &mut T)
+pub fn rqtk_client::StakeholderEntry::to_owned(&self) -> T
+impl<T> core::any::Any for rqtk_client::StakeholderEntry where T: 'static + ?core::marker::Sized
+pub fn rqtk_client::StakeholderEntry::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for rqtk_client::StakeholderEntry where T: ?core::marker::Sized
+pub fn rqtk_client::StakeholderEntry::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for rqtk_client::StakeholderEntry where T: ?core::marker::Sized
+pub fn rqtk_client::StakeholderEntry::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for rqtk_client::StakeholderEntry where T: core::clone::Clone
+pub unsafe fn rqtk_client::StakeholderEntry::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for rqtk_client::StakeholderEntry
+pub fn rqtk_client::StakeholderEntry::from(T) -> T
+impl<T> crossbeam_epoch::atomic::Pointable for rqtk_client::StakeholderEntry
+pub type rqtk_client::StakeholderEntry::Init = T
+pub const rqtk_client::StakeholderEntry::ALIGN: usize
+pub unsafe fn rqtk_client::StakeholderEntry::deref<'a>(usize) -> &'a T
+pub unsafe fn rqtk_client::StakeholderEntry::deref_mut<'a>(usize) -> &'a mut T
+pub unsafe fn rqtk_client::StakeholderEntry::drop(usize)
+pub unsafe fn rqtk_client::StakeholderEntry::init(<T as crossbeam_epoch::atomic::Pointable>::Init) -> usize
+impl<T> dyn_clone::DynClone for rqtk_client::StakeholderEntry where T: core::clone::Clone
+pub fn rqtk_client::StakeholderEntry::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> tower_http::follow_redirect::policy::PolicyExt for rqtk_client::StakeholderEntry where T: ?core::marker::Sized
+pub fn rqtk_client::StakeholderEntry::and<P, B, E>(self, P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn rqtk_client::StakeholderEntry::or<P, B, E>(self, P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: core::marker::Sized + tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for rqtk_client::StakeholderEntry
+impl<T> tracing::instrument::WithSubscriber for rqtk_client::StakeholderEntry
+impl<T> typenum::type_operators::Same for rqtk_client::StakeholderEntry
+pub type rqtk_client::StakeholderEntry::Output = T
+pub fn rqtk_client::cache_dir() -> std::path::PathBuf
+pub fn rqtk_client::clear_cache() -> rqtk_client::Result<()>
+pub type rqtk_client::Result<T> = core::result::Result<T, rqtk_client::Error>

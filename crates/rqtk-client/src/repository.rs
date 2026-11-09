@@ -11,7 +11,6 @@ use crate::views::{
     TraceDoc, schema_id,
 };
 use rqtk_core::query::Direction;
-use rqtk_core::spec::SpecFiles as _;
 use rqtk_core::{
     ActivityState, ClosureStatus, Diagnostic, EntityRef, Evidence, GitContext, RequirementId,
     RequirementSet, RequirementVerification, Severity, SourceLink, Validated,
@@ -56,6 +55,10 @@ pub struct Repository {
     statuses: BTreeMap<RequirementId, RequirementVerification>,
     /// Normalised SHA-256 of every file holding a linked test, as it was when opened.
     test_files: BTreeMap<PathBuf, String>,
+    /// Links declared by other items, by the ID they point to.
+    incoming: BTreeMap<String, Vec<Link>>,
+    /// The tests linked to each activity.
+    tests: BTreeMap<String, Vec<SourceLink>>,
     origin: Origin,
     /// For a remote: whether `file://` URLs were allowed, so `reload` can open it again.
     allow_file_url: bool,
@@ -165,7 +168,14 @@ impl Repository {
                 Some((p, content_hash(&bytes)))
             })
             .collect();
+        let incoming = incoming_links(&set);
+        let mut tests: BTreeMap<String, Vec<SourceLink>> = BTreeMap::new();
+        for l in &links {
+            tests.entry(l.activity.clone()).or_default().push(l.clone());
+        }
         Ok(Self {
+            incoming,
+            tests,
             set,
             diagnostics,
             checked,
@@ -264,13 +274,14 @@ impl Repository {
                 id: activity.id.clone(),
             });
         }
-        for (other_id, other) in self.set.requirements() {
-            for (field, target) in other.trace.requirement_links() {
-                if target == id {
-                    links.push(link(field, Direction::Incoming, &other_id.0));
-                }
-            }
-        }
+        links.extend(
+            self.incoming
+                .get(&id.0)
+                .into_iter()
+                .flatten()
+                .filter(|l| l.kind != LinkKind::Satisfies)
+                .cloned(),
+        );
         links
     }
 
@@ -331,17 +342,7 @@ impl Repository {
                 id: s.0.clone(),
             })
             .collect();
-        links.extend(
-            self.set
-                .requirements()
-                .iter()
-                .filter(|(_, r)| r.trace.satisfies.contains(id))
-                .map(|(rid, _)| Link {
-                    kind: LinkKind::Satisfies,
-                    direction: Direction::Incoming,
-                    id: rid.0.clone(),
-                }),
-        );
+        links.extend(self.incoming.get(&id.0).into_iter().flatten().cloned());
         NeedEntry {
             id: id.0.clone(),
             path: self.path_of(&EntityRef::Need(id.clone())),
@@ -372,17 +373,7 @@ impl Repository {
             id: id.0.clone(),
             path: self.path_of(&EntityRef::Stakeholder(id.clone())),
             stakeholder: self.set.stakeholders()[id].clone(),
-            links: self
-                .set
-                .needs()
-                .iter()
-                .filter(|(_, n)| n.stakeholders.contains(id))
-                .map(|(nid, _)| Link {
-                    kind: LinkKind::Stakeholders,
-                    direction: Direction::Incoming,
-                    id: nid.0.clone(),
-                })
-                .collect(),
+            links: self.incoming.get(&id.0).cloned().unwrap_or_default(),
         }
     }
 
@@ -416,12 +407,7 @@ impl Repository {
                     requirement: req_id.0.clone(),
                     activity: activity.clone(),
                     state,
-                    tests: self
-                        .links
-                        .iter()
-                        .filter(|l| l.activity == activity.id)
-                        .cloned()
-                        .collect(),
+                    tests: self.tests.get(&activity.id).cloned().unwrap_or_default(),
                     evidence: self.evidence.activities.get(&activity.id).cloned(),
                 });
             }
@@ -534,23 +520,17 @@ impl Repository {
     /// What changed since revision `base` and what that puts at risk. Test files count as
     /// changed when they differ from `base` as they were when the repository was opened.
     pub fn impact(&self, base: &str) -> Result<ImpactDoc> {
-        let base_files = self
-            .set
-            .git()
-            .spec_files_at(base, self.set.repo_root())
-            .map_err(|e| ref_error(base, e))?;
-        let changed: Vec<PathBuf> = self
-            .test_files
-            .iter()
-            .filter(|(path, hash)| {
-                let at_base = base_files
-                    .read(&path.to_string_lossy().replace('\\', "/"))
-                    .ok()
-                    .flatten();
-                at_base.is_none_or(|bytes| content_hash(&bytes) != **hash)
-            })
-            .map(|(path, _)| path.clone())
-            .collect();
+        let git = self.set.git();
+        let root = self.set.repo_root();
+        let mut changed = Vec::new();
+        for (path, hash) in &self.test_files {
+            let at_base = git
+                .read_at(base, root, &path.to_string_lossy().replace('\\', "/"))
+                .map_err(|e| ref_error(base, e))?;
+            if at_base.is_none_or(|bytes| content_hash(&bytes) != *hash) {
+                changed.push(path.clone());
+            }
+        }
         let impact = self
             .set
             .impact(base, &self.links, &self.evidence, &changed)?;
@@ -562,12 +542,7 @@ impl Repository {
 
     /// Requirements added, removed and modified between revisions `from` and `to`.
     pub fn diff(&self, from: &str, to: &str) -> Result<DiffDoc> {
-        let diff = self.set.git().diff_refs(
-            from,
-            to,
-            self.set.requirements_dir(),
-            self.set.repo_root(),
-        )?;
+        let diff = self.set.diff(from, to)?;
         Ok(DiffDoc {
             schema: schema_id("diff"),
             from: from.to_owned(),
@@ -633,6 +608,36 @@ impl Repository {
     pub fn requirement_set(&self) -> &RequirementSet<Validated> {
         &self.set
     }
+}
+
+/// Every link, filed under the item it points to, as that item sees it (`incoming`).
+fn incoming_links(set: &RequirementSet<Validated>) -> BTreeMap<String, Vec<Link>> {
+    let mut incoming: BTreeMap<String, Vec<Link>> = BTreeMap::new();
+    let mut add = |target: &str, kind: LinkKind, from: &str| {
+        incoming.entry(target.to_owned()).or_default().push(Link {
+            kind,
+            direction: Direction::Incoming,
+            id: from.to_owned(),
+        });
+    };
+    for (id, req) in set.requirements() {
+        for (field, target) in req.trace.requirement_links() {
+            add(
+                &target.0,
+                LinkKind::from_field(field).unwrap_or(LinkKind::Related),
+                &id.0,
+            );
+        }
+        for need in &req.trace.satisfies {
+            add(&need.0, LinkKind::Satisfies, &id.0);
+        }
+    }
+    for (id, need) in set.needs() {
+        for stakeholder in &need.stakeholders {
+            add(&stakeholder.0, LinkKind::Stakeholders, &id.0);
+        }
+    }
+    incoming
 }
 
 fn link(field: &str, direction: Direction, id: &str) -> Link {
