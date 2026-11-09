@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0020"
+title = "Performance"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "Opening a generated 5,000-requirement repository with verification status shall take under 2 s, and any query on it under 50 ms, on a GitHub-hosted Linux runner."
+rationale = "Dashboards and editors stay responsive only if loading is quick and queries are interactive."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "The benchmark on the generated fixture stays under both limits on the CI runner."
+
+[[verification.activities]]
+id = "VA-CLIENT-0020-01"
+name = "Open and query benchmark"

@@ -1,0 +1,6 @@
+id = "NEED-0007"
+title = "Programmatic access to requirements"
+state = "Draft"
+stakeholders = ["STK-004"]
+statement = "Tool builders need to read requirements, verification status and change history from rqtk repositories in Rust, Python and TypeScript programs, with the same results the CLI reports."
+rationale = "Companies build their own dashboards, portals and editor integrations on their requirements. Parsing the TOML themselves, or scraping CLI output, would compute status and lint differently from rqtk and drift from it."

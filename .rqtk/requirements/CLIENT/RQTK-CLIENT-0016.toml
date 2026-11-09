@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0016"
+title = "Generated types"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "The Python and TypeScript data types shall be generated from the client's JSON Schemas, and CI shall fail when the committed types differ from freshly generated ones."
+rationale = "Committed generated types make every API change visible in review; the drift check keeps them honest."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Changing a client type without regenerating fails the check."
+
+[[verification.activities]]
+id = "VA-CLIENT-0016-01"
+name = "Drift check fails on stale types"

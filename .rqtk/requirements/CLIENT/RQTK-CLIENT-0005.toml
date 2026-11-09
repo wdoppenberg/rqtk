@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0005"
+title = "Remote repository cache"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = 'The client shall keep fetched repositories as bare clones under `~/.cache/rqtk/repos` on Linux, `~/Library/Caches/rqtk/repos` on macOS and `%LOCALAPPDATA%\rqtk\cache\repos` on Windows, or under `RQTK_CACHE_DIR` when it is set, and shall delete them only when `clear_cache()` is called.'
+rationale = "Fetching again on every open must only transfer what changed, and a cached repository stays readable offline; automatic eviction would make a portal's latency unpredictable."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0008"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "A second open fetches into the existing clone; RQTK_CACHE_DIR moves the cache; clear_cache() removes it and nothing else does."
+
+[[verification.activities]]
+id = "VA-CLIENT-0005-01"
+name = "Cache location and override"
+
+[[verification.activities]]
+id = "VA-CLIENT-0005-02"
+name = "Only clear_cache deletes the cache"

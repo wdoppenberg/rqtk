@@ -1,0 +1,24 @@
+id = "RQTK-SYS-0007"
+title = "Programmatic access"
+category = "SYS"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall give Rust, Python and TypeScript programs read-only access to a repository's requirements, needs, stakeholders, links, verification status, lint findings and change history, with the same results as the CLI."
+rationale = "Tool builders need rqtk's own answers in their programs; one engine bound into three languages keeps status, hashing and lint identical everywhere."
+
+[trace]
+satisfies = [
+    "NEED-0007",
+    "NEED-0008",
+]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "The conformance suite passes in Rust, Python and TypeScript."
+
+[[verification.activities]]
+id = "VA-SYS-0007-01"
+name = "Conformance suite passes in all three languages"

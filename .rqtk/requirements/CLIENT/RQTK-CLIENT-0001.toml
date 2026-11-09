@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0001"
+title = "Stable client surface"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "The rqtk-client crate shall be the only public client API, and changes to its public items shall follow semantic versioning."
+rationale = "rqtk-core's internals must stay free to change; a curated facade is what companies build on, so its changes have to be deliberate and versioned."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A change to any public item of rqtk-client fails the public-API snapshot test until the snapshot is updated."
+
+[[verification.activities]]
+id = "VA-CLIENT-0001-01"
+name = "Public API snapshot"

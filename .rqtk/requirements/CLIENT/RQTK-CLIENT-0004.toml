@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0004"
+title = "Open a remote repository"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall open an https or SSH git URL at a ref, authenticating as git would through credential helpers, the SSH agent and `~/.ssh`."
+rationale = "A portal reads many repositories it has no checkout of; companies already have git credentials set up, so the client reuses them instead of inventing its own."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0008"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "A repository opened over a URL returns the same results as its checkout at that ref; URLs with a transport other than https, SSH or (when allowed) file are refused."
+
+[[verification.activities]]
+id = "VA-CLIENT-0004-01"
+name = "Open a remote URL at a ref"
+
+[[verification.activities]]
+id = "VA-CLIENT-0004-02"
+name = "Disallowed transports are refused"

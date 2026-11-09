@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0013"
+title = "Python client"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The `rqtk` Python package shall expose the client through `rqtk.open` and `rqtk.open_remote`, returning frozen dataclasses whose enumerated fields are `Literal` strings, and shall release the GIL while it loads."
+rationale = "Python is the most common language for internal tooling; dataclasses keep the package free of runtime dependencies, and `dataclasses.asdict` gives JSON-ready data because enums are plain strings."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "The Python conformance run passes; returned objects are frozen; another thread runs while a repository loads."
+
+[[verification.activities]]
+id = "VA-CLIENT-0013-01"
+name = "Python opens and queries a repository"
+
+[[verification.activities]]
+id = "VA-CLIENT-0013-02"
+name = "Loading releases the GIL"

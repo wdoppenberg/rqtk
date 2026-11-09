@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0018"
+title = "Prebuilt platforms"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "The Python and Node packages shall ship prebuilt for Linux x86_64 and aarch64 with glibc and musl, macOS aarch64, and Windows x64."
+rationale = "Tool builders install a package, not a Rust toolchain; the list matches the wheels rqtk already ships."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Demonstration"
+level = "System"
+phase = "Development"
+success_criteria = "The release build produces a Python wheel and a Node package for each listed platform, and each installs and opens a fixture."
+
+[[verification.activities]]
+id = "VA-CLIENT-0018-01"
+name = "Release matrix builds every platform"

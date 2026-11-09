@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0010"
+title = "Entities and links"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall return every requirement, need, stakeholder and verification activity together with its links in both directions."
+rationale = "Dashboards and editors navigate the trace graph both ways, from a need to the requirements satisfying it as well as the other way round."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "For a fixture, every link appears from both ends, and nothing in the repository is missing."
+
+[[verification.activities]]
+id = "VA-CLIENT-0010-01"
+name = "Links in both directions"

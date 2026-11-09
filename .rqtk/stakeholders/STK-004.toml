@@ -1,0 +1,3 @@
+id = "STK-004"
+name = "Tool builder"
+role = "Internal platform or tooling team building dashboards, portals, editor integrations and automation on top of rqtk repositories"

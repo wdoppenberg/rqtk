@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0007"
+title = "Immutable snapshots"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall answer every query on an opened repository from its state at opening, and `reload()` shall return a new snapshot."
+rationale = "A query must never see half an edit; editors and portals decide when to reload."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Files changed after opening do not change any answer until reload(), which returns a snapshot with the change."
+
+[[verification.activities]]
+id = "VA-CLIENT-0007-01"
+name = "Queries ignore later edits until reload"

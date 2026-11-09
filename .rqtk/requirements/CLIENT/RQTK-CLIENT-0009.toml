@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0009"
+title = "Stable error codes"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "Every client error shall carry a code from one fixed list, identical in Rust, Python and TypeScript."
+rationale = "Callers branch on what went wrong, in whichever language they use; message text is not a contract."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "The conformance suite triggers each error code and sees the same code in all three languages."
+
+[[verification.activities]]
+id = "VA-CLIENT-0009-01"
+name = "Error codes match across languages"
