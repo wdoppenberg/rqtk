@@ -1,21 +1,18 @@
 use std::error::Error;
 
-use rqtk_core::RequirementSet;
 use rqtk_core::query::{ChangeKind, ItemChange, ReverifyReason};
 
 use crate::cli::output::{self, Ctx, Exit};
 
 /// Informational: always exits 0 unless the comparison itself fails.
 pub fn run(ctx: &Ctx, base: &str) -> Result<Exit, Box<dyn Error>> {
-    let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let (links, evidence) = super::load_links_and_evidence(&set)?;
-    let changed_files = set.git().changed_files_since(base)?;
-    let impact = set.impact(base, &links, &evidence, &changed_files)?;
-
+    let repo = super::open(ctx)?;
+    let doc = repo.impact(base)?;
     if ctx.json() {
-        output::json(&impact)?;
+        output::json(&doc)?;
         return Ok(Exit::Ok);
     }
+    let impact = &doc.impact;
     if impact.is_empty() {
         output::success(&format!("No requirement changes since {base}"), &[]);
         return Ok(Exit::Ok);

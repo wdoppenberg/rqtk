@@ -141,7 +141,19 @@ impl Repository {
                 loc.path = relative_to(&loc.path, &root);
             }
         }
-        let evidence = Evidence::load(set.repo_root())?;
+        // Unreadable evidence is a finding, not a reason to refuse the repository; a newer
+        // evidence schema is, like a newer config.
+        let evidence = match Evidence::load(set.repo_root()) {
+            Ok(evidence) => evidence,
+            Err(e @ rqtk_core::RqtkError::UnsupportedSchemaVersion { .. }) => return Err(e.into()),
+            Err(e) => {
+                diagnostics.push(
+                    Diagnostic::new("RQ100", format!("cannot read verification evidence: {e}"))
+                        .file(PathBuf::from(rqtk_core::evidence::EVIDENCE_PATH)),
+                );
+                Evidence::default()
+            }
+        };
         let statuses = set.verification_status(&links, &evidence);
         let test_files = links
             .iter()
@@ -640,7 +652,7 @@ fn not_found(id: &str) -> Error {
 
 fn ref_error(reference: &str, e: rqtk_core::RqtkError) -> Error {
     let err = Error::from(e);
-    if err.code == ErrorCode::Git {
+    if err.code == ErrorCode::Git && !err.message.contains("not inside a git repository") {
         Error::new(
             ErrorCode::RefNotFound,
             format!("`{reference}`: {}", err.message),

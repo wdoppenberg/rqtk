@@ -1,44 +1,10 @@
 use std::{collections::BTreeMap, error::Error};
 
 use console::style;
-use rqtk_core::{
-    ActivityState, ClosureStatus, NeedId, RequirementId, RequirementSet, RequirementVerification,
-    SuspectReason,
-};
-use serde::Serialize;
+use rqtk_client::views::NeedStatus;
+use rqtk_core::{ActivityState, ClosureStatus, RequirementVerification, SuspectReason};
 
 use crate::cli::output::{self, Ctx, Exit};
-
-#[derive(Serialize)]
-struct NeedStatus {
-    id: NeedId,
-    satisfied_by: Vec<RequirementId>,
-}
-
-#[derive(Serialize)]
-struct RequirementStatus<'a> {
-    id: &'a RequirementId,
-    #[serde(flatten)]
-    verification: &'a RequirementVerification,
-}
-
-#[derive(Serialize)]
-struct ConsumedStatus {
-    #[serde(flatten)]
-    interface: rqtk_core::query::ConsumedSummary,
-    consumers: Vec<RequirementId>,
-}
-
-#[derive(Serialize)]
-struct Report<'a> {
-    summary: BTreeMap<ClosureStatus, usize>,
-    requirements: Vec<RequirementStatus<'a>>,
-    needs: Vec<NeedStatus>,
-    unsatisfied_needs: usize,
-    /// Vendored interface requirements consumed here, with the provider's status. Not
-    /// counted in `summary` and never part of `--strict`.
-    consumed: Vec<ConsumedStatus>,
-}
 
 /// Requirement states `coverage --strict --allow` accepts besides Verified.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, clap::ValueEnum)]
@@ -50,36 +16,12 @@ pub enum Allow {
 }
 
 pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit, Box<dyn Error>> {
-    let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let (links, evidence) = super::load_links_and_evidence(&set)?;
-    let statuses = set.verification_status(&links, &evidence);
-
-    let mut summary: BTreeMap<ClosureStatus, usize> = BTreeMap::new();
-    for v in statuses.values() {
-        *summary.entry(v.status).or_default() += 1;
-    }
-    let needs: Vec<NeedStatus> = set
-        .satisfaction_closure()
-        .into_keys()
-        .map(|id| NeedStatus {
-            satisfied_by: set
-                .requirements()
-                .iter()
-                .filter(|(_, r)| r.trace.satisfies.contains(&id))
-                .map(|(rid, _)| rid.clone())
-                .collect(),
-            id,
-        })
-        .collect();
-    let unsatisfied = needs.iter().filter(|n| n.satisfied_by.is_empty()).count();
-    let consumed: Vec<ConsumedStatus> = set
-        .consumed_interfaces()
-        .into_iter()
-        .map(|(interface, consumers)| ConsumedStatus {
-            interface,
-            consumers,
-        })
-        .collect();
+    let repo = super::open(ctx)?;
+    let doc = repo.coverage();
+    let summary: &BTreeMap<ClosureStatus, usize> = &doc.summary;
+    let needs = &doc.needs;
+    let unsatisfied = doc.unsatisfied_needs;
+    let consumed = &doc.consumed;
 
     let accepted = |status: &ClosureStatus| match status {
         ClosureStatus::Verified => true,
@@ -91,16 +33,7 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
     let exit = Exit::findings_if(strict && failing);
 
     if ctx.json() {
-        output::json(&Report {
-            summary,
-            requirements: statuses
-                .iter()
-                .map(|(id, verification)| RequirementStatus { id, verification })
-                .collect(),
-            needs,
-            unsatisfied_needs: unsatisfied,
-            consumed,
-        })?;
+        output::json(&doc)?;
         return Ok(exit);
     }
 
@@ -114,7 +47,7 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
             fmt_count(needs.len()),
         );
         if !short && unsatisfied > 0 {
-            print_unsatisfied(&set, &needs);
+            print_unsatisfied(repo.requirement_set(), needs);
         }
     }
     // ── verification closure ──────────────────────────────────────────────────
@@ -129,7 +62,7 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
         count(ClosureStatus::InProgress),
         count(ClosureStatus::Planned),
         count(ClosureStatus::Gap),
-        fmt_count(statuses.len()),
+        fmt_count(doc.requirements.len()),
     );
 
     if !short {
@@ -160,10 +93,11 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
                 "(partially executed, not all terminal)",
             ),
         ] {
-            let entries: Vec<String> = statuses
+            let entries: Vec<String> = doc
+                .requirements
                 .iter()
-                .filter(|(_, v)| v.status == status)
-                .map(|(id, v)| describe(id, v))
+                .filter(|r| r.verification.status == status)
+                .map(|r| describe(&r.id, &r.verification))
                 .collect();
             if !entries.is_empty() {
                 output::section(title, detail);
@@ -177,8 +111,8 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
                 "Consumed interfaces",
                 "(provider status at the pinned commit; not counted here)",
             );
-            for c in &consumed {
-                let consumers: Vec<&str> = c.consumers.iter().map(|r| r.0.as_str()).collect();
+            for c in consumed {
+                let consumers: Vec<&str> = c.consumers.iter().map(String::as_str).collect();
                 output::item(&format!(
                     "{}  ← {}",
                     output::consumed_line(&c.interface),
@@ -191,11 +125,11 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
     Ok(exit)
 }
 
-fn print_unsatisfied(set: &RequirementSet<rqtk_core::Validated>, needs: &[NeedStatus]) {
+fn print_unsatisfied(set: &rqtk_core::RequirementSet<rqtk_core::Validated>, needs: &[NeedStatus]) {
     // Group unsatisfied needs by stakeholder; ungrouped under "(none)".
     let mut by_stakeholder: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for status in needs.iter().filter(|n| n.satisfied_by.is_empty()) {
-        let Some(need) = set.needs().get(&status.id) else {
+        let Some(need) = set.needs().get(&rqtk_core::NeedId(status.id.clone())) else {
             continue;
         };
         let entry = format!("{}  {}", status.id, need.title);
@@ -225,7 +159,7 @@ fn print_unsatisfied(set: &RequirementSet<rqtk_core::Validated>, needs: &[NeedSt
 
 /// The requirement ID, naming the activities behind a Failed status and the reasons behind
 /// a Suspect one.
-fn describe(id: &RequirementId, v: &RequirementVerification) -> String {
+fn describe(id: &str, v: &RequirementVerification) -> String {
     let mut flagged: Vec<String> = v
         .activities
         .iter()
@@ -253,7 +187,7 @@ fn describe(id: &RequirementId, v: &RequirementVerification) -> String {
         });
     }
     if flagged.is_empty() {
-        id.to_string()
+        id.to_owned()
     } else {
         format!("{id}  ({})", flagged.join(", "))
     }

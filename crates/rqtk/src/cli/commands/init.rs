@@ -4,6 +4,13 @@ use serde::Serialize;
 
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
+/// `rqtk init --agents --json`: what init and the skill install did.
+#[derive(Serialize)]
+pub struct WithSkills<'a> {
+    pub init: &'a Report,
+    pub skills: &'a super::skills::Report,
+}
+
 #[derive(Serialize)]
 pub struct Report {
     created: Vec<PathBuf>,
@@ -31,7 +38,7 @@ pub struct InitArgs<'a> {
 pub fn run(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Exit, Box<dyn Error>> {
     let report = execute(ctx, args)?;
     if ctx.json() {
-        output::json(&report)?;
+        output::document("init", &report)?;
     } else {
         print(&report);
     }

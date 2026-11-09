@@ -6,6 +6,12 @@ use rqtk_core::rules::{RULES, Rule, rule};
 
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
+/// `rqtk explain --json`: the rules asked for, or all of them.
+#[derive(serde::Serialize)]
+pub struct Rules<'a> {
+    pub rules: &'a [&'a Rule],
+}
+
 pub fn run(ctx: &Ctx, code: Option<&str>) -> Result<Exit, Box<dyn Error>> {
     let rules: Vec<&Rule> = match code {
         Some(code) => {
@@ -19,10 +25,7 @@ pub fn run(ctx: &Ctx, code: Option<&str>) -> Result<Exit, Box<dyn Error>> {
         None => RULES.iter().collect(),
     };
     if ctx.json() {
-        match rules.as_slice() {
-            [one] if code.is_some() => output::json(one)?,
-            all => output::json(all)?,
-        }
+        output::document("explain", &Rules { rules: &rules })?;
         return Ok(Exit::Ok);
     }
     for r in rules {

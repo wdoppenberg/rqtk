@@ -12,6 +12,12 @@ pub struct SearchArgs {
     pub field: Option<Vec<String>>,
 }
 
+/// `rqtk search --json`.
+#[derive(Serialize)]
+struct Report<'a> {
+    hits: &'a [Hit<'a>],
+}
+
 #[derive(Serialize)]
 struct FieldMatch<'a> {
     field: &'static str,
@@ -126,7 +132,7 @@ pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
     }
 
     if ctx.json() {
-        output::json(&serde_json::json!({ "hits": hits }))?;
+        output::document("search", &Report { hits: &hits })?;
         return Ok(Exit::Ok);
     }
     for hit in &hits {

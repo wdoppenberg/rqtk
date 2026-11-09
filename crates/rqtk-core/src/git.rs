@@ -673,6 +673,7 @@ impl GitContext {
 
     /// [`Self::resolve_ref_tree_id`], stopping at the commit.
     fn resolve_ref_commit_id(&self, spec: &str) -> Result<gix::ObjectId, RqtkError> {
+        self.repo()?;
         if spec == "HEAD" {
             return self
                 .head()

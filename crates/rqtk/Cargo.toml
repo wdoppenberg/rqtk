@@ -12,6 +12,7 @@ categories = ["command-line-utilities", "development-tools", "development-tools:
 readme = "../../README.md"
 
 [dependencies]
+rqtk-client = { workspace = true, optional = true }
 rqtk-core = { workspace = true, optional = true }
 rqtk-export = { workspace = true, optional = true }
 rqtk-macros = { workspace = true, optional = true }
@@ -26,6 +27,7 @@ sha2 = { version = "0.10", optional = true }
 console = { version = "0.16", optional = true }
 comfy-table = { version = "7.2", optional = true }
 chrono = { version = "0.4.44", optional = true }
+schemars = { version = "1.0.4", optional = true }
 
 [features]
 default = ["cli"]
@@ -33,6 +35,8 @@ default = ["cli"]
 cli = [
     "lib",
     "rqtk-core/network",
+    "dep:rqtk-client",
+    "rqtk-client/remote",
     "dep:clap",
     "rqtk-export/clap",
     "dep:rqtk-report",
@@ -45,6 +49,7 @@ cli = [
     "dep:console",
     "dep:comfy-table",
     "dep:chrono",
+    "dep:schemars",
 ]
 # `rqtk::core` and `rqtk::export`: the library crates the tool is built from.
 lib = ["dep:rqtk-core", "dep:rqtk-export"]

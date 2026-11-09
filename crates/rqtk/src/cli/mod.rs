@@ -177,12 +177,17 @@ enum Command {
         #[arg(long, value_enum, default_value_t = commands::graph::GraphFormat::Dot)]
         format: commands::graph::GraphFormat,
     },
-    /// Stamp all requirements and create a git tag baseline for HEAD.
+    /// Stamp all requirements and create a git tag baseline for HEAD, or list baselines.
     Baseline {
-        version: String,
+        /// The semver version to baseline, e.g. `1.2.0`.
+        #[arg(required_unless_present = "list")]
+        version: Option<String>,
         /// Report what would be stamped and tagged without changing anything.
-        #[arg(long)]
+        #[arg(long, conflicts_with = "list")]
         dry_run: bool,
+        /// List the existing baselines instead, oldest first.
+        #[arg(long)]
+        list: bool,
     },
     /// Export requirements to a file in the given format.
     Export {
@@ -384,7 +389,8 @@ where
         Ok(Ok(Exit::Findings)) => 1,
         Ok(Err(err)) => {
             let usage = err.is::<Usage>();
-            output::error(&ctx, &err.to_string(), usage);
+            let code = err.downcast_ref::<rqtk_client::Error>().map(|e| e.code);
+            output::error(&ctx, &err.to_string(), usage, code);
             if usage { 2 } else { 3 }
         }
         // The reader went away (`rqtk … | head`). Files are written before output is
@@ -444,7 +450,13 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
             };
             let skills = commands::skills::execute(ctx, &args)?;
             if ctx.json() {
-                output::json(&serde_json::json!({ "init": init, "skills": skills }))?;
+                output::document(
+                    "init-agents",
+                    &commands::init::WithSkills {
+                        init: &init,
+                        skills: &skills,
+                    },
+                )?;
             } else {
                 commands::init::print(&init);
                 println!();
@@ -561,7 +573,14 @@ fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
             short,
         } => commands::coverage::run(ctx, strict, &allow, short),
         Command::Graph { format } => commands::graph::run(ctx, format),
-        Command::Baseline { version, dry_run } => commands::baseline::run(ctx, version, dry_run),
+        Command::Baseline {
+            version,
+            dry_run,
+            list,
+        } => match version {
+            Some(version) if !list => commands::baseline::run(ctx, version, dry_run),
+            _ => commands::baseline::list(ctx),
+        },
         Command::Export { format, output } => commands::export::run(ctx, format, output),
         Command::Diff { from, to } => commands::diff::run(ctx, from, to),
         Command::Scan => commands::scan::run(ctx),

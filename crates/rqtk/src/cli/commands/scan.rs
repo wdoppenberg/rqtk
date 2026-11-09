@@ -37,11 +37,14 @@ pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let exit = Exit::findings_if(issues.iter().any(Diagnostic::is_error));
 
     if ctx.json() {
-        output::json(&Report {
-            links: &links,
-            unlinked_activities: unlinked,
-            diagnostics: &issues,
-        })?;
+        output::document(
+            "scan",
+            &Report {
+                links: &links,
+                unlinked_activities: unlinked,
+                diagnostics: &issues,
+            },
+        )?;
         return Ok(exit);
     }
 

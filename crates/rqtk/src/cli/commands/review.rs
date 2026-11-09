@@ -55,11 +55,14 @@ pub fn run(ctx: &Ctx, args: ReviewArgs) -> Result<Exit, Box<dyn Error>> {
         .any(|r| matches!(r, SuspectReason::RequirementChanged { .. }));
 
     if ctx.json() {
-        output::json(&Report {
-            review: &review,
-            cleared,
-            written: !args.dry_run,
-        })?;
+        output::document(
+            "review",
+            &Report {
+                review: &review,
+                cleared,
+                written: !args.dry_run,
+            },
+        )?;
         return Ok(Exit::Ok);
     }
 

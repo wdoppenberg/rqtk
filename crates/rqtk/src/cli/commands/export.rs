@@ -23,7 +23,7 @@ pub fn run(ctx: &Ctx, format: ExportFormat, out: Option<PathBuf>) -> Result<Exit
         requirements: set.requirements().len(),
     };
     if ctx.json() {
-        output::json(&report)?;
+        output::document("export", &report)?;
     } else {
         output::success(
             "Requirements exported",

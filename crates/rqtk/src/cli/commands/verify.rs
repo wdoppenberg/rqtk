@@ -65,16 +65,19 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     );
 
     if ctx.json() {
-        output::json(&Report {
-            test_results: results.len(),
-            activities: &runs,
-            changes: &changes,
-            written: write,
-            up_to_date: changes.is_empty(),
-            commit: commit.as_deref(),
-            unattached_links: unattached,
-            not_in_results,
-        })?;
+        output::document(
+            "verify",
+            &Report {
+                test_results: results.len(),
+                activities: &runs,
+                changes: &changes,
+                written: write,
+                up_to_date: changes.is_empty(),
+                commit: commit.as_deref(),
+                unattached_links: unattached,
+                not_in_results,
+            },
+        )?;
         return Ok(exit);
     }
 

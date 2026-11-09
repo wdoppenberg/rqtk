@@ -58,17 +58,41 @@ impl std::fmt::Display for Usage {
 
 impl Error for Usage {}
 
-/// Print `value` as pretty JSON on stdout.
+/// Print `value`, a document that carries its own `schema` field (the client's views), as
+/// pretty JSON on stdout.
 pub fn json<T: Serialize + ?Sized>(value: &T) -> Result<(), Box<dyn Error>> {
     println!("{}", serde_json::to_string_pretty(value)?);
     Ok(())
 }
 
-/// Report a failed command on stderr, as JSON with `--json`.
-pub fn error(ctx: &Ctx, message: &str, usage: bool) {
+/// Print `value` as document `name`: pretty JSON on stdout, with `schema` set to
+/// `rqtk/<name>/<version>`. `value` must serialise to a JSON object.
+pub fn document<T: Serialize + ?Sized>(name: &str, value: &T) -> Result<(), Box<dyn Error>> {
+    let mut object = match serde_json::to_value(value)? {
+        serde_json::Value::Object(object) => object,
+        other => return Err(format!("document `{name}` is not a JSON object: {other}").into()),
+    };
+    object.insert(
+        "schema".to_owned(),
+        serde_json::Value::String(rqtk_client::views::schema_id(name)),
+    );
+    println!("{}", serde_json::to_string_pretty(&object)?);
+    Ok(())
+}
+
+/// Report a failed command on stderr, as JSON with `--json`. `code` is the client's error
+/// code, when the error came from opening or querying the repository.
+pub fn error(ctx: &Ctx, message: &str, usage: bool, code: Option<rqtk_client::ErrorCode>) {
     if ctx.json() {
         let kind = if usage { "usage" } else { "error" };
-        let body = serde_json::json!({ "error": { "kind": kind, "message": message } });
+        let mut error = serde_json::json!({ "kind": kind, "message": message });
+        if let Some(code) = code {
+            error["code"] = serde_json::Value::String(code.as_str().to_owned());
+        }
+        let body = serde_json::json!({
+            "schema": rqtk_client::views::schema_id("error"),
+            "error": error,
+        });
         eprintln!("{body}");
     } else {
         failure(message);

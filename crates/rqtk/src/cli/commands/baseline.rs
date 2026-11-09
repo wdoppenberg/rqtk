@@ -54,7 +54,7 @@ pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, Box<dyn Er
         dry_run,
     };
     if ctx.json() {
-        output::json(&report)?;
+        output::document("baseline", &report)?;
     } else {
         let label = if dry_run {
             "Baseline would be created"
@@ -70,6 +70,38 @@ pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, Box<dyn Er
             ],
         );
     }
+    Ok(Exit::Ok)
+}
+
+/// `rqtk baseline --list`: every baseline, oldest first.
+pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+    let repo = super::open(ctx)?;
+    let doc = repo.baselines()?;
+    if ctx.json() {
+        output::json(&doc)?;
+        return Ok(Exit::Ok);
+    }
+    if doc.baselines.is_empty() {
+        output::success(
+            "No baselines yet",
+            &[("create one", "rqtk baseline <version>")],
+        );
+        return Ok(Exit::Ok);
+    }
+    output::section("Baselines", &format!("{} tags", doc.baselines.len()));
+    for b in &doc.baselines {
+        let date = b
+            .timestamp
+            .as_deref()
+            .and_then(|t| t.get(..10))
+            .unwrap_or("unknown");
+        output::item(&format!(
+            "{}  {date}  {}",
+            b.tag,
+            b.message.lines().next().unwrap_or("")
+        ));
+    }
+    println!();
     Ok(Exit::Ok)
 }
 

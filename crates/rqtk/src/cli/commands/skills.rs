@@ -58,6 +58,12 @@ Work is done when `rqtk lint` and `rqtk coverage --strict` both exit 0. Skills: 
 `rqtk-requirements`, `rqtk-verification`, `/to-requirements`, `/requirements-review`.";
 
 /// A skill's name, description and who can invoke it, read from its frontmatter.
+/// `rqtk skills list --json`.
+#[derive(Serialize)]
+pub struct SkillList<'a> {
+    pub skills: &'a [SkillInfo],
+}
+
 #[derive(Debug, Serialize)]
 pub struct SkillInfo {
     pub name: String,
@@ -175,7 +181,7 @@ impl Default for InstallArgs {
 pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let skills = skills();
     if ctx.json() {
-        output::json(&skills)?;
+        output::document("skills", &SkillList { skills: &skills })?;
         return Ok(Exit::Ok);
     }
     for s in &skills {
@@ -198,7 +204,7 @@ pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
 pub fn install(ctx: &Ctx, args: &InstallArgs) -> Result<Exit, Box<dyn Error>> {
     let report = execute(ctx, args)?;
     if ctx.json() {
-        output::json(&report)?;
+        output::document("skills-install", &report)?;
     } else {
         print(&report);
     }

@@ -48,12 +48,15 @@ pub fn finish<T: Serialize>(
     }
     let path = output::relative(&path, &ctx.root);
     if ctx.json() {
-        output::json(&Created {
-            id,
-            path,
-            dry_run,
-            item: view,
-        })?;
+        output::document(
+            &format!("add-{}", kind.to_lowercase()),
+            &Created {
+                id,
+                path,
+                dry_run,
+                item: view,
+            },
+        )?;
     } else if dry_run {
         println!(
             "# would create {}\n{}",
@@ -80,12 +83,15 @@ pub fn finish_edit<T: Serialize>(
 ) -> Result<Exit, Box<dyn Error>> {
     let path = output::relative(path, &ctx.root);
     if ctx.json() {
-        output::json(&Created {
-            id,
-            path,
-            dry_run,
-            item,
-        })?;
+        output::document(
+            &format!("add-{}", kind.to_lowercase()),
+            &Created {
+                id,
+                path,
+                dry_run,
+                item,
+            },
+        )?;
     } else if dry_run {
         println!(
             "# would add to {}\n{}",

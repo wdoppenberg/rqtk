@@ -35,7 +35,7 @@ pub fn run(ctx: &Ctx, all: bool, dry_run: bool) -> Result<Exit, Box<dyn Error>> 
         .collect();
 
     if ctx.json() {
-        output::json(&Report { updated, dry_run })?;
+        output::document("rehash", &Report { updated, dry_run })?;
     } else if updated.is_empty() {
         output::success("All content hashes are current", &[]);
     } else {

@@ -71,13 +71,16 @@ pub fn add(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
         vendor::declare_source(&ctx.root, &args.alias, &source)?;
     }
     if ctx.json() {
-        output::json(&AddReport {
-            alias: &args.alias,
-            git: &args.url,
-            reference: &args.reference,
-            written: !args.dry_run,
-            warning: UNTRUSTED_WARNING,
-        })?;
+        output::document(
+            "interfaces-add",
+            &AddReport {
+                alias: &args.alias,
+                git: &args.url,
+                reference: &args.reference,
+                written: !args.dry_run,
+                warning: UNTRUSTED_WARNING,
+            },
+        )?;
     } else {
         let label = if args.dry_run {
             "Dry run: interface source not written"
@@ -126,10 +129,13 @@ pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
         }
     }
     if ctx.json() {
-        output::json(&SyncReport {
-            sources: &sources,
-            warning: UNTRUSTED_WARNING,
-        })?;
+        output::document(
+            "interfaces-sync",
+            &SyncReport {
+                sources: &sources,
+                warning: UNTRUSTED_WARNING,
+            },
+        )?;
         return Ok(Exit::Ok);
     }
     if sources.is_empty() {
@@ -183,10 +189,13 @@ pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
         .into());
     }
     if ctx.json() {
-        output::json(&RemoveReport {
-            alias,
-            removed: true,
-        })?;
+        output::document(
+            "interfaces-remove",
+            &RemoveReport {
+                alias,
+                removed: true,
+            },
+        )?;
     } else {
         output::success(
             "Interface source removed",
@@ -200,6 +209,11 @@ pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
         );
     }
     Ok(Exit::Ok)
+}
+
+#[derive(Serialize)]
+pub struct ListReport<'a> {
+    sources: &'a [Listed],
 }
 
 #[derive(Serialize)]
@@ -230,7 +244,7 @@ pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
         })
         .collect();
     if ctx.json() {
-        output::json(&listed)?;
+        output::document("interfaces-list", &ListReport { sources: &listed })?;
         return Ok(Exit::Ok);
     }
     if listed.is_empty() {

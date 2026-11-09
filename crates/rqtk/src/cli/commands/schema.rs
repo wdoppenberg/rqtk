@@ -14,7 +14,7 @@ pub fn run(ctx: &Ctx, kind: Option<&str>) -> Result<Exit, Box<dyn Error>> {
                 .iter()
                 .map(|(kind, file)| serde_json::json!({ "kind": kind, "file": file }))
                 .collect();
-            output::json(&kinds)?;
+            output::document("schema-kinds", &serde_json::json!({ "kinds": kinds }))?;
         } else {
             for (kind, file) in KINDS {
                 println!("  {:<12} {}", style(kind).bold(), style(file).dim());

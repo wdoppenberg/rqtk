@@ -19,10 +19,23 @@ fn splice_region(existing: &str) -> String {
     super::splice_managed(existing, REGION_BEGIN, REGION_END, REGION_BODY)
 }
 
+/// `rqtk install-hook --json`.
+#[derive(serde::Serialize)]
+pub struct Report<'a> {
+    pub hook: &'a Path,
+    pub action: &'a str,
+}
+
 pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let (hook_path, action) = install(&ctx.root, false)?;
     if ctx.json() {
-        output::json(&serde_json::json!({ "hook": hook_path, "action": action }))?;
+        output::document(
+            "install-hook",
+            &Report {
+                hook: &hook_path,
+                action,
+            },
+        )?;
     } else {
         output::success(
             &format!("Pre-commit hook region {action}"),
