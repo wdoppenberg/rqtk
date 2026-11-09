@@ -68,7 +68,7 @@ def commands_page(rqtk):
 
 
 def lint_rules_page(rqtk):
-    rules = json.loads(run(rqtk, "explain", "--json"))
+    rules = json.loads(run(rqtk, "explain", "--json"))["rules"]
     out = [GENERATED_NOTE, "# Lint rules\n\n",
            "`rqtk lint` reports these findings. Codes are stable: a code keeps its meaning and is ",
            "never reused. `rqtk explain <code>` prints the same information.\n\n",

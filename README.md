@@ -119,7 +119,7 @@ Every command accepts `--json`. Every command that writes files (`init`, `add*`,
 
 rqtk is built to be driven by scripts and coding agents as well as people.
 
-- **`--json`** prints one JSON document on stdout. Paths in it are relative to the repository root, and diagnostics carry `code`, `severity`, `subject` and `location.line`. With `--json`, errors are written to stderr as `{"error": {"kind": "usage" | "error", "message": …}}`.
+- **`--json`** prints one JSON object on stdout, with a `schema` field naming its shape and version (`rqtk/coverage/2`). Paths in it are relative to the repository root, and diagnostics carry `code`, `severity`, `subject` and `location.line`. With `--json`, errors are written to stderr as `{"schema": "rqtk/error/2", "error": {"kind": "usage" | "error", "message": …, "code": …}}`.
 - **Exit codes are fixed:**
 
   | Code | Meaning |
@@ -130,7 +130,8 @@ rqtk is built to be driven by scripts and coding agents as well as people.
   | 3 | error: missing or invalid configuration, I/O or git failure |
 
 - **Nothing prompts.** Every input is a flag, and `--dry-run` shows exactly what would be written. For `add*` that is the full TOML, or the item under `--json`.
-- **`rqtk schema <kind>`** prints the JSON Schema for each file kind, and **`rqtk explain <code>`** gives a rule's meaning and fix. An agent can look both up instead of guessing.
+- **`rqtk schema <kind>`** prints the JSON Schema for each file kind and each `--json` document, and **`rqtk explain <code>`** gives a rule's meaning and fix. An agent can look both up instead of guessing.
+- **The `rqtk-client` crate** reads a repository from Rust: a working tree, a tag or commit (without a checkout), or a git URL. Its views are the same documents `--json` prints. See the [client guide](https://rqtk.dev/docs/guides/client.html).
 - **`rqtk context <ID>`** is the briefing for working on one item:
   - for a requirement: its ancestors, children and other links, the needs it satisfies, the test functions linked to each activity, their verification status and evidence, and its lint findings;
   - for a need: its stakeholders and the requirements that satisfy it;
@@ -198,13 +199,14 @@ Claude Code users can instead install the skills as a plugin from this repositor
 
 ## Stability
 
-From 1.0, the `rqtk` command line follows semantic versioning. Within 1.x, the following change only in backwards-compatible ways:
+The `rqtk` command line follows semantic versioning. Within a major version, the following change only in backwards-compatible ways:
 
-| Surface | Promise within 1.x |
+| Surface | Promise within a major version |
 |---|---|
 | File format (`schema_version = 1`) | Files valid today stay valid. New optional fields may be added. A breaking change gets a new `schema_version`. |
 | Commands and flags | None removed or renamed. |
-| `--json` output | Fields are only added, never removed, renamed or retyped. A test enforces this against a recorded snapshot. |
+| `--json` output | Fields are only added, never removed, renamed or retyped. A test enforces this against a recorded snapshot. Each document's `schema` field names its major version. |
+| `rqtk-client` | Its public API follows semantic versioning, released with the same version as the CLI. A test records every public item. |
 | Exit codes | 0, 1, 2 and 3 keep their meaning. |
 | Lint rule codes | A code keeps its meaning and is never reused. New rules may be added, so lint can find new problems after an upgrade. |
 | Content hash | Tagged with its version (`v1:`); a different algorithm gets a new tag. |
