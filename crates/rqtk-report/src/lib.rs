@@ -212,11 +212,11 @@ fn write_attention(
         let mut why: Vec<String> = v
             .activities
             .iter()
-            .filter(|(_, s)| {
-                matches!(s, ActivityState::Failed)
-                    || matches!(s, ActivityState::Manual(Some(m)) if m == "Failed")
+            .filter(|a| {
+                matches!(a.state, ActivityState::Failed)
+                    || matches!(&a.state, ActivityState::Manual(Some(m)) if m == "Failed")
             })
-            .map(|(a, _)| format!("`{a}` failed"))
+            .map(|a| format!("`{}` failed", a.id))
             .collect();
         why.extend(v.suspect_reasons.iter().map(suspect_text));
         let _ = writeln!(
@@ -569,8 +569,8 @@ fn closure_label(status: &ClosureStatus) -> &'static str {
 }
 
 fn activity_label(verification: Option<&RequirementVerification>, activity: &str) -> String {
-    let state = verification.and_then(|v| v.activities.iter().find(|(id, _)| id == activity));
-    match state.map(|(_, s)| s) {
+    let state = verification.and_then(|v| v.activities.iter().find(|a| a.id == *activity));
+    match state.map(|a| &a.state) {
         Some(ActivityState::Passed) => "Passed (tests)".to_owned(),
         Some(ActivityState::Failed) => "**Failed** (tests)".to_owned(),
         Some(ActivityState::Suspect) => "**Suspect** (tests passed on older content)".to_owned(),

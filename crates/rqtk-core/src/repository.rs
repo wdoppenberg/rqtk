@@ -131,6 +131,13 @@ impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
         let repo_root = repo_root.as_ref().to_path_buf();
         let git = GitContext::open(&repo_root)?;
+        Self::load_with_git(repo_root, git)
+    }
+
+    /// Load the repository whose files are under `repo_root`, with `git` for history: the
+    /// repository's own, or a [`GitContext::snapshot`] when `repo_root` holds a commit's
+    /// extracted tree.
+    pub fn load_with_git(repo_root: PathBuf, git: GitContext) -> Result<Self, RqtkError> {
         let config_path = repo_root.join(CONFIG_PATH);
         let config = load_config(&config_path)?;
 

@@ -2758,6 +2758,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rqtk-client"
+version = "1.2.0"
+dependencies = [
+ "rqtk-core",
+ "rqtk-macros",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "rqtk-core"
 version = "0.2.0"
 dependencies = [

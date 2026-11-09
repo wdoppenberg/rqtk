@@ -229,9 +229,9 @@ fn describe(id: &RequirementId, v: &RequirementVerification) -> String {
     let mut flagged: Vec<String> = v
         .activities
         .iter()
-        .filter_map(|(activity, state)| match state {
-            ActivityState::Failed => Some(format!("{activity} failed")),
-            ActivityState::Manual(Some(s)) if s == "Failed" => Some(format!("{activity} failed")),
+        .filter_map(|a| match &a.state {
+            ActivityState::Failed => Some(format!("{} failed", a.id)),
+            ActivityState::Manual(Some(s)) if s == "Failed" => Some(format!("{} failed", a.id)),
             _ => None,
         })
         .collect();

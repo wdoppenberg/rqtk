@@ -5,11 +5,12 @@ use crate::evidence::{Evidence, Outcome};
 use crate::model::{EntityRef, Requirement, RequirementId, VerificationActivity};
 use crate::repository::{RequirementSet, Validated};
 use crate::scan::SourceLink;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Status of a single verification activity.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(tag = "state", content = "status", rename_all = "snake_case")]
 pub enum ActivityState {
     /// Linked tests passed against the requirement's current content.
@@ -43,7 +44,9 @@ impl ActivityState {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ClosureStatus {
     /// Every activity passed (tests against current content, or manual Passed/Waived).
@@ -74,21 +77,18 @@ impl ClosureStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct RequirementVerification {
     pub status: ClosureStatus,
-    /// Each activity's ID and state, in file order. Serialised as `[id, state]` pairs;
-    /// `activity_states` has the same as objects.
-    pub activities: Vec<(String, ActivityState)>,
-    /// Each activity's ID and state as `{"id": …, "state": …}`, in file order.
-    pub activity_states: Vec<ActivityStatus>,
+    /// Each activity's ID and state, in file order.
+    pub activities: Vec<ActivityStatus>,
     /// Why the requirement is Suspect, when it is.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub suspect_reasons: Vec<SuspectReason>,
 }
 
-/// One activity's state, as reported in `activity_states`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+/// One activity's state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct ActivityStatus {
     pub id: String,
     #[serde(flatten)]
@@ -96,7 +96,7 @@ pub struct ActivityStatus {
 }
 
 /// Why recorded evidence no longer settles a requirement.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(tag = "reason", rename_all = "snake_case")]
 pub enum SuspectReason {
     /// The requirement changed after these activities' tests passed. Rerun them.
@@ -168,17 +168,12 @@ impl RequirementSet<Validated> {
                 if !suspect_reasons.is_empty() && status != ClosureStatus::Failed {
                     status = ClosureStatus::Suspect;
                 }
-                let activity_states = activities
-                    .iter()
-                    .map(|(id, state)| ActivityStatus {
-                        id: id.clone(),
-                        state: state.clone(),
-                    })
-                    .collect();
                 let verification = RequirementVerification {
                     status,
-                    activities,
-                    activity_states,
+                    activities: activities
+                        .into_iter()
+                        .map(|(id, state)| ActivityStatus { id, state })
+                        .collect(),
                     suspect_reasons,
                 };
                 (id.clone(), verification)

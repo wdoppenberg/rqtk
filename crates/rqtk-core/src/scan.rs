@@ -24,13 +24,14 @@ use crate::model::ScanConfig;
 use ignore::WalkBuilder;
 use ignore::overrides::OverrideBuilder;
 use regex::Regex;
+use schemars::JsonSchema;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 /// A `verifies` annotation found in source code.
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 pub struct SourceLink {
     /// Verification activity ID named by the annotation.
     pub activity: String,

@@ -49,7 +49,7 @@ id_newtype!(
 );
 
 /// A reference to any tracked item.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(tag = "kind", content = "id", rename_all = "lowercase")]
 pub enum EntityRef {
     Requirement(RequirementId),

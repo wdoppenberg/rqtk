@@ -1,0 +1,28 @@
+[package]
+name = "rqtk-client"
+# Released in lockstep with the rqtk CLI (RQTK-CLIENT-0019).
+version = "1.2.0"
+description = "Read rqtk repositories from Rust: requirements, links, verification status, lint findings and change history."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+keywords = ["requirements", "traceability", "verification", "client"]
+categories = ["development-tools"]
+
+[features]
+default = ["remote"]
+# Open repositories from https and SSH git URLs (`Repository::open_remote`).
+remote = ["rqtk-core/network"]
+
+[dependencies]
+rqtk-core = { workspace = true }
+schemars = "1.0.4"
+serde = { workspace = true, features = ["derive"] }
+serde_json = "1.0.145"
+sha2 = "0.10"
+tempfile = "3"
+
+[dev-dependencies]
+rqtk-macros = { path = "../rqtk-macros" }

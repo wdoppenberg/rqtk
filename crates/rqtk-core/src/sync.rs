@@ -175,7 +175,7 @@ fn stage(
         ));
     }
     let work = temp.path().join("work");
-    let symlinks = extract(&repo, commit, &work).map_err(err)?;
+    let symlinks = crate::git::extract(&repo, commit, &work).map_err(err)?;
 
     // The provider's format must be one this rqtk reads.
     let config_path = work.join(CONFIG_PATH);
@@ -453,6 +453,43 @@ pub fn remove(repo_root: &Path, alias: &str) -> Result<bool, RqtkError> {
 
 // ── git ─────────────────────────────────────────────────────────────────────
 
+/// Fetch `url` into the bare repository at `path`, cloning it there first when it does not
+/// exist yet. The caller checks the URL against [`check_url`].
+pub fn fetch_cached(url: &str, path: &Path) -> Result<gix::Repository, String> {
+    if !path.join("HEAD").is_file() {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("cannot create {}: {e}", parent.display()))?;
+        }
+        let _ = std::fs::remove_dir_all(path);
+        return fetch(url, path);
+    }
+    let repo = gix::open(path).map_err(|e| format!("cannot open the cached copy of {url}: {e}"))?;
+    // Branches and tags as the provider has them now, moved or force-updated ones included.
+    let remote = repo
+        .find_remote("origin")
+        .map_err(|e| format!("the cached copy of {url} has no origin: {e}"))?
+        .with_refspecs(
+            [
+                "+refs/heads/*:refs/remotes/origin/*",
+                "+refs/tags/*:refs/tags/*",
+            ],
+            gix::remote::Direction::Fetch,
+        )
+        .map_err(|e| format!("cannot fetch {url}: {e}"))?;
+    remote
+        .connect(gix::remote::Direction::Fetch)
+        .map_err(|e| format!("cannot connect to {url}: {e}"))?
+        .prepare_fetch(gix::progress::Discard, Default::default())
+        .map_err(|e| format!("cannot fetch {url}: {e}"))?
+        .receive(
+            gix::progress::Discard,
+            &std::sync::atomic::AtomicBool::new(false),
+        )
+        .map_err(|e| format!("cannot fetch {url}: {e}"))?;
+    Ok(repo)
+}
+
 fn fetch(url: &str, path: &Path) -> Result<gix::Repository, String> {
     let mut prepare =
         gix::prepare_clone_bare(url, path).map_err(|e| format!("cannot clone {url}: {e}"))?;
@@ -466,7 +503,7 @@ fn fetch(url: &str, path: &Path) -> Result<gix::Repository, String> {
 }
 
 /// The commit `reference` names, and whether it is a tag, branch or commit SHA.
-fn resolve_ref(
+pub fn resolve_ref(
     repo: &gix::Repository,
     reference: &str,
 ) -> Result<(gix::ObjectId, RefKind), String> {
@@ -483,9 +520,10 @@ fn resolve_ref(
             return Ok((peel(r)?, RefKind::Tag));
         }
     }
+    // The remote-tracking branch first: a cached clone's local branches don't move on fetch.
     for name in [
-        format!("refs/heads/{reference}"),
         format!("refs/remotes/origin/{reference}"),
+        format!("refs/heads/{reference}"),
     ] {
         if let Ok(Some(r)) = repo.try_find_reference(name.as_str()) {
             return Ok((peel(r)?, RefKind::Branch));
@@ -503,75 +541,6 @@ fn resolve_ref(
 fn commit_of(repo: &gix::Repository, id: gix::ObjectId) -> Result<gix::ObjectId, String> {
     let object = repo.find_object(id).map_err(|e| e.to_string())?;
     Ok(object.peel_to_commit().map_err(|e| e.to_string())?.id)
-}
-
-/// Write the tree of `commit` below `dest`. Symbolic links and submodules are not written;
-/// the paths of symbolic links are returned.
-fn extract(
-    repo: &gix::Repository,
-    commit: gix::ObjectId,
-    dest: &Path,
-) -> Result<BTreeSet<String>, String> {
-    let tree = repo
-        .find_object(commit)
-        .map_err(|e| e.to_string())?
-        .peel_to_commit()
-        .map_err(|e| e.to_string())?
-        .tree()
-        .map_err(|e| e.to_string())?;
-    let mut symlinks = BTreeSet::new();
-    write_tree(repo, tree, dest, "", &mut symlinks)?;
-    Ok(symlinks)
-}
-
-fn write_tree(
-    repo: &gix::Repository,
-    tree: gix::Tree<'_>,
-    dest: &Path,
-    prefix: &str,
-    symlinks: &mut BTreeSet<String>,
-) -> Result<(), String> {
-    use gix::objs::tree::EntryKind;
-    std::fs::create_dir_all(dest).map_err(|e| e.to_string())?;
-    for entry in tree.iter() {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let name = entry.filename().to_string();
-        if name.is_empty()
-            || name == "."
-            || name == ".."
-            || name.contains(['/', '\\'])
-            || name.chars().any(char::is_control)
-        {
-            return Err(format!(
-                "provider tree has an invalid file name `{}`",
-                name.escape_debug()
-            ));
-        }
-        let rel = if prefix.is_empty() {
-            name.clone()
-        } else {
-            format!("{prefix}/{name}")
-        };
-        let oid = entry.oid().to_owned();
-        match entry.mode().kind() {
-            EntryKind::Tree => {
-                let sub = repo
-                    .find_object(oid)
-                    .map_err(|e| e.to_string())?
-                    .into_tree();
-                write_tree(repo, sub, &dest.join(&name), &rel, symlinks)?;
-            }
-            EntryKind::Blob | EntryKind::BlobExecutable => {
-                let blob = repo.find_object(oid).map_err(|e| e.to_string())?;
-                std::fs::write(dest.join(&name), &blob.data).map_err(|e| e.to_string())?;
-            }
-            EntryKind::Link => {
-                symlinks.insert(rel);
-            }
-            EntryKind::Commit => {}
-        }
-    }
-    Ok(())
 }
 
 // ── files ───────────────────────────────────────────────────────────────────
