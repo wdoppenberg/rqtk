@@ -1,8 +1,9 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use rqtk_core::{EntityRef, RequirementSet};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
@@ -18,7 +19,7 @@ struct Report {
     dry_run: bool,
 }
 
-pub fn run(ctx: &Ctx, all: bool, dry_run: bool) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, all: bool, dry_run: bool) -> Result<Exit, CliError> {
     let mut set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let stale = if dry_run {
         set.stale_hashes(all)

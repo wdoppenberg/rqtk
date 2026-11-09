@@ -1,13 +1,12 @@
-use std::error::Error;
-
 use console::style;
 use rqtk_core::schema::{KINDS, json_schema};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// Print the JSON Schema for a file kind. Without a kind, list the kinds.
 /// The schema is JSON either way; `--json` only changes the listing.
-pub fn run(ctx: &Ctx, kind: Option<&str>) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, kind: Option<&str>) -> Result<Exit, CliError> {
     let Some(kind) = kind else {
         if ctx.json() {
             let kinds: Vec<_> = KINDS

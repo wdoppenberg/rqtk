@@ -1,10 +1,9 @@
-use std::error::Error;
-
 use rqtk_client::views::Modification;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
-pub fn run(ctx: &Ctx, from: String, to: String) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, from: String, to: String) -> Result<Exit, CliError> {
     let repo = super::open(ctx)?;
     let diff = repo.diff(&from, &to)?;
     if ctx.json() {

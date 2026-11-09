@@ -1,14 +1,13 @@
-use std::error::Error;
-
 use console::style;
 use rqtk_core::ActivityState;
 use rqtk_core::query::{Context, Summary};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, consumed_line, printable};
 
-pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, CliError> {
     let repo = super::open(ctx)?;
-    let doc = repo.context(id).map_err(super::usage_if_not_found)?;
+    let doc = repo.context(id).map_err(CliError::usage_if_not_found)?;
 
     if ctx.json() {
         output::json(&doc)?;

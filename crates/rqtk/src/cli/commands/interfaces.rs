@@ -1,13 +1,12 @@
 //! `rqtk interfaces add | sync | remove | list`: consume interface requirements published
 //! by other repositories.
 
-use std::error::Error;
-
 use rqtk_core::sync::{SyncOptions, SyncedSource};
 use rqtk_core::vendor::{self, LOCK_PATH, Lockfile, VENDOR_DIR};
 use rqtk_core::{InterfaceSource, load_config};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// Printed by every `add` and `sync`: what is vendored comes from someone else.
@@ -45,7 +44,7 @@ struct AddReport<'a> {
     warning: &'static str,
 }
 
-pub fn add(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn add(ctx: &Ctx, args: AddArgs) -> Result<Exit, CliError> {
     warn(ctx);
     if !vendor::valid_alias(&args.alias) {
         return Err(Usage(format!(
@@ -111,7 +110,7 @@ struct SyncReport<'a> {
     warning: &'static str,
 }
 
-pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, CliError> {
     warn(ctx);
     let config = load_config(&config_path(ctx))?;
     let options = SyncOptions {
@@ -176,7 +175,7 @@ struct RemoveReport<'a> {
     removed: bool,
 }
 
-pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
+pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, CliError> {
     // Read the lockfile before touching anything, so a corrupt one stops the removal
     // before the config is edited.
     Lockfile::read(&ctx.root)?;
@@ -226,7 +225,7 @@ struct Listed {
     requirements: usize,
 }
 
-pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+pub fn list(ctx: &Ctx) -> Result<Exit, CliError> {
     let config = load_config(&config_path(ctx))?;
     let lock = Lockfile::read(&ctx.root)?.unwrap_or_default();
     let listed: Vec<Listed> = config

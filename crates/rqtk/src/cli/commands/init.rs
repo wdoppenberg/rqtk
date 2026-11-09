@@ -1,7 +1,8 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use serde::Serialize;
 
+use crate::cli::error::{CliError, IoContext};
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// `rqtk init --agents --json`: what init and the skill install did.
@@ -35,7 +36,7 @@ pub struct InitArgs<'a> {
     pub dry_run: bool,
 }
 
-pub fn run(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Exit, CliError> {
     let report = execute(ctx, args)?;
     if ctx.json() {
         output::document("init", &report)?;
@@ -45,13 +46,13 @@ pub fn run(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Exit, Box<dyn Error>> {
     Ok(Exit::Ok)
 }
 
-pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, Box<dyn Error>> {
+pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, CliError> {
     let root = &ctx.root;
     let dry_run = args.dry_run;
     let req_dir = args.requirements_dir.unwrap_or(".rqtk/requirements");
     let config_path = root.join(".rqtk/config.toml");
     if config_path.exists() && !args.force {
-        return Err(Box::new(Usage(format!(
+        return Err(CliError::Usage(Usage(format!(
             "refusing to overwrite {}; pass --force to replace it",
             config_path.display()
         ))));
@@ -82,13 +83,13 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, Box<dyn Error>>
 
     if !dry_run {
         for dir in &dirs {
-            std::fs::create_dir_all(dir)?;
+            std::fs::create_dir_all(dir).at(dir)?;
         }
         for (path, content) in &files {
             if let Some(parent) = path.parent() {
-                std::fs::create_dir_all(parent)?;
+                std::fs::create_dir_all(parent).at(parent)?;
             }
-            std::fs::write(path, content)?;
+            std::fs::write(path, content).at(path)?;
         }
     }
 

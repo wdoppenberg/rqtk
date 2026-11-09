@@ -1,8 +1,8 @@
+use crate::cli::error::CliError;
 use comfy_table::{Attribute, Cell, Color, ContentArrangement, Table, presets};
 use console::style;
 use rqtk_core::{Diagnostic, Severity};
 use serde::Serialize;
-use std::error::Error;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,37 +56,39 @@ impl std::fmt::Display for Usage {
     }
 }
 
-impl Error for Usage {}
+impl std::error::Error for Usage {}
 
 /// Print `value`, a document that carries its own `schema` field (the client's views), as
 /// pretty JSON on stdout.
-pub fn json<T: Serialize + ?Sized>(value: &T) -> Result<(), Box<dyn Error>> {
+pub fn json<T: Serialize + ?Sized>(value: &T) -> Result<(), CliError> {
     println!("{}", serde_json::to_string_pretty(value)?);
     Ok(())
 }
 
 /// Print `value` as document `name`: pretty JSON on stdout, with `schema` set to
 /// `rqtk/<name>/<version>`. `value` must serialise to a JSON object.
-pub fn document<T: Serialize + ?Sized>(name: &str, value: &T) -> Result<(), Box<dyn Error>> {
-    let mut object = match serde_json::to_value(value)? {
-        serde_json::Value::Object(object) => object,
-        other => return Err(format!("document `{name}` is not a JSON object: {other}").into()),
-    };
-    object.insert(
-        "schema".to_owned(),
-        serde_json::Value::String(rqtk_client::views::schema_id(name)),
-    );
-    println!("{}", serde_json::to_string_pretty(&object)?);
-    Ok(())
+pub fn document<T: Serialize + ?Sized>(name: &str, value: &T) -> Result<(), CliError> {
+    /// `value`'s fields with `schema` first. Serialising a value that isn't a struct or map
+    /// fails, so every document is an object.
+    #[derive(Serialize)]
+    struct Stamped<'a, T: ?Sized> {
+        schema: String,
+        #[serde(flatten)]
+        body: &'a T,
+    }
+    json(&Stamped {
+        schema: rqtk_client::views::schema_id(name),
+        body: value,
+    })
 }
 
 /// Report a failed command on stderr, as JSON with `--json`. `code` is the client's error
 /// code, when the error came from opening or querying the repository.
-pub fn error(ctx: &Ctx, message: &str, usage: bool, code: Option<rqtk_client::ErrorCode>) {
+pub fn error(ctx: &Ctx, err: &CliError) {
+    let message = err.to_string();
     if ctx.json() {
-        let kind = if usage { "usage" } else { "error" };
-        let mut error = serde_json::json!({ "kind": kind, "message": message });
-        if let Some(code) = code {
+        let mut error = serde_json::json!({ "kind": err.kind(), "message": message });
+        if let Some(code) = err.code() {
             error["code"] = serde_json::Value::String(code.as_str().to_owned());
         }
         let body = serde_json::json!({
@@ -95,7 +97,7 @@ pub fn error(ctx: &Ctx, message: &str, usage: bool, code: Option<rqtk_client::Er
         });
         eprintln!("{body}");
     } else {
-        failure(message);
+        failure(&message);
     }
 }
 

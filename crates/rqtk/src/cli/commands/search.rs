@@ -2,8 +2,9 @@ use console::style;
 use regex::{Regex, RegexBuilder};
 use rqtk_core::{EntityRef, RequirementSet};
 use serde::Serialize;
-use std::{error::Error, path::Path, path::PathBuf};
+use std::{path::Path, path::PathBuf};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 pub struct SearchArgs {
@@ -88,7 +89,7 @@ fn file_of<'a, S>(set: &'a RequirementSet<S>, subject: &EntityRef) -> &'a Path {
         .expect("item listed by the set has a file")
 }
 
-pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, CliError> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let re = RegexBuilder::new(&regex::escape(&args.pattern))
         .case_insensitive(args.ignore_case)

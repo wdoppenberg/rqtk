@@ -34,15 +34,6 @@ pub fn open(ctx: &crate::cli::output::Ctx) -> Result<rqtk_client::Repository, rq
     rqtk_client::Repository::open(&ctx.root)
 }
 
-/// A client error, as a usage error when it names an item that doesn't exist.
-pub fn usage_if_not_found(e: rqtk_client::Error) -> Box<dyn std::error::Error> {
-    if e.code == rqtk_client::ErrorCode::NotFound {
-        Box::new(crate::cli::output::Usage(e.message))
-    } else {
-        Box::new(e)
-    }
-}
-
 /// Source links and recorded evidence, the inputs to verification status.
 pub fn load_links_and_evidence(
     set: &RequirementSet<Validated>,

@@ -1,9 +1,10 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use rqtk_core::io::create_toml_file;
 use rqtk_core::{NeedId, RequirementId, RequirementSet, ScaffoldInput, VerificationActivity};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 pub struct AddArgs {
@@ -42,7 +43,7 @@ pub fn finish<T: Serialize>(
     item: &T,
     view: &T,
     dry_run: bool,
-) -> Result<Exit, Box<dyn Error>> {
+) -> Result<Exit, CliError> {
     if !dry_run {
         create_toml_file(&path, item)?;
     }
@@ -80,7 +81,7 @@ pub fn finish_edit<T: Serialize>(
     path: &std::path::Path,
     item: &T,
     dry_run: bool,
-) -> Result<Exit, Box<dyn Error>> {
+) -> Result<Exit, CliError> {
     let path = output::relative(path, &ctx.root);
     if ctx.json() {
         output::document(
@@ -107,19 +108,19 @@ pub fn finish_edit<T: Serialize>(
     Ok(Exit::Ok)
 }
 
-pub fn run(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: AddArgs) -> Result<Exit, CliError> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let cfg = set.config();
     if !cfg.categories.contains_key(&args.category) {
         let known: Vec<&str> = cfg.categories.keys().map(String::as_str).collect();
-        return Err(Box::new(Usage(format!(
+        return Err(CliError::Usage(Usage(format!(
             "unknown category `{}`; expected one of: {}",
             args.category,
             known.join(", ")
         ))));
     }
     if !cfg.req_types.allowed.contains(&args.req_type) {
-        return Err(Box::new(Usage(format!(
+        return Err(CliError::Usage(Usage(format!(
             "unknown type `{}`; expected one of: {}",
             args.req_type,
             cfg.req_types.allowed.join(", ")
@@ -147,7 +148,7 @@ pub fn run(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
             .require_parent_for_categories
             .contains(&args.category)
     {
-        return Err(Box::new(Usage(format!(
+        return Err(CliError::Usage(Usage(format!(
             "category `{}` requires a parent; pass --parent <ID>",
             args.category
         ))));
@@ -157,14 +158,14 @@ pub fn run(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
             .requirements()
             .contains_key(&RequirementId(parent.clone()))
         {
-            return Err(Box::new(Usage(format!(
+            return Err(CliError::Usage(Usage(format!(
                 "no requirement with ID `{parent}`"
             ))));
         }
     }
     for need in &args.satisfies {
         if !set.needs().contains_key(&NeedId(need.clone())) {
-            return Err(Box::new(Usage(format!("no need with ID `{need}`"))));
+            return Err(CliError::Usage(Usage(format!("no need with ID `{need}`"))));
         }
     }
 

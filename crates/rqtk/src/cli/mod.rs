@@ -2,13 +2,15 @@
 //! not part of the library API.
 
 mod commands;
+mod error;
 mod output;
+
+use error::CliError;
 
 use clap::{Parser, Subcommand};
 use commands::skills::AgentTarget;
-use output::{Ctx, Exit, Format, Usage};
+use output::{Ctx, Exit, Format};
 use rqtk_export::ExportFormat;
-use std::error::Error;
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -388,10 +390,8 @@ where
         Ok(Ok(Exit::Ok)) => 0,
         Ok(Ok(Exit::Findings)) => 1,
         Ok(Err(err)) => {
-            let usage = err.is::<Usage>();
-            let code = err.downcast_ref::<rqtk_client::Error>().map(|e| e.code);
-            output::error(&ctx, &err.to_string(), usage, code);
-            if usage { 2 } else { 3 }
+            output::error(&ctx, &err);
+            err.exit_code()
         }
         // The reader went away (`rqtk … | head`). Files are written before output is
         // printed, so the command has done its work; there is nobody left to tell.
@@ -424,7 +424,7 @@ fn quiet_broken_pipes() {
     });
 }
 
-fn run(ctx: &Ctx, command: Command) -> Result<Exit, Box<dyn Error>> {
+fn run(ctx: &Ctx, command: Command) -> Result<Exit, CliError> {
     match command {
         Command::Init {
             requirements_dir,

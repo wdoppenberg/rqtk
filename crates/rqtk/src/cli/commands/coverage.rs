@@ -1,9 +1,10 @@
-use std::{collections::BTreeMap, error::Error};
+use std::collections::BTreeMap;
 
 use console::style;
 use rqtk_client::views::NeedStatus;
 use rqtk_core::{ActivityState, ClosureStatus, RequirementVerification, SuspectReason};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 /// Requirement states `coverage --strict --allow` accepts besides Verified.
@@ -15,7 +16,7 @@ pub enum Allow {
     InProgress,
 }
 
-pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit, CliError> {
     let repo = super::open(ctx)?;
     let doc = repo.coverage();
     let summary: &BTreeMap<ClosureStatus, usize> = &doc.summary;

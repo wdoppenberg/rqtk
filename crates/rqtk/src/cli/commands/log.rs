@@ -1,8 +1,7 @@
-use std::error::Error;
-
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
-pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, id: String) -> Result<Exit, CliError> {
     let repo = super::open(ctx)?;
     let doc = repo.history(&id)?;
     if ctx.json() {

@@ -1,9 +1,10 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use rqtk_core::RequirementSet;
 use rqtk_export::{ExportFormat, default_export_path, export_set};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
@@ -13,7 +14,7 @@ struct Report<'a> {
     requirements: usize,
 }
 
-pub fn run(ctx: &Ctx, format: ExportFormat, out: Option<PathBuf>) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, format: ExportFormat, out: Option<PathBuf>) -> Result<Exit, CliError> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let out = out.unwrap_or_else(|| default_export_path(set.requirements_dir(), &format));
     export_set(&set, &format, &out)?;

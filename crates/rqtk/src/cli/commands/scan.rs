@@ -1,9 +1,10 @@
-use std::{collections::BTreeMap, error::Error};
+use std::collections::BTreeMap;
 
 use console::style;
 use rqtk_core::{Diagnostic, RequirementSet, SourceLink, scan};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 #[derive(Serialize)]
@@ -14,7 +15,7 @@ struct Report<'a> {
 }
 
 /// List every `verifies` link in source, grouped by activity, then any link problems.
-pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx) -> Result<Exit, CliError> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let links = scan::scan(set.repo_root(), &set.config().scan)?;
     let mut by_activity: BTreeMap<&str, Vec<&SourceLink>> = BTreeMap::new();

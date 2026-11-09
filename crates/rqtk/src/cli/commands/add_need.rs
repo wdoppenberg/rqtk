@@ -1,7 +1,6 @@
-use std::error::Error;
-
 use rqtk_core::{NeedId, RequirementSet, StakeholderId};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{Ctx, Exit};
 
 pub struct AddNeedArgs {
@@ -13,7 +12,7 @@ pub struct AddNeedArgs {
     pub dry_run: bool,
 }
 
-pub fn run(ctx: &Ctx, args: AddNeedArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: AddNeedArgs) -> Result<Exit, CliError> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let id = args.id.map_or_else(|| set.next_need_id(), NeedId);
     let mut need = set.scaffold_need(id.clone(), &args.title, &args.statement);

@@ -1,10 +1,11 @@
-use std::{error::Error, path::PathBuf, process::Command};
+use std::{path::PathBuf, process::Command};
 
 use chrono::Utc;
 use rqtk_core::{BaselineName, EntityRef, RequirementSet};
 use semver::Version;
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 #[derive(Serialize)]
@@ -15,7 +16,7 @@ struct Report {
     dry_run: bool,
 }
 
-pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, CliError> {
     let parsed = Version::parse(&version)
         .map_err(|e| Usage(format!("baseline version `{version}` is not semver: {e}")))?;
     let name: BaselineName = parsed.to_string().parse()?;
@@ -74,7 +75,7 @@ pub fn run(ctx: &Ctx, version: String, dry_run: bool) -> Result<Exit, Box<dyn Er
 }
 
 /// `rqtk baseline --list`: every baseline, oldest first.
-pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+pub fn list(ctx: &Ctx) -> Result<Exit, CliError> {
     let repo = super::open(ctx)?;
     let doc = repo.baselines()?;
     if ctx.json() {
@@ -105,15 +106,19 @@ pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     Ok(Exit::Ok)
 }
 
-fn git(ctx: &Ctx, command: &mut Command) -> Result<(), Box<dyn Error>> {
+fn git(ctx: &Ctx, command: &mut Command) -> Result<(), CliError> {
     // Keep git's own chatter off stdout so `--json` output stays parseable.
-    let out = command.current_dir(&ctx.root).output()?;
+    let out = command
+        .current_dir(&ctx.root)
+        .output()
+        .map_err(|source| CliError::Spawn {
+            program: "git".to_owned(),
+            source,
+        })?;
     if !out.status.success() {
-        return Err(format!(
-            "git failed: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        )
-        .into());
+        return Err(CliError::Git(
+            String::from_utf8_lossy(&out.stderr).trim().to_owned(),
+        ));
     }
     Ok(())
 }

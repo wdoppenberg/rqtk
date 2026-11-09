@@ -28,6 +28,7 @@ console = { version = "0.16", optional = true }
 comfy-table = { version = "7.2", optional = true }
 chrono = { version = "0.4.44", optional = true }
 schemars = { version = "1.0.4", optional = true }
+thiserror = { version = "2.0.17", optional = true }
 
 [features]
 default = ["cli"]
@@ -50,6 +51,7 @@ cli = [
     "dep:comfy-table",
     "dep:chrono",
     "dep:schemars",
+    "dep:thiserror",
 ]
 # `rqtk::core` and `rqtk::export`: the library crates the tool is built from.
 lib = ["dep:rqtk-core", "dep:rqtk-export"]
