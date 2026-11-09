@@ -643,6 +643,8 @@ fn lint_and_coverage_need_no_network() {
 #[test]
 fn a_baseline_name_resolves_to_its_rqtk_tag() {
     let p = provider();
+    git(&p.root, &["config", "user.name", "Test"]);
+    git(&p.root, &["config", "user.email", "test@example.com"]);
     rqtk(&p.root).args(["baseline", "1.0.0"]).assert().success();
     let c = consumer(&p, "1.0.0");
     sync(&c).success();
