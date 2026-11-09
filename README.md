@@ -375,9 +375,9 @@ rqtk interfaces sync          # writes .rqtk/vendor/users/ and .rqtk/interfaces.
 consumes = ["users:USR-SYS-0007"]
 ```
 
-When a sync brings in a changed contract, every requirement that consumes it becomes Suspect until it is reviewed. Lint works offline from the committed snapshot and reports hand-edited vendored files, drift between the config and the lockfile, and links to interfaces the provider no longer exposes. The provider's verification status is shown but never counts toward yours.
+When a sync brings in a changed contract, every requirement that consumes it, and every requirement below those, becomes Suspect until it is reviewed. Lint works offline from the committed snapshot and reports hand-edited vendored files, drift between the config and the lockfile, and links to interfaces the provider no longer exposes. The provider's verification status is shown but never counts toward yours.
 
-**Vendor only from providers you trust, and review every sync.** rqtk treats vendored content as data: it never executes it, escapes it in reports, accepts only `https` and SSH URLs, and refuses symbolic links, references outside the provider's repository, files over 10 MiB and sources over 100 MiB. The content itself is still the provider's. See the [guide](https://rqtk.dev/docs/guides/interfaces.html).
+**Vendor only from providers you trust, and review every sync.** rqtk treats vendored content as data: it never executes it, escapes it in reports, accepts only `https` and SSH URLs, and refuses symbolic links, references outside the provider's repository, specs that don't resolve, files over 10 MiB and sources over 100 MiB. The content itself is still the provider's. See the [guide](https://rqtk.dev/docs/guides/interfaces.html).
 
 ## Change control
 

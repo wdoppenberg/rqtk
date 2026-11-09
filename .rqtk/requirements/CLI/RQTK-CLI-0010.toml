@@ -15,8 +15,12 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Integration"
 phase = "Development"
-success_criteria = "The config gains the alias table with url and ref; existing comments and layout are preserved; a duplicate alias is a usage error."
+success_criteria = "The config gains the alias table with `git` and `ref`; existing comments and layout are preserved; a duplicate alias is a usage error; with --dry-run the command reports the table it would write and writes nothing."
 
 [[verification.activities]]
 id = "VA-CLI-0010-01"
 name = "add records the alias"
+
+[[verification.activities]]
+id = "VA-CLI-0010-02"
+name = "Dry run writes nothing"

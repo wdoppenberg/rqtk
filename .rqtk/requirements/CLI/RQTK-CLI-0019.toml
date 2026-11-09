@@ -15,8 +15,16 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Integration"
 phase = "Development"
-success_criteria = "A sync that fails at any point leaves the vendor directory and lockfile byte-identical to before."
+success_criteria = "A sync that fails at any point, including while it swaps the new snapshots in, leaves the vendor directory and lockfile byte-identical to before; after a sync interrupted mid-swap, the next sync first restores the previous snapshot."
 
 [[verification.activities]]
 id = "VA-CLI-0019-01"
 name = "Failed sync leaves vendor and lockfile unchanged"
+
+[[verification.activities]]
+id = "VA-CLI-0019-02"
+name = "A failure while swapping in rolls back"
+
+[[verification.activities]]
+id = "VA-CLI-0019-03"
+name = "An interrupted swap is undone by the next sync"

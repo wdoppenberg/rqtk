@@ -352,16 +352,11 @@ impl Requirement {
     /// verified: id, statement, parameters, structural links and verification method/level/phase.
     /// Administrative fields (title, status, approval, allocation, risk, custom, …) are excluded.
     ///
-    /// For an interface requirement this covers its spec entries but not the content of the
-    /// files they name; [`Self::compute_content_hash_with`] adds that.
-    pub fn compute_content_hash(&self) -> String {
-        self.compute_content_hash_with(None)
-    }
-
-    /// [`Self::compute_content_hash`], plus `spec_digest`: the digest of the interface's
-    /// definition files (see [`crate::spec`]). Requirements without an `[interface]` table
-    /// hash the same with or without it.
-    pub fn compute_content_hash_with(&self, spec_digest: Option<&str>) -> String {
+    /// For an interface requirement, `spec_digest` is the digest of the definition files its
+    /// specs name ([`crate::spec::SpecResolution::digest`]); pass `None` only for a
+    /// requirement without an `[interface]` table, which hashes the same either way.
+    /// [`crate::RequirementSet::content_hash`] does this for a loaded requirement.
+    pub fn compute_content_hash(&self, spec_digest: Option<&str>) -> String {
         let mut h = ContentHasher::default();
         h.field("id", &self.id.0);
         h.field("statement", &self.statement);
@@ -429,9 +424,6 @@ pub struct SpecEntry {
     /// `#/paths/~1users~1{id}/get` for OpenAPI; free-form for other formats.
     pub element: Option<String>,
 }
-
-/// The spec formats rqtk knows. Only `openapi` is parsed; the others are hashed as files.
-pub const SPEC_FORMATS: &[&str] = &["openapi", "protobuf", "asyncapi", "jsonschema", "other"];
 
 /// A `consumes` link: `<alias>:<ID>`, naming an interface requirement in the vendored
 /// snapshot of the interface source `alias`.
@@ -845,7 +837,11 @@ phase = "Development"
     // rqtk: verifies VA-CORE-003-01
     #[test]
     fn content_hash_is_versioned() {
-        assert!(requirement("").compute_content_hash().starts_with("v1:"));
+        assert!(
+            requirement("")
+                .compute_content_hash(None)
+                .starts_with("v1:")
+        );
     }
 
     // rqtk: verifies VA-CORE-003-01
@@ -853,7 +849,10 @@ phase = "Development"
     fn content_hash_frames_list_items() {
         let joined = requirement("[trace]\nparents = [\"AB\"]\n");
         let split = requirement("[trace]\nparents = [\"A\", \"B\"]\n");
-        assert_ne!(joined.compute_content_hash(), split.compute_content_hash());
+        assert_ne!(
+            joined.compute_content_hash(None),
+            split.compute_content_hash(None)
+        );
     }
 
     // rqtk: verifies VA-CORE-003-01
@@ -862,8 +861,8 @@ phase = "Development"
         let parent = requirement("[trace]\nparents = [\"X\"]\n");
         let refines = requirement("[trace]\nrefines = [\"X\"]\n");
         assert_ne!(
-            parent.compute_content_hash(),
-            refines.compute_content_hash()
+            parent.compute_content_hash(None),
+            refines.compute_content_hash(None)
         );
     }
 
@@ -872,7 +871,7 @@ phase = "Development"
     fn content_hash_ignores_administrative_fields() {
         let a = requirement("");
         let b = requirement("notes = \"reworded\"\nkeywords = [\"x\"]\n");
-        assert_eq!(a.compute_content_hash(), b.compute_content_hash());
+        assert_eq!(a.compute_content_hash(None), b.compute_content_hash(None));
     }
 
     // rqtk: verifies VA-CORE-0007-02
@@ -891,12 +890,28 @@ phase = "Development"
         assert_eq!(specs[1].element, None);
     }
 
+    // rqtk: verifies VA-CORE-0010-02
+    #[test]
+    fn consumes_links_are_part_of_the_content_hash() {
+        let plain = requirement("");
+        let consuming = requirement("[trace]\nconsumes = [\"users:USR-SYS-0001\"]\n");
+        let other = requirement("[trace]\nconsumes = [\"users:USR-SYS-0002\"]\n");
+        assert_ne!(
+            plain.compute_content_hash(None),
+            consuming.compute_content_hash(None)
+        );
+        assert_ne!(
+            consuming.compute_content_hash(None),
+            other.compute_content_hash(None)
+        );
+    }
+
     #[test]
     fn requirements_without_an_interface_hash_as_before() {
         let req = requirement("");
         assert_eq!(
-            req.compute_content_hash(),
-            req.compute_content_hash_with(Some("x"))
+            req.compute_content_hash(None),
+            req.compute_content_hash(Some("x"))
         );
     }
 

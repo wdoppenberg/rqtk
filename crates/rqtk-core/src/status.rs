@@ -5,7 +5,7 @@ use crate::evidence::{Evidence, Outcome};
 use crate::model::{EntityRef, Requirement, RequirementId, VerificationActivity};
 use crate::repository::{RequirementSet, Validated};
 use crate::scan::SourceLink;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Status of a single verification activity.
@@ -43,7 +43,7 @@ impl ActivityState {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ClosureStatus {
     /// Every activity passed (tests against current content, or manual Passed/Waived).
@@ -58,6 +58,20 @@ pub enum ClosureStatus {
     Planned,
     /// No activities defined, or success criteria missing.
     Gap,
+}
+
+impl ClosureStatus {
+    /// The snake_case name used in JSON and `status.toml`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Verified => "verified",
+            Self::Suspect => "suspect",
+            Self::Failed => "failed",
+            Self::InProgress => "in_progress",
+            Self::Planned => "planned",
+            Self::Gap => "gap",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

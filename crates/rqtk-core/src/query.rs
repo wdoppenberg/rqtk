@@ -42,7 +42,7 @@ pub struct ConsumedSummary {
     pub statement: Option<String>,
     /// The provider's verification status at the pinned commit. Informational: it does not
     /// count toward this repository's coverage.
-    pub provider_status: Option<String>,
+    pub provider_status: Option<crate::status::ClosureStatus>,
     /// Whether the vendored snapshot has it.
     pub resolved: bool,
 }
@@ -63,7 +63,7 @@ pub struct InterfaceContext<'a> {
     pub alias: String,
     pub path: PathBuf,
     pub requirement: &'a Requirement,
-    pub provider_status: Option<String>,
+    pub provider_status: Option<crate::status::ClosureStatus>,
     /// Local requirements that consume it.
     pub consumers: Vec<Summary>,
 }
@@ -196,7 +196,7 @@ impl RequirementSet<Validated> {
             id: reference.0.clone(),
             title: vendored.map(|v| v.requirement.title.clone()),
             statement: vendored.map(|v| v.requirement.statement.clone()),
-            provider_status: vendored.and_then(|v| v.provider_status.clone()),
+            provider_status: vendored.and_then(|v| v.provider_status),
             resolved: vendored.is_some(),
         }
     }
@@ -322,7 +322,7 @@ impl RequirementSet<Validated> {
                 alias: v.alias.clone(),
                 path: self.relative(&v.path),
                 requirement: &v.requirement,
-                provider_status: v.provider_status.clone(),
+                provider_status: v.provider_status,
                 consumers: self
                     .requirements
                     .iter()
@@ -390,12 +390,19 @@ impl RequirementSet<Validated> {
             .map(|n| (n.id.clone(), n))
             .collect();
 
+        let base_files = self.git.spec_files_at(base, &self.repo_root)?;
         let requirements = compare(
             &base_reqs,
             &self.requirements,
-            Requirement::compute_content_hash,
+            |_, r| crate::git::hash_in(r, &base_files),
+            |id, _| self.content_hash(id),
         );
-        let needs = compare(&base_needs, &self.needs, Need::compute_content_hash);
+        let needs = compare(
+            &base_needs,
+            &self.needs,
+            |_, n| n.compute_content_hash(),
+            |_, n| n.compute_content_hash(),
+        );
         let interfaces = self.interface_changes(base)?;
 
         // Walk from each semantically changed or removed item to everything that depends on it.
@@ -514,6 +521,7 @@ impl RequirementSet<Validated> {
 impl RequirementSet<Validated> {
     /// Vendored interface requirements whose hash in the lockfile differs from `base`.
     fn interface_changes(&self, base: &str) -> Result<Vec<ItemChange>, RqtkError> {
+        use crate::spec::SpecFiles as _;
         let hashes = |lock: Option<&crate::vendor::Lockfile>| -> BTreeMap<String, String> {
             lock.into_iter()
                 .flat_map(|l| &l.sources)
@@ -524,10 +532,18 @@ impl RequirementSet<Validated> {
                 })
                 .collect()
         };
-        let base_lock = self
+        let base_lock = match self
             .git
-            .file_at_ref(base, Path::new(crate::vendor::LOCK_PATH))?
-            .and_then(|t| crate::vendor::Lockfile::parse(&t).ok());
+            .spec_files_at(base, &self.repo_root)?
+            .read(crate::vendor::LOCK_PATH)
+        {
+            Ok(Some(bytes)) => Some(
+                crate::vendor::Lockfile::parse(&String::from_utf8_lossy(&bytes))
+                    .map_err(|e| crate::vendor::Lockfile::unreadable(&format!("at {base}: {e}")))?,
+            ),
+            Ok(None) => None,
+            Err(e) => return Err(crate::vendor::Lockfile::unreadable(&e.to_string())),
+        };
         let before = hashes(base_lock.as_ref());
         let after = hashes(self.vendored.lock.as_ref());
         let mut changes: Vec<ItemChange> = after
@@ -561,7 +577,8 @@ impl RequirementSet<Validated> {
 fn compare<K: Ord + AsRef<str>, T>(
     base: &BTreeMap<K, T>,
     current: &BTreeMap<K, T>,
-    hash: impl Fn(&T) -> String,
+    base_hash: impl Fn(&K, &T) -> String,
+    current_hash: impl Fn(&K, &T) -> String,
 ) -> Vec<ItemChange>
 where
     T: Serialize,
@@ -570,7 +587,7 @@ where
     for (id, item) in current {
         let change = match base.get(id) {
             None => Some(ChangeKind::Added),
-            Some(old) if hash(old) != hash(item) => Some(ChangeKind::Semantic),
+            Some(old) if base_hash(id, old) != current_hash(id, item) => Some(ChangeKind::Semantic),
             Some(old) if toml::to_string(old).ok() != toml::to_string(item).ok() => {
                 Some(ChangeKind::Cosmetic)
             }

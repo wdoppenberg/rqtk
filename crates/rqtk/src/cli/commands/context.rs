@@ -4,7 +4,7 @@ use console::style;
 use rqtk_core::query::{Context, Summary};
 use rqtk_core::{ActivityState, RequirementSet};
 
-use crate::cli::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage, consumed_line, printable};
 
 pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
     let (set, mut diagnostics) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
@@ -129,7 +129,7 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
                 style(format!(
                     "vendored from `{}` · read-only · provider status: {}",
                     c.alias,
-                    printable(c.provider_status.as_deref().unwrap_or("unknown"))
+                    c.provider_status.map_or("unknown", |s| s.as_str())
                 ))
                 .dim()
             );
@@ -185,27 +185,6 @@ fn list(title: &str, items: &[Summary]) {
     for s in items {
         output::item(&format!("{}  {}", s.id, s.title));
     }
-}
-
-pub fn consumed_line(s: &rqtk_core::query::ConsumedSummary) -> String {
-    if !s.resolved {
-        return format!("{}  (not in the vendored snapshot)", s.id);
-    }
-    printable(&format!(
-        "{}  {}  [{}]",
-        s.id,
-        s.title.as_deref().unwrap_or(""),
-        s.provider_status.as_deref().unwrap_or("status unknown")
-    ))
-}
-
-/// Provider-controlled text with control characters (terminal escape sequences included)
-/// removed, so vendored content cannot drive the terminal.
-pub fn printable(s: &str) -> String {
-    s.chars()
-        .map(|c| if c == '\n' || c == '\t' { ' ' } else { c })
-        .filter(|c| !c.is_control())
-        .collect()
 }
 
 fn findings(diagnostics: &[rqtk_core::Diagnostic]) {

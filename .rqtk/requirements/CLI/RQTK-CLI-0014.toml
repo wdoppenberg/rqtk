@@ -15,8 +15,12 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Integration"
 phase = "Development"
-success_criteria = "Text and --json output list every alias with these fields."
+success_criteria = "Text and --json output list every alias with these fields; an unreadable lockfile is an error, not an empty list."
 
 [[verification.activities]]
 id = "VA-CLI-0014-01"
 name = "list shows every alias"
+
+[[verification.activities]]
+id = "VA-CLI-0014-02"
+name = "An unreadable lockfile is an error"

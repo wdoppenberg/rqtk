@@ -181,7 +181,7 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
                 let consumers: Vec<&str> = c.consumers.iter().map(|r| r.0.as_str()).collect();
                 output::item(&format!(
                     "{}  ← {}",
-                    super::context::consumed_line(&c.interface),
+                    output::consumed_line(&c.interface),
                     consumers.join(", ")
                 ));
             }

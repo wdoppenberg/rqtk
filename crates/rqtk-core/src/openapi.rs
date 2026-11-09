@@ -2,16 +2,16 @@
 //!
 //! An `openapi` spec entry is hashed as the canonical form of its element (or of the whole
 //! document) together with every node that element references through `$ref`,
-//! transitively and across files. References to URLs or to files outside the root are
+//! transitively and across files. An operation also carries what governs it from outside
+//! its node (see [`closure`]). References to URLs or to files outside the root are
 //! refused and never fetched. Parsing is bounded: the YAML parser rejects alias expansion
 //! beyond a fixed budget, and both parsers reject nesting deeper than 128 levels.
 
-use crate::spec::{SpecProblem, normalize};
+use crate::spec::{SpecFiles, SpecProblem, codes, normalize};
 use percent_encoding::percent_decode_str;
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
-use std::path::Path;
 
 /// Every file and node an OpenAPI entry reaches, keyed `file#pointer`.
 #[derive(Debug, Default)]
@@ -21,16 +21,28 @@ pub(crate) struct Closure {
     pub nodes: BTreeMap<String, String>,
 }
 
+/// Tag hashed with every OpenAPI digest: change it whenever the canonical form or what a
+/// closure includes changes, so the change is deliberate.
+pub(crate) const CANONICAL_FORM: &str = "openapi-closure/1";
+
+const METHODS: [&str; 8] = [
+    "get", "put", "post", "delete", "options", "head", "patch", "trace",
+];
+
 /// Follow the entry at `file`, `element` from the root, adding problems for entry `entry`.
+///
+/// When `element` is an operation (`#/paths/<path>/<method>`), the closure also holds what
+/// governs that operation from outside it: the path item's `parameters` and `servers`, the
+/// document's `servers` and `security`, and the security schemes either `security` names.
 pub(crate) fn closure(
-    root: &Path,
+    files: &dyn SpecFiles,
     file: &str,
     element: Option<&str>,
     entry: usize,
     problems: &mut Vec<SpecProblem>,
 ) -> Closure {
     let mut docs = Documents {
-        root,
+        files,
         cache: HashMap::new(),
     };
     let mut out = Closure::default();
@@ -39,7 +51,7 @@ pub(crate) fn closure(
     };
     if let Err(message) = check_version(doc) {
         problems.push(SpecProblem::new(
-            "RQ035",
+            codes::UNPARSEABLE,
             entry,
             format!("`{file}`: {message}"),
         ));
@@ -51,7 +63,7 @@ pub(crate) fn closure(
             Some(p) => p,
             None => {
                 problems.push(SpecProblem::new(
-                    "RQ037",
+                    codes::UNRESOLVED,
                     entry,
                     format!("element `{e}` is not a JSON pointer such as `#/paths/~1users/get`"),
                 ));
@@ -61,7 +73,7 @@ pub(crate) fn closure(
     };
     if doc.pointer(&pointer).is_none() {
         problems.push(SpecProblem::new(
-            "RQ037",
+            codes::UNRESOLVED,
             entry,
             format!(
                 "element `{}` does not resolve in `{file}`",
@@ -71,7 +83,11 @@ pub(crate) fn closure(
         return out;
     }
 
-    let mut queue = vec![(file.to_owned(), pointer)];
+    let mut queue = operation_context(doc, &pointer)
+        .into_iter()
+        .map(|p| (file.to_owned(), p))
+        .collect::<Vec<_>>();
+    queue.push((file.to_owned(), pointer));
     let mut seen = BTreeSet::new();
     while let Some((file, pointer)) = queue.pop() {
         if !seen.insert((file.clone(), pointer.clone())) {
@@ -99,7 +115,7 @@ pub(crate) fn closure(
                     Some(f) => f,
                     None => {
                         problems.push(SpecProblem::new(
-                            "RQ036",
+                            codes::ESCAPES,
                             entry,
                             format!(
                                 "`$ref: {reference}` in `{file}` points to a URL or outside the repository; rqtk does not follow it"
@@ -111,7 +127,7 @@ pub(crate) fn closure(
             };
             let Some(target_pointer) = fragment_pointer(&format!("#{fragment}")) else {
                 problems.push(SpecProblem::new(
-                    "RQ037",
+                    codes::UNRESOLVED,
                     entry,
                     format!("`$ref: {reference}` in `{file}` is not a JSON pointer"),
                 ));
@@ -122,7 +138,7 @@ pub(crate) fn closure(
             };
             if target_doc.pointer(&target_pointer).is_none() {
                 problems.push(SpecProblem::new(
-                    "RQ037",
+                    codes::UNRESOLVED,
                     entry,
                     format!("`$ref: {reference}` in `{file}` does not resolve"),
                 ));
@@ -137,7 +153,7 @@ pub(crate) fn closure(
 /// Parsed documents by root-relative path; a document that failed to load is `None`, so
 /// its problem is reported once.
 struct Documents<'a> {
-    root: &'a Path,
+    files: &'a dyn SpecFiles,
     cache: HashMap<String, Option<Value>>,
 }
 
@@ -149,31 +165,24 @@ impl Documents<'_> {
         problems: &mut Vec<SpecProblem>,
     ) -> Option<&Value> {
         if !self.cache.contains_key(file) {
-            let parsed = match std::fs::read(self.root.join(file)) {
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                    problems.push(
-                        SpecProblem::new(
-                            "RQ032",
-                            entry,
-                            format!("spec path `{file}` matches no file"),
-                        )
-                        .at(file),
-                    );
+            let parsed = match self.files.read(file) {
+                Ok(None) => {
+                    problems.push(SpecProblem::no_match(entry, file));
                     None
                 }
                 Err(e) => {
                     problems.push(SpecProblem::new(
-                        "RQ032",
+                        codes::NO_MATCH,
                         entry,
                         format!("cannot read spec file `{file}`: {e}"),
                     ));
                     None
                 }
-                Ok(bytes) => match parse(&bytes) {
+                Ok(Some(bytes)) => match parse(&bytes) {
                     Ok(value) => Some(value),
                     Err(message) => {
                         problems.push(SpecProblem::new(
-                            "RQ035",
+                            codes::UNPARSEABLE,
                             entry,
                             format!("cannot parse `{file}`: {message}"),
                         ));
@@ -212,6 +221,50 @@ fn check_version(doc: &Value) -> Result<(), String> {
         )),
         None => Err("not an OpenAPI document: no `openapi` version field".to_owned()),
     }
+}
+
+/// Pointers, in the same document, to what governs operation `pointer` from outside it.
+/// Empty when `pointer` is not an operation.
+fn operation_context(doc: &Value, pointer: &str) -> Vec<String> {
+    let Some((path_item, method)) = pointer.rsplit_once('/') else {
+        return Vec::new();
+    };
+    let is_operation = METHODS.contains(&method)
+        && path_item.starts_with("/paths/")
+        && path_item.matches('/').count() == 2;
+    if !is_operation {
+        return Vec::new();
+    }
+    let mut out: Vec<String> = [
+        format!("{path_item}/parameters"),
+        format!("{path_item}/servers"),
+        "/servers".to_owned(),
+        "/security".to_owned(),
+    ]
+    .into_iter()
+    .filter(|p| doc.pointer(p).is_some())
+    .collect();
+    let mut schemes = BTreeSet::new();
+    for security in [
+        doc.pointer("/security"),
+        doc.pointer(&format!("{pointer}/security")),
+    ] {
+        for requirement in security.and_then(Value::as_array).into_iter().flatten() {
+            if let Some(names) = requirement.as_object() {
+                schemes.extend(names.keys().cloned());
+            }
+        }
+    }
+    for name in schemes {
+        let scheme = format!(
+            "/components/securitySchemes/{}",
+            name.replace('~', "~0").replace('/', "~1")
+        );
+        if doc.pointer(&scheme).is_some() {
+            out.push(scheme);
+        }
+    }
+    out
 }
 
 /// `#/a/b` (percent-decoded) → `/a/b`; `#` or `` → the whole document. `None` for anything
@@ -283,7 +336,12 @@ fn write_canonical(value: &Value, out: &mut String) {
 mod tests {
     use super::*;
     use crate::model::{Interface, SpecEntry};
-    use crate::spec::resolve;
+    use crate::spec::{DirFiles, SpecResolution};
+    use std::path::Path;
+
+    fn resolve(root: &Path, interface: &Interface) -> SpecResolution {
+        crate::spec::resolve(&DirFiles::working_tree(root), interface)
+    }
 
     const API: &str = r##"openapi: 3.0.3
 info: {title: Users, version: "1"}
@@ -434,7 +492,6 @@ components:
             let r = resolve(dir.path(), &spec(&file, None));
             assert_eq!(r.problems.len(), 1, "{:?}", r.problems);
             assert_eq!(r.problems[0].code, "RQ036");
-            assert!(r.problems[0].escapes());
         }
     }
 
@@ -500,6 +557,51 @@ components:
         let schema_edit = resolve(dir.path(), &spec("a.yaml", Some(GET_USER))).digest;
         assert_ne!(schema_edit, before);
         assert_ne!(schema_edit, operation_edit);
+    }
+
+    // rqtk: verifies VA-CORE-0027-03
+    #[test]
+    fn what_governs_an_operation_from_outside_it_changes_the_hash() {
+        const SECURED: &str = r##"openapi: 3.0.3
+info: {title: Users, version: "1"}
+servers: [{url: "https://api.example.com"}]
+security: [{bearer: []}]
+paths:
+  /users/{id}:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string}}
+    get:
+      security: [{apiKey: []}]
+      responses:
+        "200": {description: A user}
+components:
+  securitySchemes:
+    bearer: {type: http, scheme: bearer}
+    apiKey: {type: apiKey, in: header, name: X-Key}
+    unused: {type: http, scheme: basic}
+"##;
+        let dir = tempfile::tempdir().unwrap();
+        let digest = |text: &str| {
+            write(dir.path(), "a.yaml", text);
+            let r = resolve(dir.path(), &spec("a.yaml", Some(GET_USER)));
+            assert!(r.problems.is_empty(), "{:?}", r.problems);
+            r.digest
+        };
+        let before = digest(SECURED);
+        for (from, to) in [
+            ("schema: {type: string}}", "schema: {type: integer}}"),
+            ("https://api.example.com", "https://api.example.org"),
+            ("security: [{bearer: []}]", "security: []"),
+            ("scheme: bearer}", "scheme: digest}"),
+            ("name: X-Key}", "name: X-Api-Key}"),
+        ] {
+            assert_ne!(digest(&SECURED.replace(from, to)), before, "{from} → {to}");
+        }
+        assert_eq!(
+            digest(&SECURED.replace("scheme: basic}", "scheme: negotiate}")),
+            before,
+            "a scheme nothing names is not part of the operation"
+        );
     }
 
     // rqtk: verifies VA-CORE-0027-02

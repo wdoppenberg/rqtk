@@ -15,7 +15,7 @@ satisfies = ["NEED-0004"]
 method = "Test"
 level = "Unit"
 phase = "Development"
-success_criteria = "Editing a referenced spec file changes the requirement's content hash; editing an unreferenced file does not; CRLF and LF checkouts of the same file hash identically."
+success_criteria = "Editing a referenced spec file changes the requirement's content hash; editing an unreferenced file does not; CRLF and LF checkouts of the same file hash identically; `impact` and `diff` report a requirement whose spec files alone changed."
 
 [[verification.activities]]
 id = "VA-CORE-0008-01"
@@ -24,3 +24,7 @@ name = "Spec edit changes the content hash"
 [[verification.activities]]
 id = "VA-CORE-0008-02"
 name = "CRLF and LF checkouts hash identically"
+
+[[verification.activities]]
+id = "VA-CORE-0008-03"
+name = "Impact and diff see a change to spec files alone"

@@ -15,8 +15,12 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Integration"
 phase = "Development"
-success_criteria = "After remove, no trace of the alias remains in config, lockfile or vendor directory, and lint reports each consumes link that still names it."
+success_criteria = "After remove, no trace of the alias remains in config, lockfile or vendor directory, and lint reports each consumes link that still names it; with an unreadable lockfile, remove fails and changes nothing."
 
 [[verification.activities]]
 id = "VA-CLI-0017-01"
 name = "remove deletes config, lockfile entry and vendor directory"
+
+[[verification.activities]]
+id = "VA-CLI-0017-02"
+name = "An unreadable lockfile stops remove before any change"

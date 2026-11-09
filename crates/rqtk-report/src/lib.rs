@@ -469,7 +469,7 @@ fn write_consumed(out: &mut String, set: &RequirementSet<Validated>) {
             c.id.replace('`', "'"),
             literal(c.title.as_deref().unwrap_or("(not vendored)")),
             literal(c.statement.as_deref().unwrap_or("")),
-            literal(c.provider_status.as_deref().unwrap_or("unknown")),
+            literal(c.provider_status.map_or("unknown", |s| s.as_str())),
             id_list(&consumers)
         );
     }

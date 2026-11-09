@@ -6,7 +6,7 @@ state = "Draft"
 priority = "Medium"
 statement = "rqtk shall hash OpenAPI nodes in a canonical form, as their parsed JSON value with object keys sorted, so that comments, whitespace, key order, YAML anchors and the choice of YAML or JSON do not change the hash."
 rationale = "Reformatting a spec is not a contract change and must not create review debt for every consumer."
-notes = "The canonical form feeds every OpenAPI content hash, so changing it changes every OpenAPI requirement's hash; it must be versioned like the `v1:` content-hash prefix."
+notes = "The canonical form feeds every OpenAPI content hash, so changing it changes every OpenAPI requirement's hash; it is versioned by the tag `openapi-closure/1` hashed into every OpenAPI digest, which must change whenever the canonical form or what a closure holds changes."
 
 [trace]
 parents = ["RQTK-SYS-0006"]

@@ -4,8 +4,8 @@ category = "CORE"
 type = "Functional"
 state = "Draft"
 priority = "Medium"
-statement = "For a spec entry whose format is not openapi, rqtk shall accept a glob as its path and treat every matching file as part of the spec."
-rationale = "rqtk does not follow protobuf imports or other cross-file references, so multi-file definitions must be listed explicitly; a glob keeps that practical."
+statement = "For a spec entry whose format is not openapi, rqtk shall accept a glob as its path and treat every matching file as part of the spec, skipping only files that the repository's own ignore files exclude, and no files in a vendored snapshot."
+rationale = "rqtk does not follow protobuf imports or other cross-file references, so multi-file definitions must be listed explicitly; a glob keeps that practical. Ignore files decide what a commit of the provider holds, but a consumer's ignore files, or those of a directory above the repository, must never hide part of a contract."
 
 [trace]
 parents = ["RQTK-SYS-0006"]
@@ -15,8 +15,12 @@ satisfies = ["NEED-0004"]
 method = "Test"
 level = "Unit"
 phase = "Development"
-success_criteria = "proto/**/*.proto matches every proto file below proto/, and each matched file is hashed and vendored."
+success_criteria = "proto/**/*.proto matches every proto file below proto/, and each matched file is hashed and vendored; a file excluded by the repository's .gitignore is skipped locally, while ignore files above the repository, and any ignore file over a vendored snapshot, hide nothing."
 
 [[verification.activities]]
 id = "VA-CORE-0022-01"
 name = "Glob matches are hashed and vendored"
+
+[[verification.activities]]
+id = "VA-CORE-0022-02"
+name = "Only the repository's own ignore files apply"

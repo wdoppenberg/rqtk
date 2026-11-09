@@ -414,6 +414,33 @@ fn editing_a_spec_file_makes_the_content_hash_stale() {
     assert_eq!(lint_codes(&p.root), ["RQ021"]);
 }
 
+#[verifies("VA-CORE-0008-03")]
+#[test]
+fn impact_and_diff_see_a_change_to_spec_files_alone() {
+    let p = Repo::new("svc", "SVC");
+    p.write("proto/a.proto", "message A {}\n")
+        .req(
+            "SVC-SYS-0001",
+            "Interface",
+            "The service shall accept A messages.",
+            "\n[interface]\n[[interface.specs]]\nformat = \"protobuf\"\npath = \"proto/*.proto\"\n",
+        )
+        .commit("v1");
+    p.write("proto/a.proto", "message A { string id = 1; }\n");
+
+    let impact = json(rqtk(&p.root).args(["impact", "HEAD"]));
+    let changed = impact["requirements"].as_array().unwrap();
+    assert_eq!(changed.len(), 1, "{impact}");
+    assert_eq!(changed[0]["id"], "SVC-SYS-0001");
+    assert_eq!(changed[0]["change"], "semantic");
+
+    p.commit("v2");
+    let diff = json(rqtk(&p.root).args(["diff", "HEAD~1", "HEAD"]));
+    let modified = diff["modified"].as_array().unwrap();
+    assert_eq!(modified.len(), 1, "{diff}");
+    assert_eq!(modified[0]["id"], "SVC-SYS-0001");
+}
+
 #[verifies("VA-CORE-0019-01")]
 #[verifies("VA-CORE-0009-01")]
 #[verifies("VA-CORE-0026-01")]
@@ -545,23 +572,97 @@ fn status_toml_matches_provider_coverage() {
 #[verifies("VA-CLI-0012-01")]
 #[test]
 fn the_providers_own_vendored_interfaces_are_ignored() {
-    let p = provider();
-    p.write(
-        ".rqtk/vendor/other/requirements/X-SYS-0001.toml",
-        "id = \"X\"\n",
-    )
-    .write(".rqtk/interfaces.lock", "version = 1\n")
-    .commit("own vendor")
-    .tag("v1");
-    let c = consumer(&p, "v1");
-    sync(&c).success();
-    let files: Vec<String> = c.vendor_state().into_keys().collect();
+    // `orders` consumes `users`, and is itself consumed by `web`.
+    let users = provider();
+    let orders = Repo::new("orders", "ORD");
+    orders.write("api/openapi.yaml", API).req(
+        "ORD-SYS-0001",
+        "Interface",
+        "The order service shall expose GET /users/{id} with the buyer.",
+        &format!("\n[trace]\nconsumes = [\"users:USR-SYS-0001\"]\n{GET_USER}"),
+    );
+    rqtk(&orders.root)
+        .args(["interfaces", "add", "users", &users.url(), "--ref", "v1"])
+        .arg("--allow-file-url")
+        .assert()
+        .success();
+    sync(&orders).success();
+    assert!(orders.root.join(".rqtk/vendor/users").is_dir());
+    orders.commit("v1").tag("v1");
+
+    let web = Repo::new("web", "WEB");
+    web.req(
+        "WEB-SYS-0001",
+        "Functional",
+        "The web app shall show the buyer of an order.",
+        "\n[trace]\nconsumes = [\"orders:ORD-SYS-0001\"]\n",
+    );
+    rqtk(&web.root)
+        .args(["interfaces", "add", "orders", &orders.url(), "--ref", "v1"])
+        .arg("--allow-file-url")
+        .assert()
+        .success();
+    sync(&web).success();
+    let files: Vec<String> = web.vendor_state().into_keys().collect();
     assert!(
         files
             .iter()
-            .all(|f| !f.contains("other") && !f.contains("X-SYS")),
+            .all(|f| f == "lock" || f.starts_with(".rqtk/vendor/orders/")),
         "{files:?}"
     );
+    assert!(!files.iter().any(|f| f.contains("USR-SYS")), "{files:?}");
+    let lock = web.read(".rqtk/interfaces.lock");
+    assert!(!lock.contains("[sources.users]"), "{lock}");
+    assert!(
+        lint_codes(&web.root).is_empty(),
+        "{:?}",
+        lint_codes(&web.root)
+    );
+}
+
+#[verifies("VA-CORE-0017-01")]
+#[test]
+fn lint_and_coverage_need_no_network() {
+    let p = provider();
+    let c = consumer(&p, "v1");
+    sync(&c).success();
+    drop(p);
+    for command in ["lint", "coverage"] {
+        rqtk(&c.root)
+            .arg(command)
+            .env("HTTPS_PROXY", "http://127.0.0.1:9")
+            .env("HTTP_PROXY", "http://127.0.0.1:9")
+            .env("ALL_PROXY", "http://127.0.0.1:9")
+            .env("GIT_SSH_COMMAND", "false")
+            .assert()
+            .success();
+    }
+}
+
+#[verifies("VA-CLI-0011-03")]
+#[test]
+fn a_baseline_name_resolves_to_its_rqtk_tag() {
+    let p = provider();
+    rqtk(&p.root).args(["baseline", "1.0.0"]).assert().success();
+    let c = consumer(&p, "1.0.0");
+    sync(&c).success();
+    let lock = c.read(".rqtk/interfaces.lock");
+    assert!(lock.contains("ref = \"1.0.0\""), "{lock}");
+    assert!(lock.contains("ref_kind = \"tag\""), "{lock}");
+}
+
+#[verifies("VA-CORE-0016-02")]
+#[test]
+fn an_unreadable_vendored_requirement_is_an_error() {
+    let p = provider();
+    let c = consumer(&p, "v1");
+    sync(&c).success();
+    c.write(
+        ".rqtk/vendor/users/requirements/USR-SYS-0001.toml",
+        "id = \"USR-SYS-0001\"\nunknown_field = 1\n",
+    );
+    let codes = lint_codes(&c.root);
+    assert!(codes.contains(&"RQ043".to_owned()), "{codes:?}");
 }
 
 #[verifies("VA-CLI-0013-01")]
@@ -612,6 +713,145 @@ fn symlinks_in_provider_content_abort_sync() {
     sync(&c)
         .failure()
         .stderr(predicate::str::contains("symbolic link"));
+    assert!(c.vendor_state().is_empty());
+}
+
+#[cfg(unix)]
+#[verifies("VA-CORE-0018-01")]
+#[test]
+fn a_symlinked_requirement_file_aborts_sync() {
+    let p = provider();
+    let real = p.root.join("USR-SYS-0001.toml");
+    fs::rename(
+        p.root.join(".rqtk/requirements/SYS/USR-SYS-0001.toml"),
+        &real,
+    )
+    .unwrap();
+    std::os::unix::fs::symlink(
+        &real,
+        p.root.join(".rqtk/requirements/SYS/USR-SYS-0001.toml"),
+    )
+    .unwrap();
+    p.commit("link").tag("v1");
+    let c = consumer(&p, "v1");
+    sync(&c)
+        .failure()
+        .stderr(predicate::str::contains("symbolic link"));
+    assert!(c.vendor_state().is_empty());
+}
+
+#[cfg(unix)]
+#[verifies("VA-CORE-0018-01")]
+#[verifies("VA-CLI-0026-01")]
+#[test]
+fn a_ref_through_a_symlinked_directory_aborts_sync() {
+    let p = provider();
+    p.write(
+        "shared/user.yaml",
+        "type: object\nproperties:\n  id: {type: string}\n",
+    );
+    std::os::unix::fs::symlink("../shared", p.root.join("api/schemas")).unwrap();
+    p.write(
+        "api/openapi.yaml",
+        &API.replace("#/components/schemas/User", "schemas/user.yaml"),
+    )
+    .commit("link")
+    .tag("v1");
+    // The provider itself resolves the $ref through the link on disk.
+    assert!(lint_codes(&p.root).is_empty(), "{:?}", lint_codes(&p.root));
+    let c = consumer(&p, "v1");
+    sync(&c)
+        .failure()
+        .stderr(predicate::str::contains("symbolic link `api/schemas`"));
+    assert!(c.vendor_state().is_empty());
+}
+
+#[verifies("VA-CLI-0027-01")]
+#[test]
+fn vendored_control_characters_are_not_printed() {
+    let p = provider();
+    p.req(
+        "USR-SYS-0001",
+        "Interface",
+        "The user service shall \\u001b[2Jexpose GET /users/{id}.",
+        GET_USER,
+    )
+    .commit("escape")
+    .tag("v1");
+    let c = consumer(&p, "v1");
+    sync(&c).success();
+    let out = rqtk(&c.root)
+        .args(["context", "users:USR-SYS-0001"])
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8(out.stdout).unwrap();
+    assert!(stdout.contains("[2Jexpose GET"), "{stdout}");
+    assert!(!stdout.contains('\u{1b}'), "{stdout:?}");
+}
+
+#[cfg(unix)]
+#[verifies("VA-CLI-0027-01")]
+#[test]
+fn a_provider_file_name_with_a_control_character_aborts_sync() {
+    let p = provider();
+    p.write("proto/a\u{1b}[31m.proto", "message A {}\n")
+        .commit("escape")
+        .tag("v1");
+    let c = consumer(&p, "v1");
+    let out = rqtk(&c.root)
+        .args(["interfaces", "sync", "--allow-file-url"])
+        .output()
+        .unwrap();
+    assert!(!out.status.success());
+    let stderr = String::from_utf8(out.stderr).unwrap();
+    assert!(
+        stderr.contains("invalid file name `a\\u{1b}[31m.proto`"),
+        "{stderr}"
+    );
+    assert!(!stderr.contains('\u{1b}'), "{stderr:?}");
+    assert!(c.vendor_state().is_empty());
+}
+
+#[verifies("VA-CLI-0017-02")]
+#[verifies("VA-CLI-0014-02")]
+#[test]
+fn an_unreadable_lockfile_stops_remove_and_list() {
+    let p = provider();
+    let c = consumer(&p, "v1");
+    sync(&c).success();
+    c.write(".rqtk/interfaces.lock", "version = [not a lockfile");
+    let before = (c.read(".rqtk/config.toml"), c.vendor_state());
+    rqtk(&c.root)
+        .args(["interfaces", "remove", "users"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "cannot read .rqtk/interfaces.lock",
+        ));
+    assert_eq!((c.read(".rqtk/config.toml"), c.vendor_state()), before);
+    rqtk(&c.root)
+        .args(["interfaces", "list"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "cannot read .rqtk/interfaces.lock",
+        ));
+}
+
+#[verifies("VA-CLI-0026-01")]
+#[test]
+fn an_unresolved_provider_spec_aborts_sync() {
+    let p = provider();
+    p.req(
+        "USR-SYS-0001",
+        "Interface",
+        "The user service shall expose GET /users/{id} returning a User.",
+        &GET_USER.replace("{id}/get", "{id}/post"),
+    )
+    .commit("broken")
+    .tag("v1");
+    let c = consumer(&p, "v1");
+    sync(&c).failure().stderr(predicate::str::contains("RQ037"));
     assert!(c.vendor_state().is_empty());
 }
 
@@ -763,14 +1003,34 @@ fn a_requirement_removed_upstream_is_a_lint_error() {
 fn an_upstream_change_makes_consumers_suspect_until_reviewed() {
     let p = provider();
     let c = consumer(&p, "main");
+    // A child of the consumer builds on the same interface.
+    c.req(
+        "REQ-SYS-0002",
+        "Functional",
+        "The app shall show a user's avatar on the profile.",
+        "\n[trace]\nparents = [\"REQ-SYS-0001\"]\n",
+    )
+    .write(
+        "tests/app.rs",
+        "#[verifies(\"VA-SYS-0001-01\")]\n#[test]\nfn shows_profile() {}\n\
+         #[verifies(\"VA-SYS-0002-01\")]\n#[test]\nfn shows_avatar() {}\n",
+    );
     sync(&c).success();
-    let junit = passing_test(&c, "VA-SYS-0001-01", "shows_profile");
+    let junit = c.root.join("junit.xml");
+    fs::write(
+        &junit,
+        "<?xml version=\"1.0\"?><testsuites><testsuite name=\"t\">\
+         <testcase classname=\"app\" name=\"shows_profile\"/>\
+         <testcase classname=\"app\" name=\"shows_avatar\"/></testsuite></testsuites>",
+    )
+    .unwrap();
     rqtk(&c.root)
         .args(["verify", "--results"])
         .arg(&junit)
         .assert()
         .success();
     assert_eq!(status_of(&c.root, "REQ-SYS-0001")["status"], "verified");
+    assert_eq!(status_of(&c.root, "REQ-SYS-0002")["status"], "verified");
 
     // An unrelated operation changes: the consumed element did not.
     p.write(
@@ -796,11 +1056,26 @@ fn an_upstream_change_makes_consumers_suspect_until_reviewed() {
         "users:USR-SYS-0001"
     );
 
-    rqtk(&c.root)
-        .args(["review", "REQ-SYS-0001", "--note", "still fits"])
-        .assert()
-        .success();
-    assert_eq!(status_of(&c.root, "REQ-SYS-0001")["status"], "verified");
+    let child = status_of(&c.root, "REQ-SYS-0002");
+    assert_eq!(
+        child["status"], "suspect",
+        "a descendant of the consumer too"
+    );
+    assert!(
+        child["suspect_reasons"][0]["items"]
+            .as_array()
+            .unwrap()
+            .contains(&Value::from("users:USR-SYS-0001")),
+        "{child}"
+    );
+
+    for id in ["REQ-SYS-0001", "REQ-SYS-0002"] {
+        rqtk(&c.root)
+            .args(["review", id, "--note", "still fits"])
+            .assert()
+            .success();
+        assert_eq!(status_of(&c.root, id)["status"], "verified");
+    }
 }
 
 #[verifies("VA-CORE-0013-01")]
@@ -1062,6 +1337,12 @@ fn impact_lists_consumers_of_changed_interfaces() {
         "Functional",
         "The app shall show a dashboard.",
         "",
+    )
+    .req(
+        "REQ-SYS-0003",
+        "Functional",
+        "The app shall show a user's avatar on the profile.",
+        "\n[trace]\nparents = [\"REQ-SYS-0001\"]\n",
     );
     sync(&c).success();
     git(&c.root, &["add", "-A"]);
@@ -1072,16 +1353,27 @@ fn impact_lists_consumers_of_changed_interfaces() {
     let impact = json(rqtk(&c.root).args(["impact", "HEAD"]));
     assert_eq!(impact["interfaces"][0]["id"], "users:USR-SYS-0001");
     assert_eq!(impact["interfaces"][0]["change"], "semantic");
-    let downstream = impact["downstream"].as_array().unwrap();
-    assert_eq!(downstream.len(), 1, "{impact}");
-    assert_eq!(downstream[0]["id"], "REQ-SYS-0001");
-    assert_eq!(downstream[0]["via"][0], "users:USR-SYS-0001");
+    let downstream: Vec<(&str, &str)> = impact["downstream"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| (d["id"].as_str().unwrap(), d["via"][0].as_str().unwrap()))
+        .collect();
+    assert_eq!(
+        downstream,
+        [
+            ("REQ-SYS-0001", "users:USR-SYS-0001"),
+            ("REQ-SYS-0003", "users:USR-SYS-0001"),
+        ],
+        "the consumer and its descendant, not the unrelated REQ-SYS-0002: {impact}"
+    );
 }
 
 // ── add / remove / list ─────────────────────────────────────────────────────
 
 #[verifies("VA-CLI-0009-01")]
 #[verifies("VA-CLI-0010-01")]
+#[verifies("VA-CLI-0010-02")]
 #[test]
 fn add_records_the_alias_and_warns() {
     let c = Repo::new("app", "REQ");
@@ -1140,6 +1432,10 @@ fn add_records_the_alias_and_warns() {
     ]));
     assert!(report["warning"].as_str().unwrap().starts_with(WARNING));
     assert_eq!(report["written"], false);
+    assert!(
+        !c.read(".rqtk/config.toml").contains("orders"),
+        "a dry run writes nothing"
+    );
 
     rqtk(&c.root)
         .args(["interfaces", "add", "evil", "ext::sh -c id", "--ref", "v1"])

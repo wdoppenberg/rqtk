@@ -44,7 +44,7 @@ pub fn refuse_vendored<S>(
     id: &str,
     command: &str,
 ) -> Result<(), crate::cli::output::Usage> {
-    match set.is_vendored_id(id) {
+    match set.vendored_alias(id) {
         Some(alias) => Err(crate::cli::output::Usage(format!(
             "`{id}` is a vendored requirement of interface source `{alias}`; vendored requirements are read-only, so `rqtk {command}` does not accept it"
         ))),

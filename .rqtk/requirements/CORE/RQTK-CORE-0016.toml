@@ -4,8 +4,8 @@ category = "CORE"
 type = "Constraint"
 state = "Draft"
 priority = "Medium"
-statement = "rqtk shall validate vendored requirements against its built-in schema for the provider's schema version and never against the consumer's configuration."
-rationale = "Each provider has its own ID pattern, types and custom fields; the consumer's policy does not apply to someone else's requirements."
+statement = "rqtk shall validate vendored requirements only against its built-in requirement schema, never against the consumer's configuration, and rqtk lint shall report a vendored requirement that does not match that schema."
+rationale = "Each provider has its own ID pattern, types and custom fields; the consumer's policy does not apply to someone else's requirements. A newer provider schema is refused at sync (RQTK-CLI-0013); a file that still fails to parse, for example one edited by hand, is reported as RQ043."
 
 [trace]
 parents = ["RQTK-SYS-0006"]
@@ -15,8 +15,12 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Unit"
 phase = "Development"
-success_criteria = "A vendored requirement using a type or ID pattern the consumer forbids produces no lint finding."
+success_criteria = "A vendored requirement using a type or ID pattern the consumer forbids produces no lint finding; a vendored requirement that is not valid TOML for the schema produces RQ043."
 
 [[verification.activities]]
 id = "VA-CORE-0016-01"
 name = "Consumer policy ignored for vendored requirements"
+
+[[verification.activities]]
+id = "VA-CORE-0016-02"
+name = "An unreadable vendored requirement is an error"

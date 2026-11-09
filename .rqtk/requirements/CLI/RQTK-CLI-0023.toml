@@ -15,7 +15,7 @@ satisfies = ["NEED-0006"]
 method = "Test"
 level = "Integration"
 phase = "Development"
-success_criteria = "After a sync that changes one consumed requirement, impact lists exactly the consumer requirements that consume it."
+success_criteria = "After a sync that changes one consumed requirement, impact lists exactly the requirements that consume it and their descendants, each with the interface it reaches them through."
 
 [[verification.activities]]
 id = "VA-CLI-0023-01"

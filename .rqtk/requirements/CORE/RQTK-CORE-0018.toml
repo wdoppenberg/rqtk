@@ -15,7 +15,7 @@ satisfies = ["NEED-0005"]
 method = "Test"
 level = "Unit"
 phase = "Development"
-success_criteria = "A symlinked spec or requirement file in the provider aborts sync and leaves .rqtk/vendor/ and the lockfile unchanged."
+success_criteria = "A symlinked spec file, spec directory or requirement file in the provider aborts sync and leaves .rqtk/vendor/ and the lockfile unchanged."
 
 [[verification.activities]]
 id = "VA-CORE-0018-01"

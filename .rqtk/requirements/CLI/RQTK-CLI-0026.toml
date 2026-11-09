@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0026"
+title = "Complete snapshots"
+category = "CLI"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "rqtk interfaces sync shall abort without writing any file when the specs of a provider interface requirement have a problem that rqtk lint reports, or when the vendored copy of a requirement does not reproduce the provider's content hash for it."
+rationale = "Symbolic links are not written and only matched or referenced files are copied, so a spec that does not resolve in the provider would be vendored incomplete. Consumers would then pin a contract that differs from the provider's, and nothing in the consumer reports it: lint does not check vendored specs."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "A provider spec whose element pointer does not resolve, or whose $ref runs through a symbolically linked directory, aborts the sync and leaves .rqtk/vendor/ and the lockfile unchanged."
+
+[[verification.activities]]
+id = "VA-CLI-0026-01"
+name = "Unresolved provider specs abort sync"

@@ -59,7 +59,7 @@ pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
     if !consumes.is_empty() {
         output::subsection("◆", &format!("Consumes ({})", consumes.len()));
         for c in &consumes {
-            output::item(&super::context::consumed_line(c));
+            output::item(&output::consumed_line(c));
         }
     }
     println!();

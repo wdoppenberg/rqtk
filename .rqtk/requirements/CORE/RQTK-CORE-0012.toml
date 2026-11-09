@@ -4,7 +4,7 @@ category = "CORE"
 type = "Functional"
 state = "Draft"
 priority = "High"
-statement = "rqtk shall mark a requirement Suspect when the content hash of an interface requirement it consumes has changed since the requirement's evidence was recorded or it was last reviewed."
+statement = "rqtk shall mark a requirement Suspect when the content hash of an interface requirement that it or one of its ancestors consumes has changed since the requirement's evidence was recorded or it was last reviewed."
 rationale = "Reuses the existing review-debt mechanism so a provider's contract change is reviewed by every consumer before it is accepted."
 
 [trace]
@@ -15,7 +15,7 @@ satisfies = ["NEED-0006"]
 method = "Test"
 level = "Unit"
 phase = "Development"
-success_criteria = "After a sync that changes a consumed requirement or its spec, linked consumer requirements are Suspect until rqtk review."
+success_criteria = "After a sync that changes a consumed requirement or its spec, linked consumer requirements and their descendants are Suspect until rqtk review."
 
 [[verification.activities]]
 id = "VA-CORE-0012-01"

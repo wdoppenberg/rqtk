@@ -4,8 +4,8 @@ category = "CORE"
 type = "Functional"
 state = "Draft"
 priority = "Medium"
-statement = "rqtk shall allow `consumes` links across repositories to form cycles and shall make Suspect only the requirements that directly consume a changed interface requirement, never the repository the change came from."
-rationale = "Systems often depend on each other in both directions, for example an API one way and a webhook back; each side pins the other independently, and a change must not echo back to its origin."
+statement = "rqtk shall allow `consumes` links across repositories to form cycles and shall make Suspect, for a changed interface requirement, only the requirements that consume it and their descendants, never requirements in the repository the change came from."
+rationale = "Systems often depend on each other in both directions, for example an API one way and a webhook back; each side pins the other independently, and a change must not echo back to its origin. A `consumes` link works like a parent link: a requirement below a consumer builds on the same assumption, so it is reviewed too, exactly as a change to a parent puts its children under review."
 
 [trace]
 parents = ["RQTK-SYS-0006"]
@@ -15,7 +15,7 @@ satisfies = ["NEED-0006"]
 method = "Test"
 level = "Unit"
 phase = "Development"
-success_criteria = "Two repositories that consume each other both sync and lint clean without RQ017; a contract change in one makes only its direct consumers Suspect, and re-syncing the origin leaves it Verified."
+success_criteria = "Two repositories that consume each other both sync and lint clean without RQ017; a contract change in one makes its consumers and their descendants Suspect, and re-syncing the origin leaves it Verified."
 
 [[verification.activities]]
 id = "VA-CORE-0030-01"

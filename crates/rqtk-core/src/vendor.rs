@@ -9,6 +9,7 @@
 
 use crate::diagnostic::Diagnostic;
 use crate::model::{Config, Requirement, RequirementId};
+use crate::repository::CONFIG_PATH;
 use crate::spec::normalize_line_endings;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -62,6 +63,23 @@ impl Lockfile {
         repo_root.join(LOCK_PATH)
     }
 
+    /// The lockfile of the repository at `repo_root`, or `None` when there is none. A
+    /// lockfile that exists but cannot be read is an error, never silently empty.
+    pub fn read(repo_root: &Path) -> Result<Option<Self>, crate::error::RqtkError> {
+        let path = Self::path(repo_root);
+        match std::fs::read_to_string(&path) {
+            Ok(text) => Self::parse(&text)
+                .map(Some)
+                .map_err(|e| Self::unreadable(&e)),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(Self::unreadable(&e.to_string())),
+        }
+    }
+
+    pub(crate) fn unreadable(reason: &str) -> crate::error::RqtkError {
+        crate::error::RqtkError::Interface(format!("cannot read {LOCK_PATH}: {reason}"))
+    }
+
     pub fn parse(text: &str) -> Result<Self, String> {
         toml::from_str(text).map_err(|e| e.message().trim().to_owned())
     }
@@ -80,9 +98,9 @@ impl Lockfile {
 pub struct ProviderStatus {
     /// The provider commit the status was computed at.
     pub commit: String,
-    /// Closure status (`verified`, `suspect`, `failed`, `in_progress`, `planned`, `gap`) by ID.
+    /// Closure status by ID.
     #[serde(default)]
-    pub requirements: BTreeMap<String, String>,
+    pub requirements: BTreeMap<String, crate::status::ClosureStatus>,
 }
 
 /// One vendored interface requirement.
@@ -93,7 +111,7 @@ pub struct VendoredRequirement {
     /// Its content hash, including its vendored spec files.
     pub hash: String,
     /// The provider's verification status at the pinned commit, if recorded.
-    pub provider_status: Option<String>,
+    pub provider_status: Option<crate::status::ClosureStatus>,
     pub path: PathBuf,
 }
 
@@ -136,17 +154,11 @@ pub fn load(repo_root: &Path, config: &Config) -> Vendored {
     let mut out = Vendored::default();
     let lock_path = Lockfile::path(repo_root);
     let vendor_root = repo_root.join(VENDOR_DIR);
-    if lock_path.is_file() {
-        match std::fs::read_to_string(&lock_path)
-            .map_err(|e| e.to_string())
-            .and_then(|t| Lockfile::parse(&t))
-        {
-            Ok(lock) => out.lock = Some(lock),
-            Err(e) => out.diagnostics.push(
-                Diagnostic::new("RQ100", format!("cannot read the interface lockfile: {e}"))
-                    .file(&lock_path),
-            ),
-        }
+    match Lockfile::read(repo_root) {
+        Ok(lock) => out.lock = lock,
+        Err(e) => out
+            .diagnostics
+            .push(Diagnostic::new("RQ100", e.to_string()).file(&lock_path)),
     }
     let empty = Lockfile::default();
     let lock = out.lock.clone().unwrap_or(empty);
@@ -161,7 +173,7 @@ pub fn load(repo_root: &Path, config: &Config) -> Vendored {
                         "interface source `{alias}` has not been synced; run `rqtk interfaces sync {alias}`"
                     ),
                 )
-                .file(repo_root.join(".rqtk/config.toml")),
+                .file(repo_root.join(CONFIG_PATH)),
             ),
             Some(locked) if locked.git != source.git || locked.reference != source.reference => {
                 out.diagnostics.push(
@@ -209,7 +221,7 @@ pub fn load(repo_root: &Path, config: &Config) -> Vendored {
                         locked.reference
                     ),
                 )
-                .file(repo_root.join(".rqtk/config.toml")),
+                .file(repo_root.join(CONFIG_PATH)),
             );
         }
         let dir = vendor_root.join(alias);
@@ -305,9 +317,9 @@ pub(crate) fn load_snapshot(
         let digest = requirement
             .interface
             .as_ref()
-            .map(|i| crate::spec::resolve(&files_root, i).digest);
-        let hash = requirement.compute_content_hash_with(digest.as_deref());
-        let provider_status = status.requirements.get(&requirement.id.0).cloned();
+            .map(|i| crate::spec::resolve(&crate::spec::DirFiles::snapshot(&files_root), i).digest);
+        let hash = requirement.compute_content_hash(digest.as_deref());
+        let provider_status = status.requirements.get(&requirement.id.0).copied();
         out.insert(
             requirement.id.clone(),
             VendoredRequirement {
@@ -329,7 +341,7 @@ pub fn declare_source(
     alias: &str,
     source: &crate::model::InterfaceSource,
 ) -> Result<(), crate::error::RqtkError> {
-    crate::io::edit_toml_file(&repo_root.join(".rqtk/config.toml"), |doc| {
+    crate::io::edit_toml_file(&repo_root.join(CONFIG_PATH), |doc| {
         let interfaces = doc
             .entry("interfaces")
             .or_insert_with(|| {
@@ -350,7 +362,7 @@ pub fn declare_source(
 /// Remove `[interfaces.<alias>]` from `.rqtk/config.toml`. Returns whether it was there.
 pub fn undeclare_source(repo_root: &Path, alias: &str) -> Result<bool, crate::error::RqtkError> {
     let mut removed = false;
-    crate::io::edit_toml_file(&repo_root.join(".rqtk/config.toml"), |doc| {
+    crate::io::edit_toml_file(&repo_root.join(CONFIG_PATH), |doc| {
         if let Some(interfaces) = doc.get_mut("interfaces").and_then(|i| i.as_table_mut()) {
             removed = interfaces.remove(alias).is_some();
             if interfaces.is_empty() {
@@ -405,6 +417,11 @@ pub fn check_url(url: &str, allow_file: bool) -> Result<(), String> {
         return Ok(());
     }
     refuse("unrecognised URL")
+}
+
+/// The first 12 characters of a provider commit SHA, as rqtk prints it.
+pub fn short_commit(sha: &str) -> &str {
+    &sha[..sha.len().min(12)]
 }
 
 /// SHA-256 of `bytes` with line endings normalised to LF, as recorded in the lockfile.

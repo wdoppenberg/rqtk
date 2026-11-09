@@ -24,7 +24,7 @@ fn warn(ctx: &Ctx) {
 }
 
 fn config_path(ctx: &Ctx) -> std::path::PathBuf {
-    ctx.root.join(".rqtk/config.toml")
+    ctx.root.join(rqtk_core::repository::CONFIG_PATH)
 }
 
 pub struct AddArgs {
@@ -111,27 +111,16 @@ struct SyncReport<'a> {
 pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
     warn(ctx);
     let config = load_config(&config_path(ctx))?;
-    if let Some(alias) = &args.alias
-        && !config.interfaces.contains_key(alias)
-    {
-        return Err(Usage(format!("no interface source `{alias}` is declared")).into());
-    }
-    for (alias, source) in &config.interfaces {
-        if args.alias.as_ref().is_none_or(|a| a == alias) {
-            vendor::check_url(&source.git, args.allow_file_url)
-                .map_err(|e| Usage(format!("`{alias}`: {e}")))?;
-        }
-    }
-    let sources = rqtk_core::sync::sync(
-        &ctx.root,
-        &SyncOptions {
-            alias: args.alias.clone(),
-            allow_file_url: args.allow_file_url,
-        },
-    )?;
+    let options = SyncOptions {
+        alias: args.alias.clone(),
+        allow_file_url: args.allow_file_url,
+    };
+    // Bad input is a usage error, reported before anything is fetched.
+    rqtk_core::sync::targets(&config, &options).map_err(Usage)?;
+    let sources = rqtk_core::sync::sync(&ctx.root, &options)?;
     for warning in sources.iter().flat_map(|s| &s.warnings) {
         if ctx.json() {
-            eprintln!("warning: {warning}");
+            eprintln!("warning: {}", output::safe(warning));
         } else {
             output::warning(warning);
         }
@@ -153,7 +142,7 @@ pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
         } else {
             format!("{} is up to date", s.alias)
         };
-        let commit = &s.commit[..s.commit.len().min(12)];
+        let commit = vendor::short_commit(&s.commit);
         let requirements = s.requirements.to_string();
         output::success(
             &label,
@@ -182,6 +171,9 @@ struct RemoveReport<'a> {
 }
 
 pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
+    // Read the lockfile before touching anything, so a corrupt one stops the removal
+    // before the config is edited.
+    Lockfile::read(&ctx.root)?;
     let declared = vendor::undeclare_source(&ctx.root, alias)?;
     let vendored = rqtk_core::sync::remove(&ctx.root, alias)?;
     if !declared && !vendored {
@@ -222,10 +214,7 @@ struct Listed {
 
 pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     let config = load_config(&config_path(ctx))?;
-    let lock = std::fs::read_to_string(Lockfile::path(&ctx.root))
-        .ok()
-        .and_then(|t| Lockfile::parse(&t).ok())
-        .unwrap_or_default();
+    let lock = Lockfile::read(&ctx.root)?.unwrap_or_default();
     let listed: Vec<Listed> = config
         .interfaces
         .iter()
@@ -254,16 +243,16 @@ pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
         let commit = l
             .commit
             .as_deref()
-            .map_or("not synced".to_owned(), |c| c[..c.len().min(12)].to_owned());
+            .map_or("not synced", vendor::short_commit);
         let count = l.requirements.to_string();
         output::section(&l.alias, "");
         for (k, v) in [
             ("git", l.git.as_str()),
             ("ref", l.reference.as_str()),
-            ("commit", commit.as_str()),
+            ("commit", commit),
             ("requirements", count.as_str()),
         ] {
-            println!("     {k:<14}{v}");
+            println!("     {k:<14}{}", output::safe(v));
         }
     }
     Ok(Exit::Ok)

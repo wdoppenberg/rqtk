@@ -12,7 +12,7 @@
 
 use crate::error::RqtkError;
 use crate::model::{Config, InterfaceSource, RequirementId, SCHEMA_VERSION};
-use crate::repository::{RequirementSet, load_config};
+use crate::repository::{CONFIG_PATH, RequirementSet, load_config};
 use crate::vendor::{
     LOCK_VERSION, LockedSource, Lockfile, ProviderStatus, RefKind, STATUS_FILE, VENDOR_DIR,
     check_url, hash_tree, load_snapshot,
@@ -27,6 +27,8 @@ pub const MAX_FILE_BYTES: u64 = 10 * 1024 * 1024;
 pub const MAX_ALIAS_BYTES: u64 = 100 * 1024 * 1024;
 
 const STAGING_DIR: &str = ".rqtk/.sync-staging";
+/// Inside the staging directory: the snapshots a sync is replacing, until it has finished.
+const BACKUP_DIR: &str = ".previous";
 
 #[derive(Debug, Clone, Default)]
 pub struct SyncOptions {
@@ -55,37 +57,41 @@ pub struct SyncedSource {
 
 /// Sync the declared interface sources of the repository at `repo_root`.
 pub fn sync(repo_root: &Path, options: &SyncOptions) -> Result<Vec<SyncedSource>, RqtkError> {
-    let config = load_config(&repo_root.join(".rqtk/config.toml"))?;
-    let targets = targets(&config, options)?;
-    let lock_path = Lockfile::path(repo_root);
-    let old_lock = match std::fs::read_to_string(&lock_path) {
-        Ok(text) => Lockfile::parse(&text).map_err(|e| {
-            RqtkError::Interface(format!("cannot read {}: {e}", lock_path.display()))
-        })?,
-        Err(_) => Lockfile::default(),
-    };
+    let config = load_config(&repo_root.join(CONFIG_PATH))?;
+    let targets = targets(&config, options).map_err(RqtkError::Interface)?;
+    let old_lock = Lockfile::read(repo_root)?.unwrap_or_default();
 
     let staging = repo_root.join(STAGING_DIR);
+    let recovered = recover(repo_root, &staging, &old_lock)?;
     remove_dir(&staging)?;
     let result = stage_all(repo_root, &staging, &targets, &old_lock).and_then(|staged| {
         let mut lock = old_lock.clone();
         lock.version = LOCK_VERSION;
-        for (alias, locked, _, _) in &staged {
-            lock.sources.insert(alias.clone(), locked.clone());
+        for s in &staged {
+            lock.sources.insert(s.alias.clone(), s.locked.clone());
         }
         swap_in(repo_root, &staging, &staged, &lock)?;
         Ok(staged
             .into_iter()
-            .map(|(alias, locked, changed, warnings)| SyncedSource {
-                warnings,
-                requirements: locked.requirements.len(),
-                files: locked.files.len(),
-                alias,
-                git: locked.git,
-                reference: locked.reference,
-                ref_kind: locked.ref_kind,
-                commit: locked.commit,
-                changed,
+            .map(|s| {
+                let mut warnings = s.warnings;
+                if recovered.contains(&s.alias) {
+                    warnings.insert(0, format!(
+                        "an earlier sync of `{}` was interrupted; its previous snapshot was restored before syncing",
+                        s.alias
+                    ));
+                }
+                SyncedSource {
+                    warnings,
+                    requirements: s.locked.requirements.len(),
+                    files: s.locked.files.len(),
+                    alias: s.alias,
+                    git: s.locked.git,
+                    reference: s.locked.reference,
+                    ref_kind: s.locked.ref_kind,
+                    commit: s.locked.commit,
+                    changed: s.changed,
+                }
             })
             .collect())
     });
@@ -93,15 +99,18 @@ pub fn sync(repo_root: &Path, options: &SyncOptions) -> Result<Vec<SyncedSource>
     result
 }
 
-fn targets(
+/// The sources `options` selects from `config`, after checking the alias is declared and
+/// every URL is one rqtk fetches. The error is a message about the user's input.
+pub fn targets(
     config: &Config,
     options: &SyncOptions,
-) -> Result<Vec<(String, InterfaceSource)>, RqtkError> {
+) -> Result<Vec<(String, InterfaceSource)>, String> {
     let targets: Vec<(String, InterfaceSource)> = match &options.alias {
         Some(alias) => {
-            let source = config.interfaces.get(alias).ok_or_else(|| {
-                RqtkError::Interface(format!("no interface source `{alias}` is declared"))
-            })?;
+            let source = config
+                .interfaces
+                .get(alias)
+                .ok_or_else(|| format!("no interface source `{alias}` is declared"))?;
             vec![(alias.clone(), source.clone())]
         }
         None => config
@@ -111,26 +120,37 @@ fn targets(
             .collect(),
     };
     for (alias, source) in &targets {
-        check_url(&source.git, options.allow_file_url)
-            .map_err(|e| RqtkError::Interface(format!("`{alias}`: {e}")))?;
+        check_url(&source.git, options.allow_file_url).map_err(|e| format!("`{alias}`: {e}"))?;
     }
     Ok(targets)
 }
 
-type Staged = Vec<(String, LockedSource, bool, Vec<String>)>;
+/// One alias, staged and ready to swap in.
+struct Staged {
+    alias: String,
+    locked: LockedSource,
+    /// Whether it differs from the snapshot it replaces.
+    changed: bool,
+    warnings: Vec<String>,
+}
 
 fn stage_all(
     repo_root: &Path,
     staging: &Path,
     targets: &[(String, InterfaceSource)],
     old: &Lockfile,
-) -> Result<Staged, RqtkError> {
+) -> Result<Vec<Staged>, RqtkError> {
     let mut staged = Vec::new();
     for (alias, source) in targets {
         let dir = staging.join(alias);
         let (locked, warnings) = stage(repo_root, alias, source, &dir)?;
         let changed = old.sources.get(alias) != Some(&locked);
-        staged.push((alias.clone(), locked, changed, warnings));
+        staged.push(Staged {
+            alias: alias.clone(),
+            locked,
+            changed,
+            warnings,
+        });
     }
     Ok(staged)
 }
@@ -151,14 +171,14 @@ fn stage(
     if in_own_history(repo_root, commit) {
         warnings.push(format!(
             "`{alias}` resolves to commit {} that is already in this repository's history: it points at this repository or a fork of it, which is almost always a mistake",
-            &commit.to_string()[..12]
+            crate::vendor::short_commit(&commit.to_string())
         ));
     }
     let work = temp.path().join("work");
     let symlinks = extract(&repo, commit, &work).map_err(err)?;
 
     // The provider's format must be one this rqtk reads.
-    let config_path = work.join(".rqtk/config.toml");
+    let config_path = work.join(CONFIG_PATH);
     if !config_path.is_file() {
         return Err(err(format!(
             "{} has no .rqtk/config.toml at {}; it is not an rqtk repository",
@@ -204,17 +224,20 @@ fn stage(
             continue;
         };
         let resolution = set.spec_resolution(id).expect("resolved at load");
-        if let Some(problem) = resolution.problems.iter().find(|p| p.escapes()) {
-            return Err(err(format!("{id}: {}; refusing to sync", problem.message)));
-        }
         let mut referenced: Vec<&str> = interface.specs.iter().map(|s| s.path.as_str()).collect();
         referenced.extend(resolution.problems.iter().filter_map(|p| p.path.as_deref()));
         for path in referenced {
-            if let Some(link) = symlinks.iter().find(|l| matches_path(path, l)) {
+            if let Some(link) = symlinks.iter().find(|l| covers_link(path, l)) {
                 return Err(err(format!(
-                    "{id}: spec file `{link}` is a symbolic link; refusing to vendor it"
+                    "{id}: spec path `{path}` reaches symbolic link `{link}`; refusing to vendor it"
                 )));
             }
+        }
+        if let Some(problem) = resolution.problems.first() {
+            return Err(err(format!(
+                "{id}: {} ({}); the provider's `rqtk lint` reports this too. Fix it there or pin another ref",
+                problem.message, problem.code
+            )));
         }
         let source_file = set
             .path_of(&crate::model::EntityRef::Requirement(id.clone()))
@@ -262,20 +285,23 @@ fn stage(
             .requirements()
             .iter()
             .filter(|(_, r)| r.interface.is_some())
-            .map(|(id, _)| {
-                let s = serde_json::to_value(statuses[id].status)
-                    .ok()
-                    .and_then(|v| v.as_str().map(str::to_owned))
-                    .unwrap_or_default();
-                (id.0.clone(), s)
-            })
+            .map(|(id, _)| (id.0.clone(), statuses[id].status))
             .collect(),
     };
     let status_path = dir.join(STATUS_FILE);
     create_parent(&status_path)?;
     write(&status_path, toml::to_string_pretty(&status)?.as_bytes())?;
 
+    // The snapshot must reproduce the provider's own hashes; anything else means a file it
+    // needs was not vendored.
     let (vendored, _) = load_snapshot(alias, dir);
+    for (id, v) in &vendored {
+        if v.hash != set.content_hash(id) {
+            return Err(err(format!(
+                "{id}: the vendored copy does not reproduce the provider's content hash; refusing to sync an incomplete snapshot"
+            )));
+        }
+    }
     let requirements: BTreeMap<String, String> = vendored
         .into_iter()
         .map(|(id, v): (RequirementId, _)| (id.0, v.hash))
@@ -296,16 +322,59 @@ fn in_own_history(repo_root: &Path, commit: gix::ObjectId) -> bool {
     gix::discover(repo_root).is_ok_and(|repo| repo.has_object(commit))
 }
 
-/// Whether spec `pattern` (a path or glob) names root-relative `path`.
-fn matches_path(pattern: &str, path: &str) -> bool {
+/// Whether spec `pattern` (a path or glob) could reach root-relative symbolic link `link`:
+/// it names the link, runs through it as a directory, or is a glob whose literal directory
+/// prefix contains it. Symbolic links are never written, so a spec that reaches one would
+/// be vendored incomplete.
+fn covers_link(pattern: &str, link: &str) -> bool {
     let Some(pattern) = crate::spec::normalize("", pattern) else {
         return false;
     };
-    pattern == path
-        || globset::GlobBuilder::new(&pattern)
-            .literal_separator(true)
-            .build()
-            .is_ok_and(|g| g.compile_matcher().is_match(path))
+    let prefix = if crate::spec::is_glob(&pattern) {
+        let literal: Vec<&str> = pattern
+            .split('/')
+            .take_while(|part| !crate::spec::is_glob(part))
+            .collect();
+        let literal = literal.join("/");
+        if literal.is_empty() || link.starts_with(&format!("{literal}/")) {
+            return true;
+        }
+        literal
+    } else {
+        pattern
+    };
+    prefix == link || prefix.starts_with(&format!("{link}/"))
+}
+
+/// Undo what an interrupted [`swap_in`] left behind. A snapshot backed up in the staging
+/// directory is restored unless the live snapshot already matches the lockfile, which
+/// means the swap had finished. Returns the aliases that were restored.
+fn recover(
+    repo_root: &Path,
+    staging: &Path,
+    lock: &Lockfile,
+) -> Result<BTreeSet<String>, RqtkError> {
+    let mut restored = BTreeSet::new();
+    let Ok(entries) = std::fs::read_dir(staging.join(BACKUP_DIR)) else {
+        return Ok(restored);
+    };
+    for entry in entries.flatten() {
+        let alias = entry.file_name().to_string_lossy().into_owned();
+        let live = repo_root.join(VENDOR_DIR).join(&alias);
+        let finished = live.is_dir()
+            && lock
+                .sources
+                .get(&alias)
+                .is_some_and(|l| l.files == hash_tree(&live));
+        if finished {
+            continue;
+        }
+        remove_dir(&live)?;
+        create_parent(&live)?;
+        rename(&entry.path(), &live)?;
+        restored.insert(alias);
+    }
+    Ok(restored)
 }
 
 /// Move the staged snapshots into `.rqtk/vendor/` and write the lockfile, restoring the
@@ -313,7 +382,7 @@ fn matches_path(pattern: &str, path: &str) -> bool {
 fn swap_in(
     repo_root: &Path,
     staging: &Path,
-    staged: &Staged,
+    staged: &[Staged],
     lock: &Lockfile,
 ) -> Result<(), RqtkError> {
     let vendor = repo_root.join(VENDOR_DIR);
@@ -321,14 +390,14 @@ fn swap_in(
         path: vendor.clone(),
         source,
     })?;
-    let backups = staging.join(".previous");
+    let backups = staging.join(BACKUP_DIR);
     std::fs::create_dir_all(&backups).map_err(|source| RqtkError::Io {
         path: backups.clone(),
         source,
     })?;
     let mut moved: Vec<&str> = Vec::new();
     let outcome = (|| {
-        for (alias, _, _, _) in staged {
+        for Staged { alias, .. } in staged {
             let live = vendor.join(alias);
             if live.exists() {
                 rename(&live, &backups.join(alias))?;
@@ -357,20 +426,17 @@ fn swap_in(
 pub fn remove(repo_root: &Path, alias: &str) -> Result<bool, RqtkError> {
     let lock_path = Lockfile::path(repo_root);
     let mut removed = false;
-    if let Ok(text) = std::fs::read_to_string(&lock_path) {
-        let mut lock = Lockfile::parse(&text).map_err(|e| {
-            RqtkError::Interface(format!("cannot read {}: {e}", lock_path.display()))
-        })?;
-        if lock.sources.remove(alias).is_some() {
-            removed = true;
-            if lock.sources.is_empty() {
-                std::fs::remove_file(&lock_path).map_err(|source| RqtkError::Io {
-                    path: lock_path.clone(),
-                    source,
-                })?;
-            } else {
-                write(&lock_path, lock.to_toml().as_bytes())?;
-            }
+    if let Some(mut lock) = Lockfile::read(repo_root)?
+        && lock.sources.remove(alias).is_some()
+    {
+        removed = true;
+        if lock.sources.is_empty() {
+            std::fs::remove_file(&lock_path).map_err(|source| RqtkError::Io {
+                path: lock_path.clone(),
+                source,
+            })?;
+        } else {
+            write(&lock_path, lock.to_toml().as_bytes())?;
         }
     }
     let dir = repo_root.join(VENDOR_DIR).join(alias);
@@ -470,8 +536,16 @@ fn write_tree(
     for entry in tree.iter() {
         let entry = entry.map_err(|e| e.to_string())?;
         let name = entry.filename().to_string();
-        if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\', '\0']) {
-            return Err(format!("provider tree has an invalid file name `{name}`"));
+        if name.is_empty()
+            || name == "."
+            || name == ".."
+            || name.contains(['/', '\\'])
+            || name.chars().any(char::is_control)
+        {
+            return Err(format!(
+                "provider tree has an invalid file name `{}`",
+                name.escape_debug()
+            ));
         }
         let rel = if prefix.is_empty() {
             name.clone()
@@ -531,5 +605,82 @@ fn remove_dir(path: &Path) -> Result<(), RqtkError> {
             source: e,
         }),
         _ => Ok(()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn locked(dir: &Path) -> LockedSource {
+        LockedSource {
+            git: "https://example.com/p".to_owned(),
+            reference: "v1".to_owned(),
+            ref_kind: RefKind::Tag,
+            commit: "0".repeat(40),
+            requirements: BTreeMap::new(),
+            files: hash_tree(dir),
+        }
+    }
+
+    fn put(path: &Path, text: &str) {
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, text).unwrap();
+    }
+
+    // rqtk: verifies VA-CLI-0019-02
+    #[test]
+    fn a_failure_while_swapping_in_rolls_back() {
+        let root = tempfile::tempdir().unwrap();
+        let root = root.path();
+        let vendor = root.join(VENDOR_DIR);
+        let staging = root.join(STAGING_DIR);
+        put(&vendor.join("a/files/x.yaml"), "old a");
+        put(&vendor.join("b/files/x.yaml"), "old b");
+        put(&staging.join("a/files/x.yaml"), "new a");
+        // `b` was never staged, so moving it in fails after `a` has been swapped.
+        let staged = |alias: &str, dir: &Path| Staged {
+            alias: alias.to_owned(),
+            locked: locked(dir),
+            changed: true,
+            warnings: vec![],
+        };
+        let staged = [
+            staged("a", &staging.join("a")),
+            staged("b", &vendor.join("b")),
+        ];
+        let before = hash_tree(&vendor);
+        assert!(swap_in(root, &staging, &staged, &Lockfile::default()).is_err());
+        assert_eq!(hash_tree(&vendor), before);
+        assert!(!Lockfile::path(root).exists());
+    }
+
+    // rqtk: verifies VA-CLI-0019-03
+    #[test]
+    fn an_interrupted_swap_is_undone_by_the_next_sync() {
+        let root = tempfile::tempdir().unwrap();
+        let root = root.path();
+        let live = root.join(VENDOR_DIR).join("a");
+        let backup = root.join(STAGING_DIR).join(BACKUP_DIR).join("a");
+        put(&backup.join("files/x.yaml"), "old");
+        let mut lock = Lockfile::default();
+        lock.sources.insert("a".into(), locked(&backup));
+        // Interrupted after the new snapshot went live but before the lockfile was written.
+        put(&live.join("files/x.yaml"), "new");
+        let restored = recover(root, &root.join(STAGING_DIR), &lock).unwrap();
+        assert_eq!(restored, BTreeSet::from(["a".to_owned()]));
+        assert_eq!(
+            std::fs::read_to_string(live.join("files/x.yaml")).unwrap(),
+            "old"
+        );
+
+        // Interrupted after the lockfile was written: the live snapshot is current.
+        put(&backup.join("files/x.yaml"), "older");
+        let restored = recover(root, &root.join(STAGING_DIR), &lock).unwrap();
+        assert!(restored.is_empty());
+        assert_eq!(
+            std::fs::read_to_string(live.join("files/x.yaml")).unwrap(),
+            "old"
+        );
     }
 }

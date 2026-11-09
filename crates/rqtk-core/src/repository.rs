@@ -18,6 +18,9 @@ use std::fs;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
+/// The repository's rqtk config, relative to the repository root.
+pub const CONFIG_PATH: &str = ".rqtk/config.toml";
+
 pub struct Loaded;
 pub struct Validated;
 
@@ -128,7 +131,7 @@ impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
         let repo_root = repo_root.as_ref().to_path_buf();
         let git = GitContext::open(&repo_root)?;
-        let config_path = repo_root.join(".rqtk/config.toml");
+        let config_path = repo_root.join(CONFIG_PATH);
         let config = load_config(&config_path)?;
 
         let pattern = config.id_pattern();
@@ -175,7 +178,13 @@ impl RequirementSet<Loaded> {
             .iter()
             .filter_map(|(id, r): (&RequirementId, &Requirement)| {
                 let interface = r.interface.as_ref()?;
-                Some((id.clone(), crate::spec::resolve(&repo_root, interface)))
+                Some((
+                    id.clone(),
+                    crate::spec::resolve(
+                        &crate::spec::DirFiles::working_tree(&repo_root),
+                        interface,
+                    ),
+                ))
             })
             .collect();
         let vendored = crate::vendor::load(&repo_root, &config);
@@ -696,7 +705,8 @@ impl RequirementSet<Validated> {
                     .map_or(("(not vendored)".to_owned(), String::new()), |v| {
                         (
                             v.requirement.title.clone(),
-                            v.provider_status.clone().unwrap_or_default(),
+                            v.provider_status
+                                .map_or_else(String::new, |s| s.as_str().to_owned()),
                         )
                     });
             out.push_str(&format!(
@@ -813,7 +823,7 @@ impl<S> RequirementSet<S> {
     /// plus, for an interface, the digest of its spec files. Panics for an unknown ID.
     pub fn content_hash(&self, id: &RequirementId) -> String {
         let req = &self.requirements[id];
-        req.compute_content_hash_with(self.specs.get(id).map(|s| s.digest.as_str()))
+        req.compute_content_hash(self.specs.get(id).map(|s| s.digest.as_str()))
     }
 
     /// The resolved spec files of local interface requirement `id`.
@@ -835,9 +845,9 @@ impl<S> RequirementSet<S> {
         self.vendored.get(alias, &id)
     }
 
-    /// Whether `id` is an `<alias>:<ID>` reference to a declared interface source; such IDs
-    /// name vendored requirements, which are read-only.
-    pub fn is_vendored_id(&self, id: &str) -> Option<String> {
+    /// The alias of a declared interface source when `id` has the form `<alias>:<ID>`; such
+    /// IDs name vendored requirements, which are read-only.
+    pub fn vendored_alias(&self, id: &str) -> Option<String> {
         let (alias, _) = id.split_once(':')?;
         self.config
             .interfaces
