@@ -8,8 +8,8 @@ use serde::Serialize;
 use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
-#[derive(Serialize)]
-struct Report {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report {
     tag: String,
     by: String,
     stamped: Vec<PathBuf>,

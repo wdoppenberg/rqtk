@@ -2,7 +2,7 @@ use crate::diagnostic::Severity;
 use serde::Serialize;
 
 /// A lint rule: its stable code, severity, what it checks and how to fix a finding.
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize, schemars::JsonSchema)]
 pub struct Rule {
     pub code: &'static str,
     pub severity: Severity,

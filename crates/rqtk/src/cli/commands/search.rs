@@ -14,21 +14,21 @@ pub struct SearchArgs {
 }
 
 /// `rqtk search --json`.
-#[derive(Serialize)]
-struct Report<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
     hits: &'a [Hit<'a>],
 }
 
-#[derive(Serialize)]
-struct FieldMatch<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct FieldMatch<'a> {
     field: &'static str,
     value: &'a str,
     /// Byte ranges of each match within `value`.
     ranges: Vec<(usize, usize)>,
 }
 
-#[derive(Serialize)]
-struct Hit<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Hit<'a> {
     subject: EntityRef,
     path: PathBuf,
     matches: Vec<FieldMatch<'a>>,

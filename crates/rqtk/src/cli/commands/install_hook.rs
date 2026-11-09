@@ -21,7 +21,7 @@ fn splice_region(existing: &str) -> String {
 }
 
 /// `rqtk install-hook --json`.
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, schemars::JsonSchema)]
 pub struct Report<'a> {
     pub hook: &'a Path,
     pub action: &'a str,

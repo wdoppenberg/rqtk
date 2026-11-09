@@ -29,6 +29,7 @@ mod filter;
 #[cfg(feature = "remote")]
 mod remote;
 mod repository;
+pub mod schemas;
 pub mod views;
 
 pub use entries::{ActivityEntry, Link, LinkKind, NeedEntry, RequirementEntry, StakeholderEntry};

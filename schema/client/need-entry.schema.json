@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "Acceptance": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "criteria",
+        "validated_by"
+      ],
+      "type": "object"
+    },
+    "Direction": {
+      "description": "Which end of a link an item is on.",
+      "oneOf": [
+        {
+          "const": "outgoing",
+          "description": "The item declares the link.",
+          "type": "string"
+        },
+        {
+          "const": "incoming",
+          "description": "The other item declares the link.",
+          "type": "string"
+        }
+      ]
+    },
+    "Link": {
+      "description": "One end of a link, seen from the item that holds it.",
+      "properties": {
+        "direction": {
+          "$ref": "#/$defs/Direction",
+          "description": "`outgoing`: this item declares the link. `incoming`: the other item does, so for\n`parents` an incoming link is a child."
+        },
+        "id": {
+          "description": "The other item's ID.",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/LinkKind"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "id"
+      ],
+      "type": "object"
+    },
+    "LinkKind": {
+      "description": "What a link means, named after the field that declares it.",
+      "oneOf": [
+        {
+          "const": "parents",
+          "description": "`trace.parents`: the requirement derives from another.",
+          "type": "string"
+        },
+        {
+          "const": "derived_from",
+          "description": "`trace.derived_from`.",
+          "type": "string"
+        },
+        {
+          "const": "refines",
+          "description": "`trace.refines`.",
+          "type": "string"
+        },
+        {
+          "const": "conflicts_with",
+          "description": "`trace.conflicts_with`.",
+          "type": "string"
+        },
+        {
+          "const": "depends_on",
+          "description": "`trace.depends_on`.",
+          "type": "string"
+        },
+        {
+          "const": "related",
+          "description": "`trace.related`.",
+          "type": "string"
+        },
+        {
+          "const": "satisfies",
+          "description": "`trace.satisfies`: a requirement satisfies a need.",
+          "type": "string"
+        },
+        {
+          "const": "consumes",
+          "description": "`trace.consumes`: a requirement relies on another repository's interface\n(`<alias>:<ID>`).",
+          "type": "string"
+        },
+        {
+          "const": "stakeholders",
+          "description": "A need's `stakeholders`.",
+          "type": "string"
+        },
+        {
+          "const": "activities",
+          "description": "A requirement's verification activities.",
+          "type": "string"
+        }
+      ]
+    },
+    "Need": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Acceptance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/NeedId"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "priority": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stakeholders": {
+          "items": {
+            "$ref": "#/$defs/StakeholderId"
+          },
+          "type": "array"
+        },
+        "state": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "state",
+        "priority",
+        "statement",
+        "rationale",
+        "content_hash",
+        "acceptance"
+      ],
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A need with its file and links.",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "links": {
+      "items": {
+        "$ref": "#/$defs/Link"
+      },
+      "type": "array"
+    },
+    "need": {
+      "$ref": "#/$defs/Need"
+    },
+    "path": {
+      "type": "string"
+    },
+    "satisfied": {
+      "description": "Whether at least one requirement satisfies it.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "path",
+    "satisfied",
+    "need",
+    "links"
+  ],
+  "title": "NeedEntry",
+  "type": "object"
+}

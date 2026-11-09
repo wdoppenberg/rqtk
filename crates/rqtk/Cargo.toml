@@ -71,6 +71,7 @@ required-features = ["cli"]
 
 [dev-dependencies]
 assert_cmd = "2.0"
+jsonschema = { version = "0.61", default-features = false }
 gix = "0.83.0"
 predicates = "3.0"
 tempfile = "3.0"

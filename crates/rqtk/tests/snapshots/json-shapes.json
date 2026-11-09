@@ -226,7 +226,8 @@
   "schema": {
     "kinds": [
       {
-        "file": "string",
+        "category": "string",
+        "describes": "string",
         "kind": "string"
       }
     ],

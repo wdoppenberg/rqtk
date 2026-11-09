@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "Modification": {
+      "description": "How a requirement changed between two revisions.",
+      "oneOf": [
+        {
+          "const": "semantic",
+          "description": "What it demands or how it is verified changed.",
+          "type": "string"
+        },
+        {
+          "const": "cosmetic",
+          "description": "Only other fields changed.",
+          "type": "string"
+        }
+      ]
+    },
+    "Modified": {
+      "properties": {
+        "change": {
+          "$ref": "#/$defs/Modification"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "change"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/diff/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Requirements added, removed and modified between two revisions (`rqtk diff`).",
+  "properties": {
+    "added": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "from": {
+      "type": "string"
+    },
+    "modified": {
+      "items": {
+        "$ref": "#/$defs/Modified"
+      },
+      "type": "array"
+    },
+    "removed": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/diff/2",
+      "type": "string"
+    },
+    "to": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "from",
+    "to",
+    "added",
+    "removed",
+    "modified"
+  ],
+  "title": "DiffDoc",
+  "type": "object"
+}

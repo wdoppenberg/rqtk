@@ -1,0 +1,35 @@
+{
+  "$id": "https://rqtk.dev/schema/interfaces-add/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "alias": {
+      "type": "string"
+    },
+    "git": {
+      "type": "string"
+    },
+    "ref": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "rqtk/interfaces-add/2",
+      "type": "string"
+    },
+    "warning": {
+      "type": "string"
+    },
+    "written": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "alias",
+    "git",
+    "ref",
+    "written",
+    "warning"
+  ],
+  "title": "AddReport",
+  "type": "object"
+}

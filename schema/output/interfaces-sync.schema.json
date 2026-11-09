@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "RefKind": {
+      "enum": [
+        "tag",
+        "branch",
+        "commit"
+      ],
+      "type": "string"
+    },
+    "SyncedSource": {
+      "description": "What one alias was synced to.",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "changed": {
+          "description": "Whether the snapshot differs from the one it replaced.",
+          "type": "boolean"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "files": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "git": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "ref_kind": {
+          "$ref": "#/$defs/RefKind"
+        },
+        "requirements": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "warnings": {
+          "description": "Things worth a second look that did not stop the sync.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "alias",
+        "git",
+        "ref",
+        "ref_kind",
+        "commit",
+        "requirements",
+        "files",
+        "changed",
+        "warnings"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/interfaces-sync/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "schema": {
+      "const": "rqtk/interfaces-sync/2",
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/SyncedSource"
+      },
+      "type": "array"
+    },
+    "warning": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "sources",
+    "warning"
+  ],
+  "title": "SyncReport",
+  "type": "object"
+}

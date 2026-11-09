@@ -6,7 +6,7 @@ use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// `rqtk explain --json`: the rules asked for, or all of them.
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, schemars::JsonSchema)]
 pub struct Rules<'a> {
     pub rules: &'a [&'a Rule],
 }

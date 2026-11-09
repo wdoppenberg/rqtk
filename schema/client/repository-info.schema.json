@@ -1,0 +1,93 @@
+{
+  "$defs": {
+    "Origin": {
+      "description": "Where a [`Repository`] was opened from.",
+      "oneOf": [
+        {
+          "description": "A working tree.",
+          "properties": {
+            "kind": {
+              "const": "checkout",
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A local repository at a revision, read from git objects.",
+          "properties": {
+            "kind": {
+              "const": "ref",
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "reference": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "reference"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A remote git URL at a revision, fetched into the cache.",
+          "properties": {
+            "kind": {
+              "const": "remote",
+              "type": "string"
+            },
+            "reference": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "url",
+            "reference"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "What a [`Repository`] is a snapshot of.",
+  "properties": {
+    "commit": {
+      "description": "The commit the files come from: the snapshot's for a ref or URL, HEAD for a checkout\n(whose working tree may differ from it). `None` outside git or before the first commit.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "origin": {
+      "$ref": "#/$defs/Origin"
+    },
+    "project": {
+      "description": "`[project] name` from the config.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "origin",
+    "commit",
+    "project"
+  ],
+  "title": "RepositoryInfo",
+  "type": "object"
+}

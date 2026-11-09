@@ -14,8 +14,8 @@ pub struct VerifyArgs {
     pub dry_run: bool,
 }
 
-#[derive(Serialize)]
-struct Report<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
     test_results: usize,
     activities: &'a BTreeMap<String, ActivityRun>,
     changes: &'a [EvidenceChange],

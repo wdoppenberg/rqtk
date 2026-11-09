@@ -7,7 +7,7 @@ use crate::cli::output::{self, Ctx, Exit, consumed_line, printable};
 
 pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, CliError> {
     let repo = super::open(ctx)?;
-    let doc = repo.context(id).map_err(CliError::usage_if_not_found)?;
+    let doc = repo.context(id)?;
 
     if ctx.json() {
         output::json(&doc)?;

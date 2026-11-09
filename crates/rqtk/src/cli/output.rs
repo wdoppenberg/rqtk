@@ -87,14 +87,15 @@ pub fn document<T: Serialize + ?Sized>(name: &str, value: &T) -> Result<(), CliE
 pub fn error(ctx: &Ctx, err: &CliError) {
     let message = err.to_string();
     if ctx.json() {
-        let mut error = serde_json::json!({ "kind": err.kind(), "message": message });
-        if let Some(code) = err.code() {
-            error["code"] = serde_json::Value::String(code.as_str().to_owned());
-        }
-        let body = serde_json::json!({
-            "schema": rqtk_client::views::schema_id("error"),
-            "error": error,
-        });
+        let body = serde_json::to_string(&crate::cli::documents::ErrorDoc {
+            schema: rqtk_client::views::schema_id("error"),
+            error: crate::cli::documents::ErrorBody {
+                kind: err.kind(),
+                message: &message,
+                code: err.code(),
+            },
+        })
+        .unwrap_or_default();
         eprintln!("{body}");
     } else {
         failure(&message);

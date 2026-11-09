@@ -60,12 +60,12 @@ Work is done when `rqtk lint` and `rqtk coverage --strict` both exit 0. Skills: 
 
 /// A skill's name, description and who can invoke it, read from its frontmatter.
 /// `rqtk skills list --json`.
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct SkillList<'a> {
     pub skills: &'a [SkillInfo],
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct SkillInfo {
     pub name: String,
     pub description: String,
@@ -101,7 +101,18 @@ fn parse_frontmatter(content: &str) -> SkillInfo {
 }
 
 /// Where a family of agents reads project skills from.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, clap::ValueEnum)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    clap::ValueEnum,
+    schemars::JsonSchema,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum AgentTarget {
     /// `.agents/skills`: the shared location read by Codex, Cursor, GitHub Copilot, Gemini
@@ -120,7 +131,7 @@ impl AgentTarget {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 enum Action {
     Created,
@@ -132,8 +143,8 @@ enum Action {
     SkippedModified,
 }
 
-#[derive(Serialize)]
-struct Written {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Written {
     path: PathBuf,
     action: Action,
     /// For symlinks: where the link points, relative to the link's directory.
@@ -144,7 +155,7 @@ struct Written {
     block_added: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct Report {
     /// Skill directories installed into, relative to the repo root.
     dirs: Vec<PathBuf>,

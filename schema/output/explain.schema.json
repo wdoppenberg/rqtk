@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "Rule": {
+      "description": "A lint rule: its stable code, severity, what it checks and how to fix a finding.",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "fix": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "summary": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "summary",
+        "fix"
+      ],
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "error",
+        "warning"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/explain/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`rqtk explain --json`: the rules asked for, or all of them.",
+  "properties": {
+    "rules": {
+      "items": {
+        "$ref": "#/$defs/Rule"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/explain/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "rules"
+  ],
+  "title": "Rules",
+  "type": "object"
+}

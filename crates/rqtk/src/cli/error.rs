@@ -72,20 +72,23 @@ impl<T> IoContext<T> for std::io::Result<T> {
 }
 
 impl CliError {
+    /// Whether the command was invoked wrongly, including naming an item that doesn't exist.
+    fn is_usage(&self) -> bool {
+        match self {
+            Self::Usage(_) => true,
+            Self::Client(e) => e.code == rqtk_client::ErrorCode::NotFound,
+            _ => false,
+        }
+    }
+
     /// 2 for usage errors, 3 for everything else.
     pub fn exit_code(&self) -> u8 {
-        match self {
-            Self::Usage(_) => 2,
-            _ => 3,
-        }
+        if self.is_usage() { 2 } else { 3 }
     }
 
     /// The JSON error document's `kind`.
     pub fn kind(&self) -> &'static str {
-        match self {
-            Self::Usage(_) => "usage",
-            _ => "error",
-        }
+        if self.is_usage() { "usage" } else { "error" }
     }
 
     /// The client's error code, when the error came from opening or querying the repository.
@@ -93,14 +96,6 @@ impl CliError {
         match self {
             Self::Client(e) => Some(e.code),
             _ => None,
-        }
-    }
-
-    /// A client error, as a usage error when it names an item that doesn't exist.
-    pub fn usage_if_not_found(e: rqtk_client::Error) -> Self {
-        match e.code {
-            rqtk_client::ErrorCode::NotFound => Self::Usage(Usage(e.message)),
-            _ => Self::Client(e),
         }
     }
 }

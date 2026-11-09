@@ -1,0 +1,258 @@
+{
+  "$defs": {
+    "Diagnostic": {
+      "description": "A single finding from loading or linting a requirement set.",
+      "properties": {
+        "code": {
+          "description": "Stable rule code, e.g. `RQ007`. See [`crate::rules::RULES`].",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The item the finding is about, if any."
+        }
+      },
+      "required": [
+        "severity",
+        "code",
+        "message",
+        "subject",
+        "location"
+      ],
+      "type": "object"
+    },
+    "EntityRef": {
+      "description": "A reference to any tracked item.",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/RequirementId"
+            },
+            "kind": {
+              "const": "requirement",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/NeedId"
+            },
+            "kind": {
+              "const": "need",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            "kind": {
+              "const": "stakeholder",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Location": {
+      "description": "A position in a source file. `line` and `column` are 1-based.",
+      "properties": {
+        "column": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "line": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "line",
+        "column"
+      ],
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "error",
+        "warning"
+      ],
+      "type": "string"
+    },
+    "SourceLink": {
+      "description": "A `verifies` annotation found in source code.",
+      "properties": {
+        "activity": {
+          "description": "Verification activity ID named by the annotation.",
+          "type": "string"
+        },
+        "aliases": {
+          "description": "Other names runners report the test under: JUnit `@DisplayName` and\n`@ParameterizedTest(name = …)` (Gradle uses them), xUnit `DisplayName`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "case": {
+          "description": "One case of a table-driven or parameterised test.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "group": {
+          "description": "The annotation names a group of tests (`describe`, `context`) rather than one test.",
+          "type": "boolean"
+        },
+        "line": {
+          "description": "1-based line of the annotation.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "path": {
+          "description": "Path relative to the repository root.",
+          "type": "string"
+        },
+        "source_hash": {
+          "description": "Hash of the test's source (its attributes, declaration and body), used to tell\nwhether a test changed between runs.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suite": {
+          "description": "Suite the test runner reports with the name, such as `Suite` in GoogleTest's\n`TEST(Suite, Name)`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "test_line": {
+          "description": "1-based line of the test declaration.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "test_name": {
+          "description": "Name of the annotated test, or of the test group for a `describe` block. `None` when\nno test declaration follows the annotation.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "activity",
+        "path",
+        "line",
+        "test_name"
+      ],
+      "type": "object"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/scan/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "diagnostics": {
+      "items": {
+        "$ref": "#/$defs/Diagnostic"
+      },
+      "type": "array"
+    },
+    "links": {
+      "items": {
+        "$ref": "#/$defs/SourceLink"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/scan/2",
+      "type": "string"
+    },
+    "unlinked_activities": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "links",
+    "unlinked_activities",
+    "diagnostics"
+  ],
+  "title": "Report",
+  "type": "object"
+}

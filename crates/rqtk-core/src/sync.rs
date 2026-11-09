@@ -39,7 +39,7 @@ pub struct SyncOptions {
 }
 
 /// What one alias was synced to.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, schemars::JsonSchema)]
 pub struct SyncedSource {
     pub alias: String,
     pub git: String,

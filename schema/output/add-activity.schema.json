@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "VerificationActivity": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "executed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected_result": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "procedure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "procedure",
+        "expected_result",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/add-activity/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "JSON shape shared by the `add*` commands.",
+  "properties": {
+    "dry_run": {
+      "type": "boolean"
+    },
+    "id": {
+      "type": "string"
+    },
+    "item": {
+      "$ref": "#/$defs/VerificationActivity"
+    },
+    "path": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "rqtk/add-activity/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "path",
+    "dry_run",
+    "item"
+  ],
+  "title": "Created",
+  "type": "object"
+}

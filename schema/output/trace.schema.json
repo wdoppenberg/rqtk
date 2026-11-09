@@ -1,0 +1,123 @@
+{
+  "$defs": {
+    "ClosureStatus": {
+      "oneOf": [
+        {
+          "const": "verified",
+          "description": "Every activity passed (tests against current content, or manual Passed/Waived).",
+          "type": "string"
+        },
+        {
+          "const": "suspect",
+          "description": "A test passed for an earlier version of the requirement; re-verify.",
+          "type": "string"
+        },
+        {
+          "const": "failed",
+          "description": "At least one activity failed.",
+          "type": "string"
+        },
+        {
+          "const": "in_progress",
+          "description": "Some activities passed or started, not all.",
+          "type": "string"
+        },
+        {
+          "const": "planned",
+          "description": "Activities and success criteria defined, none executed yet.",
+          "type": "string"
+        },
+        {
+          "const": "gap",
+          "description": "No activities defined, or success criteria missing.",
+          "type": "string"
+        }
+      ]
+    },
+    "ConsumedSummary": {
+      "description": "A vendored interface requirement as seen from a consumer.",
+      "properties": {
+        "id": {
+          "description": "`<alias>:<ID>`.",
+          "type": "string"
+        },
+        "provider_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClosureStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The provider's verification status at the pinned commit. Informational: it does not\ncount toward this repository's coverage."
+        },
+        "resolved": {
+          "description": "Whether the vendored snapshot has it.",
+          "type": "boolean"
+        },
+        "statement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "statement",
+        "provider_status",
+        "resolved"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/trace/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A requirement's ancestors and descendants through `trace.parents` (`rqtk trace`).",
+  "properties": {
+    "ancestors": {
+      "description": "Nearest first.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "consumes": {
+      "description": "Vendored interface requirements it consumes.",
+      "items": {
+        "$ref": "#/$defs/ConsumedSummary"
+      },
+      "type": "array"
+    },
+    "descendants": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "id": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "rqtk/trace/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "ancestors",
+    "descendants",
+    "consumes"
+  ],
+  "title": "TraceDoc",
+  "type": "object"
+}

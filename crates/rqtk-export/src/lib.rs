@@ -16,7 +16,7 @@ pub trait Exporter {
 }
 
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ExportFormat {
     Csv,

@@ -1,0 +1,101 @@
+{
+  "$defs": {
+    "ClosureStatus": {
+      "oneOf": [
+        {
+          "const": "verified",
+          "description": "Every activity passed (tests against current content, or manual Passed/Waived).",
+          "type": "string"
+        },
+        {
+          "const": "suspect",
+          "description": "A test passed for an earlier version of the requirement; re-verify.",
+          "type": "string"
+        },
+        {
+          "const": "failed",
+          "description": "At least one activity failed.",
+          "type": "string"
+        },
+        {
+          "const": "in_progress",
+          "description": "Some activities passed or started, not all.",
+          "type": "string"
+        },
+        {
+          "const": "planned",
+          "description": "Activities and success criteria defined, none executed yet.",
+          "type": "string"
+        },
+        {
+          "const": "gap",
+          "description": "No activities defined, or success criteria missing.",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Conditions a requirement must meet. Every field that is set must match; a list matches\nwhen any of its values does. The default filter matches everything.",
+  "properties": {
+    "ancestor": {
+      "description": "Only requirements below this one through `trace.parents`, at any depth.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "category": {
+      "description": "Category key, e.g. `[\"SYS\"]`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "consumes": {
+      "description": "Only requirements that consume this interface: `<alias>:<ID>`, or `<alias>` for any\ninterface of that source.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "priority": {
+      "description": "Priority, e.g. `[\"Critical\", \"High\"]`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "state": {
+      "description": "Lifecycle state, e.g. `[\"Approved\"]`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "status": {
+      "description": "Verification status, e.g. `[\"suspect\", \"failed\"]`.",
+      "items": {
+        "$ref": "#/$defs/ClosureStatus"
+      },
+      "type": "array"
+    },
+    "text": {
+      "description": "Case-insensitive text in the ID, title, statement or rationale.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "type": {
+      "description": "Requirement type, e.g. `[\"Interface\"]`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "title": "Filter",
+  "type": "object"
+}

@@ -25,7 +25,7 @@ pub struct AddArgs {
 }
 
 /// JSON shape shared by the `add*` commands.
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct Created<'a, T: Serialize> {
     pub id: &'a str,
     pub path: PathBuf,

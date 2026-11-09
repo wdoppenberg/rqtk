@@ -6,13 +6,13 @@ use crate::cli::error::{CliError, IoContext};
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// `rqtk init --agents --json`: what init and the skill install did.
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct WithSkills<'a> {
     pub init: &'a Report,
     pub skills: &'a super::skills::Report,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct Report {
     created: Vec<PathBuf>,
     dry_run: bool,

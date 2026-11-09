@@ -6,15 +6,15 @@ use serde::Serialize;
 use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
-#[derive(Serialize)]
-struct Updated {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Updated {
     subject: EntityRef,
     path: PathBuf,
     hash: String,
 }
 
-#[derive(Serialize)]
-struct Report {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report {
     updated: Vec<Updated>,
     dry_run: bool,
 }

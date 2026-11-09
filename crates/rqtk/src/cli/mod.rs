@@ -2,6 +2,7 @@
 //! not part of the library API.
 
 mod commands;
+mod documents;
 mod error;
 mod output;
 

@@ -11,8 +11,8 @@ pub struct ReviewArgs {
     pub dry_run: bool,
 }
 
-#[derive(Serialize)]
-struct Report<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
     review: &'a Review,
     /// The Suspect reasons this review settles.
     cleared: Vec<SuspectReason>,

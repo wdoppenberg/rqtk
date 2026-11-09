@@ -34,8 +34,8 @@ pub struct AddArgs {
     pub dry_run: bool,
 }
 
-#[derive(Serialize)]
-struct AddReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct AddReport<'a> {
     alias: &'a str,
     git: &'a str,
     #[serde(rename = "ref")]
@@ -104,8 +104,8 @@ pub struct SyncArgs {
     pub allow_file_url: bool,
 }
 
-#[derive(Serialize)]
-struct SyncReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct SyncReport<'a> {
     sources: &'a [SyncedSource],
     warning: &'static str,
 }
@@ -169,8 +169,8 @@ pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, CliError> {
     Ok(Exit::Ok)
 }
 
-#[derive(Serialize)]
-struct RemoveReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct RemoveReport<'a> {
     alias: &'a str,
     removed: bool,
 }
@@ -210,13 +210,13 @@ pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, CliError> {
     Ok(Exit::Ok)
 }
 
-#[derive(Serialize)]
-pub struct ListReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct ListReport<'a> {
     sources: &'a [Listed],
 }
 
-#[derive(Serialize)]
-struct Listed {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Listed {
     alias: String,
     git: String,
     #[serde(rename = "ref")]

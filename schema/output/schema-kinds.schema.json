@@ -1,0 +1,64 @@
+{
+  "$defs": {
+    "Category": {
+      "oneOf": [
+        {
+          "const": "file",
+          "description": "A file under `.rqtk/`.",
+          "type": "string"
+        },
+        {
+          "const": "document",
+          "description": "A `--json` document a command prints.",
+          "type": "string"
+        },
+        {
+          "const": "client",
+          "description": "A type the client libraries return or accept.",
+          "type": "string"
+        }
+      ]
+    },
+    "SchemaKind": {
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/Category"
+        },
+        "describes": {
+          "description": "The file, command or client type the schema describes.",
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "category",
+        "describes"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/schema-kinds/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`rqtk schema --json`: everything `rqtk schema <kind>` can print.",
+  "properties": {
+    "kinds": {
+      "items": {
+        "$ref": "#/$defs/SchemaKind"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/schema-kinds/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "kinds"
+  ],
+  "title": "SchemaKinds",
+  "type": "object"
+}

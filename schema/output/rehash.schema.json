@@ -1,0 +1,112 @@
+{
+  "$defs": {
+    "EntityRef": {
+      "description": "A reference to any tracked item.",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/RequirementId"
+            },
+            "kind": {
+              "const": "requirement",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/NeedId"
+            },
+            "kind": {
+              "const": "need",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            "kind": {
+              "const": "stakeholder",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    },
+    "Updated": {
+      "properties": {
+        "hash": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/EntityRef"
+        }
+      },
+      "required": [
+        "subject",
+        "path",
+        "hash"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/rehash/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "dry_run": {
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "rqtk/rehash/2",
+      "type": "string"
+    },
+    "updated": {
+      "items": {
+        "$ref": "#/$defs/Updated"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "updated",
+    "dry_run"
+  ],
+  "title": "Report",
+  "type": "object"
+}

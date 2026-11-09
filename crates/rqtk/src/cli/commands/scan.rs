@@ -7,8 +7,8 @@ use serde::Serialize;
 use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
-#[derive(Serialize)]
-struct Report<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
     links: &'a [SourceLink],
     unlinked_activities: Vec<&'a str>,
     diagnostics: &'a [Diagnostic],

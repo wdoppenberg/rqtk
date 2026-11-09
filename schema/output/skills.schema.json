@@ -1,0 +1,45 @@
+{
+  "$defs": {
+    "SkillInfo": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "user_invoked": {
+          "description": "`true` when only the user can invoke it (`disable-model-invocation: true`).",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "user_invoked"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/skills/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A skill's name, description and who can invoke it, read from its frontmatter.\n`rqtk skills list --json`.",
+  "properties": {
+    "schema": {
+      "const": "rqtk/skills/2",
+      "type": "string"
+    },
+    "skills": {
+      "items": {
+        "$ref": "#/$defs/SkillInfo"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "skills"
+  ],
+  "title": "SkillList",
+  "type": "object"
+}

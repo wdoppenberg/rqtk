@@ -1,0 +1,145 @@
+{
+  "$defs": {
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "Review": {
+      "description": "A person's or agent's confirmation that a requirement still holds after something it\ndepends on changed, recorded with `rqtk review`.",
+      "properties": {
+        "commit": {
+          "description": "Commit checked out when the review was recorded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date": {
+          "description": "Date of the review, `YYYY-MM-DD`.",
+          "type": "string"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requirement": {
+          "$ref": "#/$defs/RequirementId"
+        },
+        "requirement_hash": {
+          "description": "The requirement's content hash when it was reviewed; a later change voids the review.",
+          "type": "string"
+        },
+        "upstream": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Content hashes of its ancestors and their needs when it was reviewed.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "requirement",
+        "requirement_hash",
+        "date",
+        "commit"
+      ],
+      "type": "object"
+    },
+    "SuspectReason": {
+      "description": "Why recorded evidence no longer settles a requirement.",
+      "oneOf": [
+        {
+          "description": "The requirement changed after these activities' tests passed. Rerun them.",
+          "properties": {
+            "activities": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "requirement_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "activities"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The requirement changed, and the same tests that passed for its earlier wording passed\nagain. Update the tests, or confirm they still prove it with `rqtk review`.",
+          "properties": {
+            "activities": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "tests_unchanged",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "activities"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "An ancestor requirement, or a need one of them satisfies, changed since this\nrequirement was verified. Check it still fits, then `rqtk review` it.",
+          "properties": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "upstream_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "items"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "https://rqtk.dev/schema/review/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "cleared": {
+      "description": "The Suspect reasons this review settles.",
+      "items": {
+        "$ref": "#/$defs/SuspectReason"
+      },
+      "type": "array"
+    },
+    "review": {
+      "$ref": "#/$defs/Review"
+    },
+    "schema": {
+      "const": "rqtk/review/2",
+      "type": "string"
+    },
+    "written": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "review",
+    "cleared",
+    "written"
+  ],
+  "title": "Report",
+  "type": "object"
+}

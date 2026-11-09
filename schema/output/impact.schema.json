@@ -1,0 +1,187 @@
+{
+  "$defs": {
+    "ChangeKind": {
+      "oneOf": [
+        {
+          "enum": [
+            "added",
+            "removed"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "semantic",
+          "description": "Content hash changed: what is demanded or how it is verified.",
+          "type": "string"
+        },
+        {
+          "const": "cosmetic",
+          "description": "Other fields changed.",
+          "type": "string"
+        }
+      ]
+    },
+    "Downstream": {
+      "description": "A requirement that did not change itself but depends on one that did.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "via": {
+          "description": "The changed requirements or needs it is reached from.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "via"
+      ],
+      "type": "object"
+    },
+    "ItemChange": {
+      "properties": {
+        "change": {
+          "$ref": "#/$defs/ChangeKind"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "change"
+      ],
+      "type": "object"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "Reverify": {
+      "properties": {
+        "activity": {
+          "type": "string"
+        },
+        "done": {
+          "description": "Recorded evidence already covers the change: the tests passed against the current\nwording, with their current source.",
+          "type": "boolean"
+        },
+        "reasons": {
+          "items": {
+            "$ref": "#/$defs/ReverifyReason"
+          },
+          "type": "array"
+        },
+        "requirement": {
+          "$ref": "#/$defs/RequirementId"
+        },
+        "tests": {
+          "description": "The linked tests to run, as `path:line name`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "activity",
+        "requirement",
+        "reasons",
+        "tests",
+        "done"
+      ],
+      "type": "object"
+    },
+    "ReverifyReason": {
+      "oneOf": [
+        {
+          "description": "The requirement is new, or its content hash changed.",
+          "properties": {
+            "reason": {
+              "const": "requirement_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A file containing a linked test changed.",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "reason": {
+              "const": "test_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "path"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "https://rqtk.dev/schema/impact/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "What changed since a revision and what that puts at risk (`rqtk impact`).",
+  "properties": {
+    "base": {
+      "type": "string"
+    },
+    "downstream": {
+      "items": {
+        "$ref": "#/$defs/Downstream"
+      },
+      "type": "array"
+    },
+    "interfaces": {
+      "description": "Vendored interface requirements (`<alias>:<ID>`) whose hash in\n`.rqtk/interfaces.lock` changed since `base`.",
+      "items": {
+        "$ref": "#/$defs/ItemChange"
+      },
+      "type": "array"
+    },
+    "needs": {
+      "items": {
+        "$ref": "#/$defs/ItemChange"
+      },
+      "type": "array"
+    },
+    "requirements": {
+      "items": {
+        "$ref": "#/$defs/ItemChange"
+      },
+      "type": "array"
+    },
+    "reverify": {
+      "items": {
+        "$ref": "#/$defs/Reverify"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/impact/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "base",
+    "requirements",
+    "needs",
+    "interfaces",
+    "downstream",
+    "reverify"
+  ],
+  "title": "ImpactDoc",
+  "type": "object"
+}
