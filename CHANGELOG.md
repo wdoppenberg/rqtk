@@ -42,6 +42,11 @@ All notable changes to the `rqtk` command line. The format follows
 - Lint rules RQ032–RQ043 for spec files, OpenAPI documents, `consumes` links, vendored
   snapshots, config/lockfile drift and branch pins.
 
+### Removed
+- Intel macOS (`x86_64-apple-darwin`) release binaries and Python wheels. Apple Silicon,
+  Linux and Windows builds continue; Intel Macs can still install with `cargo install rqtk`
+  or from the source distribution.
+
 ### Upgrade notes
 - Requirement files with an `[interface]` table, configs with `[interfaces]`, and `consumes`
   links can't be read by rqtk 1.2. Requirements without them hash exactly as before.
