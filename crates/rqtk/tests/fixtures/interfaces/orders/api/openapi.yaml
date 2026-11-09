@@ -1,0 +1,21 @@
+openapi: 3.1.0
+info: {title: Orders, version: "1.0.0"}
+paths:
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      responses:
+        "200":
+          description: The order with its customer
+          content:
+            application/json:
+              schema: {$ref: "schemas/order.yaml#/Order"}
+webhooks:
+  orderPlaced:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: "schemas/order.yaml#/OrderPlaced"}
+      responses:
+        "204": {description: Received}

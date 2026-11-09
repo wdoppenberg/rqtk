@@ -80,6 +80,39 @@ pub fn relative(path: &Path, root: &Path) -> PathBuf {
     path.strip_prefix(root).unwrap_or(path).to_path_buf()
 }
 
+/// `s` without control characters other than newlines and tabs. Every human-readable line
+/// goes through this, because messages can quote text a provider controls (vendored
+/// requirements, file names, TOML errors) and an escape sequence in it could drive the
+/// terminal.
+pub fn safe(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_control() || *c == '\n' || *c == '\t')
+        .collect()
+}
+
+/// [`safe`], on one line: newlines and tabs become spaces. For provider text shown as a
+/// single field, such as a vendored requirement's title.
+pub fn printable(s: &str) -> String {
+    s.chars()
+        .map(|c| if c == '\n' || c == '\t' { ' ' } else { c })
+        .filter(|c| !c.is_control())
+        .collect()
+}
+
+/// One line describing a consumed interface: its qualified ID, title and the provider's
+/// status.
+pub fn consumed_line(s: &rqtk_core::query::ConsumedSummary) -> String {
+    if !s.resolved {
+        return printable(&format!("{}  (not in the vendored snapshot)", s.id));
+    }
+    printable(&format!(
+        "{}  {}  [{}]",
+        s.id,
+        s.title.as_deref().unwrap_or(""),
+        s.provider_status.map_or("status unknown", |s| s.as_str())
+    ))
+}
+
 const INDENT: &str = "  ";
 const SUB: &str = "     ";
 
@@ -88,15 +121,15 @@ pub fn success(label: &str, pairs: &[(&str, &str)]) {
         "{}{} {}",
         INDENT,
         style("✓").green().bold(),
-        style(label).bold()
+        style(safe(label)).bold()
     );
     for (k, v) in pairs {
         println!(
             "{}{} {:<20}{}",
             SUB,
             style("└─").dim(),
-            style(*k).dim(),
-            style(*v).cyan()
+            style(safe(k)).dim(),
+            style(safe(v)).cyan()
         );
     }
 }
@@ -106,7 +139,7 @@ pub fn warning(msg: &str) {
         "{}{} {}",
         INDENT,
         style("!").yellow().bold(),
-        style(msg).yellow()
+        style(safe(msg)).yellow()
     );
 }
 
@@ -115,19 +148,19 @@ pub fn failure(msg: &str) {
         "{}{} {}",
         INDENT,
         style("✗").red().bold(),
-        style(msg).bold()
+        style(safe(msg)).bold()
     );
 }
 
 pub fn section(title: &str, detail: &str) {
     if detail.is_empty() {
-        println!("\n{}{}", INDENT, style(title).bold());
+        println!("\n{}{}", INDENT, style(safe(title)).bold());
     } else {
         println!(
             "\n{}{}  {}",
             INDENT,
-            style(title).bold(),
-            style(detail).dim()
+            style(safe(title)).bold(),
+            style(safe(detail)).dim()
         );
     }
 }
@@ -137,12 +170,12 @@ pub fn subsection(icon: &str, title: &str) {
         "\n{}{}  {}",
         INDENT,
         style(icon).bold(),
-        style(title).bold()
+        style(safe(title)).bold()
     );
 }
 
 pub fn item(id: &str) {
-    println!("{}{}  {}", SUB, style("·").dim(), style(id).bold());
+    println!("{}{}  {}", SUB, style("·").dim(), style(safe(id)).bold());
 }
 
 /// Print diagnostics as a table; returns (errors, warnings).
@@ -188,11 +221,11 @@ pub fn lint_table(issues: &[Diagnostic], repo_root: &Path) -> (usize, usize) {
             .as_ref()
             .map_or_else(|| "-".to_owned(), ToString::to_string);
         table.add_row(vec![
-            Cell::new(location).fg(Color::DarkGrey),
+            Cell::new(safe(&location)).fg(Color::DarkGrey),
             Cell::new(subject).add_attribute(Attribute::Bold),
             Cell::new(sev_str).fg(sev_color),
             Cell::new(issue.code),
-            Cell::new(&issue.message),
+            Cell::new(safe(&issue.message)),
         ]);
     }
 

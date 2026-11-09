@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0009"
+title = "Untrusted provider warning"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk interfaces add and rqtk interfaces sync shall warn that vendored content comes from the provider's repository and must be reviewed before it is committed."
+rationale = "Pulling interface definitions from an untrusted party is a supply-chain risk; users must not vendor external content haphazardly."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Every run of either command prints the warning on stderr and includes it in --json output."
+
+[[verification.activities]]
+id = "VA-CLI-0009-01"
+name = "add warns about untrusted content"
+
+[[verification.activities]]
+id = "VA-CLI-0009-02"
+name = "sync warns about untrusted content"

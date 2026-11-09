@@ -22,6 +22,7 @@ Call the Skill tool with "rqtk-requirements" for the authoring rules.
 
 - **Needs**: one per distinct thing a stakeholder needs, with the stakeholder and why. User stories map onto needs.
 - **Requirements**: one shall-sentence each, measurable, with rationale, category, type, parent and the need it satisfies. Testing decisions and acceptance criteria in a spec map onto requirements and their success criteria.
+- **Interfaces**: behaviour other systems rely on (an API, an event, a file format) becomes an interface requirement whose `[interface]` table points at the spec; a dependency on another repository's interface becomes a `consumes` link. The `rqtk-requirements` skill has the format.
 - **Verification**: success criteria, plus one activity per independently testable behaviour. Method `Test` unless the behaviour can only be inspected, analysed or demonstrated.
 
 Mark each item **new** or **changed**. A changed requirement is Suspect until tests updated for it pass, and so are its child requirements until they are reviewed; say which.
@@ -38,7 +39,7 @@ Iterate until the user approves.
 
 ### 4. Write
 
-Create needs with `rqtk add-need --json` and requirements with `rqtk add --json`, parents first, reading the assigned ID from each result. `rqtk add` takes `--parent`, `--satisfies`, `--criteria` and one `--activity "name"` per activity, so each requirement is complete in one command. Change existing requirements by editing their files.
+Create needs with `rqtk add-need --json` and requirements with `rqtk add --json`, parents first, reading the assigned ID from each result. `rqtk add` takes `--parent`, `--satisfies`, `--criteria` and one `--activity "name"` per activity, so each requirement is complete in one command. Change existing requirements, and add `[interface]` tables and `consumes` links, by editing their files.
 
 ### 5. Check
 

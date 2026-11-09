@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0024"
+title = "Provider status at sync"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk interfaces sync shall compute the verification status of each vendored interface requirement in the provider checkout at the resolved commit and write it to `.rqtk/vendor/<alias>/status.toml`."
+rationale = "Status depends on the provider's evidence and source, which are not vendored; computing it at sync time lets consumers show it offline."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "status.toml lists every vendored interface requirement with the status rqtk coverage reports for it in the provider at that commit."
+
+[[verification.activities]]
+id = "VA-CLI-0024-01"
+name = "status.toml matches provider coverage"

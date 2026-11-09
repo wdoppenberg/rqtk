@@ -1,0 +1,22 @@
+id = "RQTK-SYS-0006"
+title = "Interface control across repositories"
+category = "SYS"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall let a consumer repository trace its requirements to interface requirements published by a provider repository at a pinned git commit, and report the consumer requirements affected when those interface requirements change."
+rationale = "Interfaces are owned by the exposing system; consumers need a reviewable, reproducible copy of the contract to trace against."
+notes = "Rejected alternatives: a first-class interface item kind (duplicates the requirement model); per-requirement or per-provider semver (bookkeeping; a git ref plus lockfile hashes suffices); fetching into a cache or git submodules (lint would depend on network or submodule state); shelling out to system git (external runtime dependency; gix keeps a single binary). Only git sources for now; non-git sources become another source kind beside `git` in `[interfaces.<alias>]`."
+
+[trace]
+satisfies = ["NEED-0004", "NEED-0005", "NEED-0006"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Release"
+success_criteria = "A consumer repository pins a provider at a ref, syncs it, traces requirements to its interface requirements, and is told when they change."
+
+[[verification.activities]]
+id = "VA-SYS-0006-01"
+name = "Pin, sync and trace to a provider repository"

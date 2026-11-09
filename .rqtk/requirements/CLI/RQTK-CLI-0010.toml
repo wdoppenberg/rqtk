@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0010"
+title = "Declare an interface source"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk interfaces add <alias> <url> --ref <ref> shall record the alias with its git URL and ref under `[interfaces.<alias>]` in `.rqtk/config.toml`."
+rationale = "Declaring the dependency is a reviewed config change, separate from fetching it."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "The config gains the alias table with `git` and `ref`; existing comments and layout are preserved; a duplicate alias is a usage error; with --dry-run the command reports the table it would write and writes nothing."
+
+[[verification.activities]]
+id = "VA-CLI-0010-01"
+name = "add records the alias"
+
+[[verification.activities]]
+id = "VA-CLI-0010-02"
+name = "Dry run writes nothing"

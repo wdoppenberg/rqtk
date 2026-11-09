@@ -12,6 +12,7 @@ pub mod graph;
 pub mod impact;
 pub mod init;
 pub mod install_hook;
+pub mod interfaces;
 pub mod lint;
 pub mod log;
 pub mod open;
@@ -34,6 +35,21 @@ pub fn load_links_and_evidence(
     let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
     let evidence = Evidence::load(set.repo_root())?;
     Ok((links, evidence))
+}
+
+/// Refuse `id` when it names a vendored requirement (`<alias>:<ID>`): those belong to the
+/// provider and are read-only.
+pub fn refuse_vendored<S>(
+    set: &RequirementSet<S>,
+    id: &str,
+    command: &str,
+) -> Result<(), crate::cli::output::Usage> {
+    match set.vendored_alias(id) {
+        Some(alias) => Err(crate::cli::output::Usage(format!(
+            "`{id}` is a vendored requirement of interface source `{alias}`; vendored requirements are read-only, so `rqtk {command}` does not accept it"
+        ))),
+        None => Ok(()),
+    }
 }
 
 /// Insert or replace the region between `begin` and `end` marker lines in `existing`,

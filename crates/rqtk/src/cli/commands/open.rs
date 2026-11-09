@@ -7,6 +7,7 @@ use crate::cli::output::{Ctx, Exit};
 pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
     ctx.require_text("open")?;
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
+    super::refuse_vendored(&set, &id, "open")?;
     let req_id = RequirementId(id);
     let path = set
         .path_of(&EntityRef::Requirement(req_id.clone()))

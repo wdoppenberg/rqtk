@@ -5,7 +5,7 @@ use crate::evidence::{Evidence, Outcome};
 use crate::model::{EntityRef, Requirement, RequirementId, VerificationActivity};
 use crate::repository::{RequirementSet, Validated};
 use crate::scan::SourceLink;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Status of a single verification activity.
@@ -43,7 +43,7 @@ impl ActivityState {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ClosureStatus {
     /// Every activity passed (tests against current content, or manual Passed/Waived).
@@ -58,6 +58,20 @@ pub enum ClosureStatus {
     Planned,
     /// No activities defined, or success criteria missing.
     Gap,
+}
+
+impl ClosureStatus {
+    /// The snake_case name used in JSON and `status.toml`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Verified => "verified",
+            Self::Suspect => "suspect",
+            Self::Failed => "failed",
+            Self::InProgress => "in_progress",
+            Self::Planned => "planned",
+            Self::Gap => "gap",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -107,7 +121,7 @@ impl RequirementSet<Validated> {
         self.requirements
             .iter()
             .map(|(id, req)| {
-                let hash = req.compute_content_hash();
+                let hash = self.content_hash(id);
                 let review = evidence
                     .reviews
                     .get(id)
@@ -172,8 +186,9 @@ impl RequirementSet<Validated> {
             .collect()
     }
 
-    /// Content hashes of everything a requirement depends on: its ancestors (transitively)
-    /// and the needs it and its ancestors satisfy, keyed by ID.
+    /// Content hashes of everything a requirement depends on: its ancestors (transitively),
+    /// the needs it and its ancestors satisfy, and the vendored interface requirements they
+    /// consume (keyed `<alias>:<ID>`), keyed by ID.
     pub fn upstream_hashes(&self, id: &RequirementId) -> BTreeMap<String, String> {
         let mut out = BTreeMap::new();
         let mut stack = vec![id.clone()];
@@ -186,7 +201,12 @@ impl RequirementSet<Validated> {
                 continue;
             };
             if current != *id {
-                out.insert(current.to_string(), req.compute_content_hash());
+                out.insert(current.to_string(), self.content_hash(&current));
+            }
+            for consumed in &req.trace.consumes {
+                if let Some(v) = self.consumed(consumed) {
+                    out.insert(consumed.to_string(), v.hash.clone());
+                }
             }
             for need in &req.trace.satisfies {
                 if let Some(n) = self.needs.get(need) {

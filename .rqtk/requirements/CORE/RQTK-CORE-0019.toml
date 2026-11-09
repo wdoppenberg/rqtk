@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0019"
+title = "Empty interface table"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk lint shall report an error when an `[interface]` table lists no spec files."
+rationale = "An interface without a definition cannot be hashed or consumed; an empty table is almost certainly a mistake."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "An [interface] table with no specs produces one located error."
+
+[[verification.activities]]
+id = "VA-CORE-0019-01"
+name = "Empty interface table is an error"

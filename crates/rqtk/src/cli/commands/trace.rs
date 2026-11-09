@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use rqtk_core::query::ConsumedSummary;
 use rqtk_core::{RequirementId, RequirementSet};
 use serde::Serialize;
 
@@ -10,17 +11,26 @@ struct Report<'a> {
     id: &'a RequirementId,
     ancestors: &'a [RequirementId],
     descendants: &'a [RequirementId],
+    /// Vendored interface requirements it consumes.
+    consumes: &'a [ConsumedSummary],
 }
 
 pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
+    let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let req_id = RequirementId(id);
     let view = set.trace_view(&req_id)?;
+    let consumes: Vec<ConsumedSummary> = set.requirements()[&req_id]
+        .trace
+        .consumes
+        .iter()
+        .map(|c| set.consumed_summary(c))
+        .collect();
     if ctx.json() {
         output::json(&Report {
             id: &req_id,
             ancestors: &view.upward,
             descendants: &view.downward,
+            consumes: &consumes,
         })?;
         return Ok(Exit::Ok);
     }
@@ -44,6 +54,12 @@ pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
         output::subsection("▼", &format!("Children ({})", view.downward.len()));
         for id in &view.downward {
             output::item(&title(id));
+        }
+    }
+    if !consumes.is_empty() {
+        output::subsection("◆", &format!("Consumes ({})", consumes.len()));
+        for c in &consumes {
+            output::item(&output::consumed_line(c));
         }
     }
     println!();

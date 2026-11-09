@@ -1,0 +1,9 @@
+id = "NEED-0005"
+title = "Consume interfaces from other repositories"
+state = "Draft"
+stakeholders = [
+    "STK-001",
+    "STK-003",
+]
+statement = "Engineers need to trace their requirements to interfaces exposed by systems in other repositories, at a pinned version they can review."
+rationale = "rqtk currently only sees one repository, while real systems consume interfaces owned elsewhere."

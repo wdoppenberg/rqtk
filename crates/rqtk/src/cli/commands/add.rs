@@ -190,7 +190,8 @@ pub fn run(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
         .category_dir(&args.category)
         .join(format!("{}.toml", req.id));
     let mut view = req.clone();
-    view.content_hash = Some(req.compute_content_hash());
+    // `rqtk add` writes no `[interface]` table, so there are no spec files to hash.
+    view.content_hash = Some(req.compute_content_hash(None));
     finish(
         ctx,
         "Requirement",

@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0024"
+title = "OpenAPI reference closure"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "For an openapi spec entry, rqtk shall resolve every `$ref` to a fragment or to a relative file, transitively, and treat each referenced file as part of the spec."
+rationale = "A contract split across files must be vendored whole, or the consumer receives an incomplete interface."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A document referencing schemas in two other files, one of them recursively, yields all three files; reference cycles terminate."
+
+[[verification.activities]]
+id = "VA-CORE-0024-01"
+name = "Relative-file refs are followed transitively"
+
+[[verification.activities]]
+id = "VA-CORE-0024-02"
+name = "Reference cycles terminate"

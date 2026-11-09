@@ -4,7 +4,7 @@ use console::style;
 use rqtk_core::query::{Context, Summary};
 use rqtk_core::{ActivityState, RequirementSet};
 
-use crate::cli::output::{self, Ctx, Exit, Usage};
+use crate::cli::output::{self, Ctx, Exit, Usage, consumed_line, printable};
 
 pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
     let (set, mut diagnostics) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
@@ -64,6 +64,12 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
                 }
             }
             list("Satisfies", &c.needs);
+            if !c.consumes.is_empty() {
+                output::section("Consumes", "(vendored interfaces; provider status)");
+                for s in &c.consumes {
+                    output::item(&consumed_line(s));
+                }
+            }
             if let Some(v) = &c.verification {
                 output::section("Verification", &format!("{:?}", v.status));
                 for (activity, state) in &v.activities {
@@ -114,6 +120,35 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
             }
             list("Satisfied by", &c.satisfied_by);
             findings(&c.diagnostics);
+        }
+        Context::Interface(c) => {
+            let r = c.requirement;
+            header(&c.id, &printable(&r.title), &c.path.display().to_string());
+            println!(
+                "  {}",
+                style(format!(
+                    "vendored from `{}` · read-only · provider status: {}",
+                    c.alias,
+                    c.provider_status.map_or("unknown", |s| s.as_str())
+                ))
+                .dim()
+            );
+            field("Statement", &printable(&r.statement));
+            if let Some(interface) = &r.interface {
+                output::section("Specs", "");
+                for s in &interface.specs {
+                    let element = s
+                        .element
+                        .as_deref()
+                        .map(|e| format!("  {e}"))
+                        .unwrap_or_default();
+                    output::item(&printable(&format!("{} {}{element}", s.format, s.path)));
+                }
+            }
+            if c.consumers.is_empty() {
+                output::section("Consumed by", "(nothing yet)");
+            }
+            list("Consumed by", &c.consumers);
         }
         Context::Stakeholder(c) => {
             let s = c.stakeholder;

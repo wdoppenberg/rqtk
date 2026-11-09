@@ -32,6 +32,7 @@ default = ["cli"]
 # The command-line tool (the `rqtk` binary).
 cli = [
     "lib",
+    "rqtk-core/network",
     "dep:clap",
     "rqtk-export/clap",
     "dep:rqtk-report",

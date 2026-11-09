@@ -1,0 +1,30 @@
+id = "RQTK-CORE-0013"
+title = "Vendor integrity"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk lint shall report an error when the files in `.rqtk/vendor/` do not match the file list and hashes recorded in `.rqtk/interfaces.lock`."
+rationale = "Vendored content is a copy of the provider's contract; hand edits would silently fork it."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Editing, adding or deleting a vendored file each produce an error."
+
+[[verification.activities]]
+id = "VA-CORE-0013-01"
+name = "Edited vendored file is an error"
+
+[[verification.activities]]
+id = "VA-CORE-0013-02"
+name = "Added vendored file is an error"
+
+[[verification.activities]]
+id = "VA-CORE-0013-03"
+name = "Deleted vendored file is an error"

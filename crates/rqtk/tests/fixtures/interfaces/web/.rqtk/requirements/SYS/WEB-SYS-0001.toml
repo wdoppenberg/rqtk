@@ -1,0 +1,21 @@
+id = "WEB-SYS-0001"
+title = "Order page"
+category = "SYS"
+type = "Functional"
+state = "Approved"
+priority = "High"
+statement = "The storefront shall show an order's items and its customer's name on the order page."
+rationale = "Customers check their orders."
+
+[trace]
+consumes = ["orders:ORD-SYS-0001"]
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "The order page renders the customer's name returned by the order service."
+
+[[verification.activities]]
+id = "VA-SYS-0001-01"
+name = "Order page shows the customer"

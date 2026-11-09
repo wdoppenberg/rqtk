@@ -215,7 +215,7 @@ impl Evidence {
             let (Some(req), Some(outcome)) = (owners.get(activity.as_str()), run.outcome()) else {
                 continue;
             };
-            let requirement_hash = req.compute_content_hash();
+            let requirement_hash = set.content_hash(&req.id);
             let previous = self
                 .activities
                 .get(activity)
@@ -311,7 +311,7 @@ impl Evidence {
         let req = set.requirements().get(id)?;
         let review = Review {
             requirement: id.clone(),
-            requirement_hash: req.compute_content_hash(),
+            requirement_hash: set.content_hash(&req.id),
             upstream: set.upstream_hashes(id),
             date,
             commit: commit.map(str::to_owned),

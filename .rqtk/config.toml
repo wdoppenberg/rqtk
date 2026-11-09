@@ -65,4 +65,5 @@ exclude = [
     "crates/rqtk-macros/tests/compile_fail/**",
     "crates/rqtk-py/tests/**",
     "crates/rqtk-core/tests/fixtures/ecosystems/**",
+    "crates/rqtk/tests/fixtures/interfaces/**",
 ]

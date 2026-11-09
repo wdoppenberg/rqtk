@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0014"
+title = "List interface sources"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Low"
+statement = "rqtk interfaces list shall print each alias with its URL, ref, resolved commit SHA and the number of vendored interface requirements."
+rationale = "Gives engineers and agents a quick view of what a repository consumes."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Text and --json output list every alias with these fields; an unreadable lockfile is an error, not an empty list."
+
+[[verification.activities]]
+id = "VA-CLI-0014-01"
+name = "list shows every alias"
+
+[[verification.activities]]
+id = "VA-CLI-0014-02"
+name = "An unreadable lockfile is an error"

@@ -6,7 +6,7 @@ use crate::diagnostic::Diagnostic;
 use crate::error::RqtkError;
 use crate::evidence::{ActivityEvidence, Evidence};
 use crate::model::{
-    EntityRef, Need, NeedId, Requirement, RequirementId, Stakeholder, StakeholderId,
+    ConsumedRef, EntityRef, Need, NeedId, Requirement, RequirementId, Stakeholder, StakeholderId,
 };
 use crate::repository::{RequirementSet, Validated};
 use crate::scan::SourceLink;
@@ -33,12 +33,39 @@ pub struct TraceLink {
     pub title: Option<String>,
 }
 
+/// A vendored interface requirement as seen from a consumer.
+#[derive(Debug, Clone, Serialize)]
+pub struct ConsumedSummary {
+    /// `<alias>:<ID>`.
+    pub id: String,
+    pub title: Option<String>,
+    pub statement: Option<String>,
+    /// The provider's verification status at the pinned commit. Informational: it does not
+    /// count toward this repository's coverage.
+    pub provider_status: Option<crate::status::ClosureStatus>,
+    /// Whether the vendored snapshot has it.
+    pub resolved: bool,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum Context<'a> {
     Requirement(Box<RequirementContext<'a>>),
     Need(NeedContext<'a>),
     Stakeholder(StakeholderContext<'a>),
+    /// A vendored interface requirement (`<alias>:<ID>`), read-only.
+    Interface(Box<InterfaceContext<'a>>),
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct InterfaceContext<'a> {
+    pub id: String,
+    pub alias: String,
+    pub path: PathBuf,
+    pub requirement: &'a Requirement,
+    pub provider_status: Option<crate::status::ClosureStatus>,
+    /// Local requirements that consume it.
+    pub consumers: Vec<Summary>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -52,6 +79,8 @@ pub struct RequirementContext<'a> {
     /// Every other requirement link, in both directions.
     pub links: Vec<TraceLink>,
     pub needs: Vec<Summary>,
+    /// Vendored interface requirements it consumes.
+    pub consumes: Vec<ConsumedSummary>,
     pub verification: Option<RequirementVerification>,
     /// `verifies` annotations for this requirement's activities.
     pub tests: Vec<SourceLink>,
@@ -128,13 +157,19 @@ pub struct Impact {
     pub base: String,
     pub requirements: Vec<ItemChange>,
     pub needs: Vec<ItemChange>,
+    /// Vendored interface requirements (`<alias>:<ID>`) whose hash in
+    /// `.rqtk/interfaces.lock` changed since `base`.
+    pub interfaces: Vec<ItemChange>,
     pub downstream: Vec<Downstream>,
     pub reverify: Vec<Reverify>,
 }
 
 impl Impact {
     pub fn is_empty(&self) -> bool {
-        self.requirements.is_empty() && self.needs.is_empty() && self.reverify.is_empty()
+        self.requirements.is_empty()
+            && self.needs.is_empty()
+            && self.interfaces.is_empty()
+            && self.reverify.is_empty()
     }
 }
 
@@ -152,6 +187,32 @@ impl RequirementSet<Validated> {
             title: req.map(|r| r.title.clone()).unwrap_or_default(),
             statement: req.map(|r| r.statement.clone()),
         }
+    }
+
+    /// A consumed reference, resolved against the vendored snapshots.
+    pub fn consumed_summary(&self, reference: &ConsumedRef) -> ConsumedSummary {
+        let vendored = self.consumed(reference);
+        ConsumedSummary {
+            id: reference.0.clone(),
+            title: vendored.map(|v| v.requirement.title.clone()),
+            statement: vendored.map(|v| v.requirement.statement.clone()),
+            provider_status: vendored.and_then(|v| v.provider_status),
+            resolved: vendored.is_some(),
+        }
+    }
+
+    /// Every `<alias>:<ID>` some local requirement consumes, with its consumers.
+    pub fn consumed_interfaces(&self) -> Vec<(ConsumedSummary, Vec<RequirementId>)> {
+        let mut by_ref: BTreeMap<&ConsumedRef, Vec<RequirementId>> = BTreeMap::new();
+        for (id, req) in &self.requirements {
+            for c in &req.trace.consumes {
+                by_ref.entry(c).or_default().push(id.clone());
+            }
+        }
+        by_ref
+            .into_iter()
+            .map(|(c, consumers)| (self.consumed_summary(c), consumers))
+            .collect()
     }
 
     fn need_summary(&self, id: &NeedId) -> Summary {
@@ -234,6 +295,12 @@ impl RequirementSet<Validated> {
                     .iter()
                     .map(|n| self.need_summary(n))
                     .collect(),
+                consumes: req
+                    .trace
+                    .consumes
+                    .iter()
+                    .map(|c| self.consumed_summary(c))
+                    .collect(),
                 verification: verification.get(&req_id).cloned(),
                 tests: links
                     .iter()
@@ -246,6 +313,22 @@ impl RequirementSet<Validated> {
                     .filter(|e| activities.contains(e.id.as_str()))
                     .collect(),
                 diagnostics: about(EntityRef::Requirement(req_id.clone())),
+            })));
+        }
+
+        if let Some(v) = self.consumed(&ConsumedRef(id.to_owned())) {
+            return Some(Context::Interface(Box::new(InterfaceContext {
+                id: id.to_owned(),
+                alias: v.alias.clone(),
+                path: self.relative(&v.path),
+                requirement: &v.requirement,
+                provider_status: v.provider_status,
+                consumers: self
+                    .requirements
+                    .iter()
+                    .filter(|(_, r)| r.trace.consumes.iter().any(|c| c.0 == id))
+                    .map(|(rid, _)| self.summary(rid))
+                    .collect(),
             })));
         }
 
@@ -307,12 +390,20 @@ impl RequirementSet<Validated> {
             .map(|n| (n.id.clone(), n))
             .collect();
 
+        let base_files = self.git.spec_files_at(base, &self.repo_root)?;
         let requirements = compare(
             &base_reqs,
             &self.requirements,
-            Requirement::compute_content_hash,
+            |_, r| crate::git::hash_in(r, &base_files),
+            |id, _| self.content_hash(id),
         );
-        let needs = compare(&base_needs, &self.needs, Need::compute_content_hash);
+        let needs = compare(
+            &base_needs,
+            &self.needs,
+            |_, n| n.compute_content_hash(),
+            |_, n| n.compute_content_hash(),
+        );
+        let interfaces = self.interface_changes(base)?;
 
         // Walk from each semantically changed or removed item to everything that depends on it.
         let mut dependents: BTreeMap<String, Vec<&RequirementId>> = BTreeMap::new();
@@ -326,7 +417,7 @@ impl RequirementSet<Validated> {
                 .chain(&t.refines)
                 .map(|r| r.0.clone())
                 .chain(t.satisfies.iter().map(|n| n.0.clone()));
-            for up in upstream {
+            for up in upstream.chain(t.consumes.iter().map(|c| c.0.clone())) {
                 dependents.entry(up).or_default().push(id);
             }
         }
@@ -336,7 +427,7 @@ impl RequirementSet<Validated> {
             .map(|c| c.id.as_str())
             .collect();
         let mut via: BTreeMap<&RequirementId, BTreeSet<String>> = BTreeMap::new();
-        for change in requirements.iter().chain(&needs) {
+        for change in requirements.iter().chain(&needs).chain(&interfaces) {
             if !matches!(change.change, ChangeKind::Semantic | ChangeKind::Removed) {
                 continue;
             }
@@ -401,7 +492,7 @@ impl RequirementSet<Validated> {
                     let done = evidence.activities.get(&activity.id).is_some_and(|e| {
                         e.requirement == *req_id
                             && e.outcome == crate::evidence::Outcome::Passed
-                            && e.requirement_hash == req.compute_content_hash()
+                            && e.requirement_hash == self.content_hash(req_id)
                             && !e.unchanged_tests
                             && (e.tests_hash.is_none() || e.tests_hash == current_tests)
                     });
@@ -420,16 +511,74 @@ impl RequirementSet<Validated> {
             base: base.to_owned(),
             requirements,
             needs,
+            interfaces,
             downstream,
             reverify,
         })
     }
 }
 
+impl RequirementSet<Validated> {
+    /// Vendored interface requirements whose hash in the lockfile differs from `base`.
+    fn interface_changes(&self, base: &str) -> Result<Vec<ItemChange>, RqtkError> {
+        use crate::spec::SpecFiles as _;
+        let hashes = |lock: Option<&crate::vendor::Lockfile>| -> BTreeMap<String, String> {
+            lock.into_iter()
+                .flat_map(|l| &l.sources)
+                .flat_map(|(alias, s)| {
+                    s.requirements
+                        .iter()
+                        .map(move |(id, h)| (format!("{alias}:{id}"), h.clone()))
+                })
+                .collect()
+        };
+        let base_lock = match self
+            .git
+            .spec_files_at(base, &self.repo_root)?
+            .read(crate::vendor::LOCK_PATH)
+        {
+            Ok(Some(bytes)) => Some(
+                crate::vendor::Lockfile::parse(&String::from_utf8_lossy(&bytes))
+                    .map_err(|e| crate::vendor::Lockfile::unreadable(&format!("at {base}: {e}")))?,
+            ),
+            Ok(None) => None,
+            Err(e) => return Err(crate::vendor::Lockfile::unreadable(&e.to_string())),
+        };
+        let before = hashes(base_lock.as_ref());
+        let after = hashes(self.vendored.lock.as_ref());
+        let mut changes: Vec<ItemChange> = after
+            .iter()
+            .filter_map(|(id, h)| {
+                let change = match before.get(id) {
+                    None => ChangeKind::Added,
+                    Some(old) if old != h => ChangeKind::Semantic,
+                    Some(_) => return None,
+                };
+                Some(ItemChange {
+                    id: id.clone(),
+                    change,
+                })
+            })
+            .collect();
+        changes.extend(
+            before
+                .keys()
+                .filter(|id| !after.contains_key(*id))
+                .map(|id| ItemChange {
+                    id: id.clone(),
+                    change: ChangeKind::Removed,
+                }),
+        );
+        changes.sort_by(|a, b| a.id.cmp(&b.id));
+        Ok(changes)
+    }
+}
+
 fn compare<K: Ord + AsRef<str>, T>(
     base: &BTreeMap<K, T>,
     current: &BTreeMap<K, T>,
-    hash: impl Fn(&T) -> String,
+    base_hash: impl Fn(&K, &T) -> String,
+    current_hash: impl Fn(&K, &T) -> String,
 ) -> Vec<ItemChange>
 where
     T: Serialize,
@@ -438,7 +587,7 @@ where
     for (id, item) in current {
         let change = match base.get(id) {
             None => Some(ChangeKind::Added),
-            Some(old) if hash(old) != hash(item) => Some(ChangeKind::Semantic),
+            Some(old) if base_hash(id, old) != current_hash(id, item) => Some(ChangeKind::Semantic),
             Some(old) if toml::to_string(old).ok() != toml::to_string(item).ok() => {
                 Some(ChangeKind::Cosmetic)
             }

@@ -462,6 +462,7 @@ impl GitContext {
         from: &BaselineName,
         to: &BaselineName,
         req_dir: &Path,
+        spec_root: &Path,
     ) -> Result<RequirementDiff, RqtkError> {
         let from_tree_id = self.resolve_baseline_tree_id(from)?;
         let to_tree_id = self.resolve_baseline_tree_id(to)?;
@@ -471,6 +472,7 @@ impl GitContext {
             from.to_string(),
             to.to_string(),
             req_dir,
+            spec_root,
         )
     }
 
@@ -483,6 +485,7 @@ impl GitContext {
         from: &str,
         to: &str,
         req_dir: &Path,
+        spec_root: &Path,
     ) -> Result<RequirementDiff, RqtkError> {
         let from_tree_id = self.resolve_ref_tree_id(from)?;
         let to_tree_id = self.resolve_ref_tree_id(to)?;
@@ -492,6 +495,7 @@ impl GitContext {
             from.to_string(),
             to.to_string(),
             req_dir,
+            spec_root,
         )
     }
 
@@ -502,6 +506,7 @@ impl GitContext {
         from_label: String,
         to_label: String,
         req_dir: &Path,
+        spec_root: &Path,
     ) -> Result<RequirementDiff, RqtkError> {
         let from_tree = self
             .repo()?
@@ -517,6 +522,8 @@ impl GitContext {
         let repo_root = self.workdir.as_path();
         let from_reqs = read_requirements_from_tree(self.repo()?, &from_tree, req_dir, repo_root)?;
         let to_reqs = read_requirements_from_tree(self.repo()?, &to_tree, req_dir, repo_root)?;
+        let from_files = self.tree_files(from_tree_id, spec_root)?;
+        let to_files = self.tree_files(to_tree_id, spec_root)?;
 
         let from_ids: std::collections::HashSet<_> = from_reqs.keys().cloned().collect();
         let to_ids: std::collections::HashSet<_> = to_reqs.keys().cloned().collect();
@@ -534,17 +541,14 @@ impl GitContext {
             let from_r = &from_reqs[&id];
             let to_r = &to_reqs[&id];
 
-            let from_ser = toml::to_string(from_r).unwrap_or_default();
-            let to_ser = toml::to_string(to_r).unwrap_or_default();
-            if from_ser == to_ser {
-                continue;
-            }
-
-            // Always recompute: a stored hash may be stale.
-            let change_kind = if from_r.compute_content_hash() != to_r.compute_content_hash() {
+            // Always recompute: a stored hash may be stale. An interface requirement can
+            // change through its spec files alone.
+            let change_kind = if hash_in(from_r, &from_files) != hash_in(to_r, &to_files) {
                 ChangeKind::Semantic
-            } else {
+            } else if toml::to_string(from_r).ok() != toml::to_string(to_r).ok() {
                 ChangeKind::Cosmetic
+            } else {
+                continue;
             };
 
             modified.push(ModifiedRequirement { id, change_kind });
@@ -626,6 +630,76 @@ impl GitContext {
             .tree_id()
             .map(|id| id.detach())
             .map_err(|e| RqtkError::Git(e.to_string()))
+    }
+
+    /// The text of repository-relative file `rel` at `spec`, or `None` if it does not exist
+    /// there.
+    pub fn file_at_ref(&self, spec: &str, rel: &Path) -> Result<Option<String>, RqtkError> {
+        let tree = self
+            .repo()?
+            .find_object(self.resolve_ref_tree_id(spec)?)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        let Some(entry) = tree
+            .lookup_entry_by_path(rel)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+        else {
+            return Ok(None);
+        };
+        let obj = self
+            .repo()?
+            .find_object(entry.oid().to_owned())
+            .map_err(|e| RqtkError::Git(e.to_string()))?;
+        Ok(Some(String::from_utf8_lossy(&obj.data).into_owned()))
+    }
+
+    /// The files below `spec_root` (the directory holding `.rqtk/`) as they are at `spec`,
+    /// for resolving interface specs at that ref.
+    pub fn spec_files_at(&self, spec: &str, spec_root: &Path) -> Result<TreeFiles<'_>, RqtkError> {
+        self.tree_files(self.resolve_ref_tree_id(spec)?, spec_root)
+    }
+
+    fn tree_files(
+        &self,
+        tree_id: gix::ObjectId,
+        spec_root: &Path,
+    ) -> Result<TreeFiles<'_>, RqtkError> {
+        let repo = self.repo()?;
+        let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+        let prefix = canonical(spec_root)
+            .strip_prefix(canonical(&self.workdir))
+            .map(|p| {
+                p.components()
+                    .map(|c| c.as_os_str().to_string_lossy())
+                    .collect::<Vec<_>>()
+                    .join("/")
+            })
+            .unwrap_or_default();
+        let tree = repo
+            .find_object(tree_id)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        let mut blobs = BTreeMap::new();
+        for entry in tree
+            .traverse()
+            .breadthfirst
+            .files()
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+        {
+            if !entry.mode.is_blob() {
+                continue;
+            }
+            let path = entry.filepath.to_string();
+            let rel = if prefix.is_empty() {
+                Some(path.as_str())
+            } else {
+                path.strip_prefix(&format!("{prefix}/"))
+            };
+            if let Some(rel) = rel {
+                blobs.insert(rel.to_owned(), entry.oid);
+            }
+        }
+        Ok(TreeFiles { repo, blobs })
     }
 
     /// Parse every `.toml` file below `dir` as a `T`, as it exists at `spec` (a branch, tag,
@@ -713,6 +787,41 @@ impl GitContext {
             .map(|id| id.detach())
             .map_err(|e| RqtkError::Git(e.to_string()))
     }
+}
+
+/// Files as they are in a git tree, read for resolving interface specs at a ref.
+pub struct TreeFiles<'r> {
+    repo: &'r gix::Repository,
+    /// Blob of each file, by path relative to the spec root.
+    blobs: BTreeMap<String, gix::ObjectId>,
+}
+
+impl crate::spec::SpecFiles for TreeFiles<'_> {
+    fn read(&self, path: &str) -> std::io::Result<Option<Vec<u8>>> {
+        let Some(oid) = self.blobs.get(path) else {
+            return Ok(None);
+        };
+        let object = self.repo.find_object(*oid).map_err(std::io::Error::other)?;
+        Ok(Some(object.data.to_vec()))
+    }
+
+    fn list(&self, dir: &str) -> Vec<String> {
+        let prefix = format!("{dir}/");
+        self.blobs
+            .keys()
+            .filter(|p| dir.is_empty() || p.starts_with(&prefix))
+            .cloned()
+            .collect()
+    }
+}
+
+/// The content hash of `req` with its spec files read from `files`.
+pub(crate) fn hash_in(req: &Requirement, files: &dyn crate::spec::SpecFiles) -> String {
+    let digest = req
+        .interface
+        .as_ref()
+        .map(|i| crate::spec::resolve(files, i).digest);
+    req.compute_content_hash(digest.as_deref())
 }
 
 fn read_requirements_from_tree(

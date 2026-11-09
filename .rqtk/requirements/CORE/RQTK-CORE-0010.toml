@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0010"
+title = "Consumes links"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall accept a `consumes` trace link of the form `<alias>:<ID>` from a requirement to an interface requirement in the vendored snapshot of that alias, and shall include each such link in the requirement's content hash."
+rationale = "Qualifying remote IDs by a local alias prevents collisions with local IDs and with other providers. Adding or removing a consumes link changes what the requirement relies on, so, like a parent link, it changes the content hash and puts the requirement under review."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A consumes link to a vendored interface requirement resolves and appears in the requirement's traceability; adding a consumes link changes the requirement's content hash."
+
+[[verification.activities]]
+id = "VA-CORE-0010-01"
+name = "Consumes link resolves to a vendored requirement"
+
+[[verification.activities]]
+id = "VA-CORE-0010-02"
+name = "Consumes links are part of the content hash"

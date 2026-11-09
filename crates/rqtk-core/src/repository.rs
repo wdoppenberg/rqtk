@@ -18,6 +18,9 @@ use std::fs;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
+/// The repository's rqtk config, relative to the repository root.
+pub const CONFIG_PATH: &str = ".rqtk/config.toml";
+
 pub struct Loaded;
 pub struct Validated;
 
@@ -62,6 +65,10 @@ pub struct RequirementSet<S = Loaded> {
     pub(crate) repo_root: PathBuf,
     pub(crate) config_path: PathBuf,
     pub(crate) git: GitContext,
+    /// Spec files and digest of each local interface requirement.
+    pub(crate) specs: BTreeMap<RequirementId, crate::spec::SpecResolution>,
+    /// Vendored interface snapshots and the lockfile.
+    pub(crate) vendored: crate::vendor::Vendored,
     /// Findings from loading: files that failed to parse, duplicate IDs, misnamed files.
     /// Those files are left out of the set; `validate` reports these alongside lint findings.
     pub(crate) load_diagnostics: Vec<Diagnostic>,
@@ -124,7 +131,7 @@ impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
         let repo_root = repo_root.as_ref().to_path_buf();
         let git = GitContext::open(&repo_root)?;
-        let config_path = repo_root.join(".rqtk/config.toml");
+        let config_path = repo_root.join(CONFIG_PATH);
         let config = load_config(&config_path)?;
 
         let pattern = config.id_pattern();
@@ -167,7 +174,24 @@ impl RequirementSet<Loaded> {
             &mut diagnostics,
         )?;
 
+        let specs = requirements
+            .iter()
+            .filter_map(|(id, r): (&RequirementId, &Requirement)| {
+                let interface = r.interface.as_ref()?;
+                Some((
+                    id.clone(),
+                    crate::spec::resolve(
+                        &crate::spec::DirFiles::working_tree(&repo_root),
+                        interface,
+                    ),
+                ))
+            })
+            .collect();
+        let vendored = crate::vendor::load(&repo_root, &config);
+
         Ok(Self {
+            specs,
+            vendored,
             config,
             requirements,
             needs,
@@ -230,6 +254,7 @@ impl RequirementSet<Loaded> {
 
     pub fn validate(mut self) -> (RequirementSet<Validated>, Vec<Diagnostic>) {
         let mut issues = std::mem::take(&mut self.load_diagnostics);
+        issues.append(&mut self.vendored.diagnostics);
         issues.extend(self.lint_requirements());
         issues.extend(self.lint_needs());
         if self.config.validation.forbid_orphans {
@@ -242,6 +267,8 @@ impl RequirementSet<Loaded> {
         resolve_lines(&mut issues);
 
         let validated = RequirementSet {
+            specs: self.specs,
+            vendored: self.vendored,
             config: self.config,
             requirements: self.requirements,
             needs: self.needs,
@@ -431,7 +458,7 @@ impl RequirementSet<Loaded> {
                 ));
             }
             if let Some(stored) = &req.content_hash {
-                let computed = req.compute_content_hash();
+                let computed = self.content_hash(req_id);
                 if stored != &computed {
                     issues.push(finding(
                         "RQ021",
@@ -457,6 +484,47 @@ impl RequirementSet<Loaded> {
                     field,
                     format!("unknown {link} reference `{target}`"),
                 ));
+            }
+            for problem in self.specs.get(req_id).map_or(&[][..], |s| &s.problems[..]) {
+                let field = match problem.entry {
+                    Some(_) => "interface.specs",
+                    None => "interface",
+                };
+                let message = match problem.entry {
+                    Some(i) if req.interface.as_ref().is_some_and(|f| f.specs.len() > 1) => {
+                        format!("spec {}: {}", i + 1, problem.message)
+                    }
+                    _ => problem.message.clone(),
+                };
+                issues.push(finding(problem.code, field, message));
+            }
+            for consumed in &req.trace.consumes {
+                let Some((alias, id)) = consumed.split() else {
+                    issues.push(finding(
+                        "RQ038",
+                        "trace.consumes",
+                        format!("consumes link `{consumed}` is not of the form `<alias>:<ID>`"),
+                    ));
+                    continue;
+                };
+                if !cfg.interfaces.contains_key(alias) {
+                    issues.push(finding(
+                        "RQ038",
+                        "trace.consumes",
+                        format!(
+                            "consumes link `{consumed}` names undeclared interface source `{alias}`; add it with `rqtk interfaces add`"
+                        ),
+                    ));
+                } else if self.vendored.is_synced(alias) && self.vendored.get(alias, &id).is_none()
+                {
+                    issues.push(finding(
+                        "RQ039",
+                        "trace.consumes",
+                        format!(
+                            "`{alias}` has no interface requirement `{id}` in its vendored snapshot; it may have been removed upstream"
+                        ),
+                    ));
+                }
             }
             for need_id in &req.trace.satisfies {
                 if !self.needs.contains_key(need_id) && !self.unloaded_ids.contains(&need_id.0) {
@@ -625,6 +693,30 @@ impl RequirementSet<Validated> {
             ));
         }
 
+        // Vendored interface requirements, read-only, as consumed by local requirements.
+        let consumed: BTreeSet<&crate::model::ConsumedRef> = self
+            .requirements
+            .values()
+            .flat_map(|r| &r.trace.consumes)
+            .collect();
+        for c in consumed {
+            let (title, status) =
+                self.consumed(c)
+                    .map_or(("(not vendored)".to_owned(), String::new()), |v| {
+                        (
+                            v.requirement.title.clone(),
+                            v.provider_status
+                                .map_or_else(String::new, |s| s.as_str().to_owned()),
+                        )
+                    });
+            out.push_str(&format!(
+                "    \"{}\" [ label=\"{}\" shape=component style=\"filled,dashed\" fillcolor=\"#F3F4F6\" tooltip=\"{}\" ];\n",
+                dot_escape(&c.0),
+                dot_escape(&c.0),
+                dot_escape(&format!("{title}\\nprovider status: {status}"))
+            ));
+        }
+
         let mut edge = |from: &str, to: &str, attrs: &str| {
             out.push_str(&format!(
                 "    \"{}\" -> \"{}\"{};\n",
@@ -657,6 +749,13 @@ impl RequirementSet<Validated> {
             }
             for c in &t.conflicts_with {
                 edge(&id.0, &c.0, " [ style=dashed color=red label=conflicts ]");
+            }
+            for c in &t.consumes {
+                edge(
+                    &id.0,
+                    &c.0,
+                    " [ style=dashed color=darkorange label=consumes ]",
+                );
             }
         }
 
@@ -718,6 +817,42 @@ impl<S> RequirementSet<S> {
 
     pub fn git(&self) -> &GitContext {
         &self.git
+    }
+
+    /// The content hash of local requirement `id`: [`Requirement::compute_content_hash`]
+    /// plus, for an interface, the digest of its spec files. Panics for an unknown ID.
+    pub fn content_hash(&self, id: &RequirementId) -> String {
+        let req = &self.requirements[id];
+        req.compute_content_hash(self.specs.get(id).map(|s| s.digest.as_str()))
+    }
+
+    /// The resolved spec files of local interface requirement `id`.
+    pub fn spec_resolution(&self, id: &RequirementId) -> Option<&crate::spec::SpecResolution> {
+        self.specs.get(id)
+    }
+
+    /// Vendored interface snapshots and the lockfile.
+    pub fn vendored(&self) -> &crate::vendor::Vendored {
+        &self.vendored
+    }
+
+    /// The vendored requirement a `<alias>:<ID>` reference names.
+    pub fn consumed(
+        &self,
+        reference: &crate::model::ConsumedRef,
+    ) -> Option<&crate::vendor::VendoredRequirement> {
+        let (alias, id) = reference.split()?;
+        self.vendored.get(alias, &id)
+    }
+
+    /// The alias of a declared interface source when `id` has the form `<alias>:<ID>`; such
+    /// IDs name vendored requirements, which are read-only.
+    pub fn vendored_alias(&self, id: &str) -> Option<String> {
+        let (alias, _) = id.split_once(':')?;
+        self.config
+            .interfaces
+            .contains_key(alias)
+            .then(|| alias.to_owned())
     }
 
     pub fn trace_view(&self, root_id: &RequirementId) -> Result<TraceView, RqtkError> {
@@ -824,6 +959,7 @@ impl<S> RequirementSet<S> {
             validation: None,
             risk: None,
             allocation: None,
+            interface: None,
             custom: BTreeMap::new(),
         }
     }
@@ -904,7 +1040,7 @@ impl<S> RequirementSet<S> {
                 EntityRef::Requirement(id.clone()),
                 &self.files_by_id[id],
                 r.content_hash.as_deref(),
-                r.compute_content_hash(),
+                self.content_hash(id),
             )
         });
         let needs = self.needs.iter().map(|(id, n)| {

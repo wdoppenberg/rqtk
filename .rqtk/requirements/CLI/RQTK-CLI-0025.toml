@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0025"
+title = "Self-consumption warning"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Low"
+statement = "rqtk interfaces sync shall warn, without failing, when a provider's resolved commit is already in the consuming repository's own history."
+rationale = "An alias that points back at the repository itself, or at a fork of it, is almost always a mistake, and URLs alone cannot tell (https, ssh and mirrors differ)."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Syncing a repository into itself succeeds and prints the warning on stderr and under sources[].warnings in --json output."
+
+[[verification.activities]]
+id = "VA-CLI-0025-01"
+name = "Syncing a repository into itself warns"

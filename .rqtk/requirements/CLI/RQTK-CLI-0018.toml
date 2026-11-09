@@ -1,0 +1,26 @@
+id = "RQTK-CLI-0018"
+title = "Allowed git URL schemes"
+category = "CLI"
+type = "Constraint"
+state = "Draft"
+priority = "Critical"
+statement = "rqtk interfaces add and rqtk interfaces sync shall reject a git URL whose transport is not https or ssh, unless the URL is a file URL and --allow-file-url is given."
+rationale = "Git's ext:: transport runs arbitrary commands and file URLs read local paths; a hand-edited or malicious config must not trigger either."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "ext::, git:// and file URLs are rejected with a usage error; file URLs are accepted only with --allow-file-url."
+
+[[verification.activities]]
+id = "VA-CLI-0018-01"
+name = "Disallowed transports are rejected"
+
+[[verification.activities]]
+id = "VA-CLI-0018-02"
+name = "File URLs need an explicit flag"

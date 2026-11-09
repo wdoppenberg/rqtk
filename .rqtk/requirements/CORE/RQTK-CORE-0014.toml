@@ -1,0 +1,26 @@
+id = "RQTK-CORE-0014"
+title = "Config and lockfile drift"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk lint shall report an error when an interface alias's URL or ref in the configuration differs from `.rqtk/interfaces.lock`, when a declared alias has no lockfile entry, or when the lockfile or `.rqtk/vendor/` holds an alias the configuration does not declare."
+rationale = "The lockfile must describe exactly what the configuration asks for, or the vendored snapshot is not what reviewers think it is."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Changed URL, changed ref, unsynced alias and orphaned vendor content each produce an error."
+
+[[verification.activities]]
+id = "VA-CORE-0014-01"
+name = "Config/lock mismatch is an error"
+
+[[verification.activities]]
+id = "VA-CORE-0014-02"
+name = "Orphaned vendor content is an error"

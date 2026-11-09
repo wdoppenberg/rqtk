@@ -1,0 +1,18 @@
+Order:
+  type: object
+  required: [id, customer]
+  properties:
+    id: {type: string}
+    customer: {$ref: "#/Customer"}
+Customer:
+  type: object
+  required: [id, name]
+  properties:
+    id: {type: string}
+    name: {type: string}
+OrderPlaced:
+  type: object
+  required: [orderId, customerId]
+  properties:
+    orderId: {type: string}
+    customerId: {type: string}

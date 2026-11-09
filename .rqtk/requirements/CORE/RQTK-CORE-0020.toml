@@ -1,0 +1,22 @@
+id = "RQTK-CORE-0020"
+title = "Vendor directory written only by sync"
+category = "CORE"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "No rqtk command other than rqtk interfaces sync and rqtk interfaces remove shall write under `.rqtk/vendor/`."
+rationale = "rehash runs in the pre-commit hook; if it or any other command rewrote vendored files, the snapshot would silently diverge from the provider."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Running rehash, review, add-activity and baseline on a repository with vendored interfaces leaves .rqtk/vendor/ byte-identical."
+
+[[verification.activities]]
+id = "VA-CORE-0020-01"
+name = "Other commands leave the vendor directory unchanged"

@@ -107,6 +107,9 @@ rqtk rehash                        # refresh stored content hashes (--all: stamp
 rqtk report [-o report.md]         # Markdown requirements report (stdout by default)
 rqtk schema requirement            # JSON Schema of a file kind (config, need, evidence, …)
 rqtk explain RQ010                 # what a lint rule checks and how to fix it
+rqtk interfaces add users <git-url> --ref v1.4.0   # consume another repository's interfaces
+rqtk interfaces sync               # vendor them into .rqtk/vendor/, pinned in .rqtk/interfaces.lock
+rqtk interfaces list | remove users
 rqtk skills install                # install the agent skills for all agents (see Agent skills)
 ```
 
@@ -227,6 +230,7 @@ A requirement file has scalar fields at the top level and these tables:
 | `[risk]` | `hazards`, `mitigations`, `fmea_ref`, `safety_critical`, `security_sensitive` |
 | `[allocation]` | `subsystems`, `components`, `software_modules`, `source_files` |
 | `[custom]` | Arbitrary project-specific key/value pairs |
+| `[interface]` | Marks the requirement as an interface other repositories can consume: `[[interface.specs]]` with `format`, `path`, `element`; see [Interfaces across repositories](#interfaces-across-repositories) |
 
 Needs (`.rqtk/needs/`) have `id`, `title`, `state`, `priority`, `stakeholders`, `keywords`, `statement`, `rationale`, `content_hash` and an optional `[acceptance]` table. Stakeholders (`.rqtk/stakeholders/`) have `id`, `name`, `role`, `organization` and optional `[concerns]` and `[authority]` tables.
 
@@ -244,6 +248,7 @@ conflicts_with = ["FOBC-SW-0003"]           # known conflict
 depends_on     = ["FOBC-HW-0001"]           # runtime dependency
 related        = ["FOBC-SW-0002"]           # informational link
 external       = [{type = "JIRA", ref = "OBC-42"}]
+consumes       = ["users:USR-SYS-0007"]     # interface requirement of another repository
 ```
 
 ### Verification activities
@@ -344,6 +349,35 @@ rqtk coverage
 
 rqtk coverage --strict   # exits 1 on any Gap, Failed or Suspect requirement, or unsatisfied need
 ```
+
+## Interfaces across repositories
+
+A provider repository marks requirements as interfaces with an `[interface]` table that points at the definition it already has:
+
+```toml
+[[interface.specs]]
+format = "openapi"                          # or protobuf, asyncapi, jsonschema, other
+path = "api/openapi.yaml"                   # a glob for formats rqtk doesn't parse
+element = "#/paths/~1users~1{id}/get"
+```
+
+The spec is part of the requirement's content hash. OpenAPI 3.0 and 3.1 are parsed: rqtk follows `$ref`s across files, checks the element exists, and hashes only that element and what it references, so an edit to an unrelated operation or a reformat doesn't count as a contract change. Other formats are hashed as whole files.
+
+A consumer declares the provider under an alias, syncs it, and traces to it:
+
+```bash
+rqtk interfaces add users https://github.com/acme/user-service --ref rqtk/1.4.0
+rqtk interfaces sync          # writes .rqtk/vendor/users/ and .rqtk/interfaces.lock; review, then commit
+```
+
+```toml
+[trace]
+consumes = ["users:USR-SYS-0007"]
+```
+
+When a sync brings in a changed contract, every requirement that consumes it, and every requirement below those, becomes Suspect until it is reviewed. Lint works offline from the committed snapshot and reports hand-edited vendored files, drift between the config and the lockfile, and links to interfaces the provider no longer exposes. The provider's verification status is shown but never counts toward yours.
+
+**Vendor only from providers you trust, and review every sync.** rqtk treats vendored content as data: it never executes it, escapes it in reports, accepts only `https` and SSH URLs, and refuses symbolic links, references outside the provider's repository, specs that don't resolve, files over 10 MiB and sources over 100 MiB. The content itself is still the provider's. See the [guide](https://rqtk.dev/docs/guides/interfaces.html).
 
 ## Change control
 

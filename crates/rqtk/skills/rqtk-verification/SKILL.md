@@ -46,9 +46,11 @@ A requirement is **verified** only by recorded test results, never by editing a 
 
 Suspect has three reasons:
 
-- **changed since its tests passed**: rerun its tests and `rqtk verify`.
+- **changed since its tests passed**: rerun its tests and `rqtk verify`. For an interface requirement, an edit to a spec file it names counts as a change.
 - **passed again with unchanged tests**: the same tests that passed for the old wording passed again, which proves nothing about the new one. Update the tests for the new wording and rerun them. If they already check it, tell the user; confirming that is theirs, with `rqtk review <ID> --note "…"`.
-- **upstream changed**: a parent requirement or need changed. Check the requirement still fits it (and change it if not); the user confirms with `rqtk review <ID>`.
+- **upstream changed**: a parent requirement or need changed, or, for an item named `<alias>:<ID>`, an interface it consumes changed at the last `rqtk interfaces sync`. Read what changed (for an interface, `git diff -- .rqtk/vendor/<alias>` and `rqtk context <alias>:<ID>`), check the requirement and its code still fit (and change them if not); the user confirms with `rqtk review <ID>`. Rerunning tests leaves this reason in place.
+
+`rqtk coverage` also lists consumed interfaces with the provider's status. That status is the provider's evidence: only this repository's tests verify this repository's requirements.
 
 Activities that no test can check (inspection, analysis, demonstration) keep a hand-written `status`. For every other activity, `status` stays unset.
 

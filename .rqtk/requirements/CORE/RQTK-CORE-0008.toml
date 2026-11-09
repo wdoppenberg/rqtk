@@ -1,0 +1,30 @@
+id = "RQTK-CORE-0008"
+title = "Opaque spec files in the content hash"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "For a spec entry whose format is not openapi, rqtk shall include the hash of every file the entry matches, computed after normalising line endings to LF, in the requirement's content hash."
+rationale = "rqtk does not parse these formats, so any byte change to a matched file must count as a contract change; whole-file hashing over-reports but never misses a change."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Editing a referenced spec file changes the requirement's content hash; editing an unreferenced file does not; CRLF and LF checkouts of the same file hash identically; `impact` and `diff` report a requirement whose spec files alone changed."
+
+[[verification.activities]]
+id = "VA-CORE-0008-01"
+name = "Spec edit changes the content hash"
+
+[[verification.activities]]
+id = "VA-CORE-0008-02"
+name = "CRLF and LF checkouts hash identically"
+
+[[verification.activities]]
+id = "VA-CORE-0008-03"
+name = "Impact and diff see a change to spec files alone"

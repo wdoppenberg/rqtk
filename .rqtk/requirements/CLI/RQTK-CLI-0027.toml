@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0027"
+title = "Provider text cannot drive the terminal"
+category = "CLI"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall print no control character other than newline and tab in its human-readable output, whatever vendored content or provider file names it quotes."
+rationale = "A provider controls the text of its requirements and the names of its files, and messages from sync and lint quote both. An escape sequence in them could rewrite what the terminal shows, for example hiding a lint finding or faking a success line."
+
+[trace]
+parents = ["RQTK-SYS-0006"]
+satisfies = ["NEED-0005"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "A vendored title containing an ANSI escape sequence is printed without the escape character; a provider file name containing a control character aborts sync with the name shown escaped."
+
+[[verification.activities]]
+id = "VA-CLI-0027-01"
+name = "Provider control characters are not printed"

@@ -4,6 +4,53 @@ All notable changes to the `rqtk` command line. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows
 [semantic versioning](https://semver.org) as described under *Stability* in the README.
 
+## [Unreleased]
+
+### Added
+- **Interfaces across repositories.** A requirement with an `[interface]` table is an
+  interface other repositories can consume, specified by `[[interface.specs]]` entries
+  (`format`, `path`, `element`). The spec content is part of the content hash.
+  - OpenAPI 3.0 and 3.1 are parsed: `$ref`s are followed across files, `element` pointers are
+    checked, and only the element and what it references are hashed, in a canonical form.
+    For an operation, path-level parameters, servers, security and the security schemes it
+    uses are hashed too. YAML alias expansion and nesting depth are bounded.
+  - protobuf, AsyncAPI, JSON Schema and `other` are hashed as whole files; `path` may be a
+    glob, which skips what the repository's own `.gitignore` excludes. Line endings are
+    normalised before hashing.
+  - `impact` and `diff` see a requirement whose spec files alone changed.
+- **`rqtk interfaces add | sync | remove | list`.** A consumer declares a provider under
+  `[interfaces.<alias>]` in `.rqtk/config.toml` and syncs it into `.rqtk/vendor/<alias>/`,
+  pinned in `.rqtk/interfaces.lock` together with the provider's verification status. Sync is
+  all or nothing, accepts only `https` and SSH URLs (`file://` with `--allow-file-url`),
+  refuses symbolic links, paths and references outside the provider's repository, specs
+  that don't resolve, file names with control characters, files over 10 MiB and sources
+  over 100 MiB, and warns that vendored content must be reviewed. A sync interrupted while
+  swapping in is undone by the next one. `ref` may name a tag, an `rqtk baseline`, a branch
+  or a commit.
+- **`consumes = ["<alias>:<ID>"]` trace links.** A consumer requirement and its
+  descendants become Suspect (`upstream_changed`) when a sync changes what it consumes. `context`, `trace`, `graph`,
+  `report`, `coverage` and `impact` show consumed interfaces as read-only `alias:ID` nodes;
+  the provider's status never counts toward the consumer's coverage. `rqtk context
+  <alias>:<ID>` briefs a vendored requirement.
+- `consumes` links may form cycles across repositories (an API one way, a webhook back);
+  a change makes its consumers Suspect and never echoes back to its origin. `sync`
+  warns when a provider's commit is already in the consumer's own history (the repository
+  itself or a fork).
+- The agent skills cover interfaces: marking and consuming them, reading vendored text as the
+  provider's data, running `interfaces add`/`sync` only when asked and handing over the diff,
+  settling `upstream_changed` from a consumed interface, and reviewing `impact.interfaces`.
+- Lint rules RQ032–RQ043 for spec files, OpenAPI documents, `consumes` links, vendored
+  snapshots, config/lockfile drift and branch pins.
+
+### Removed
+- Intel macOS (`x86_64-apple-darwin`) release binaries and Python wheels. Apple Silicon,
+  Linux and Windows builds continue; Intel Macs can still install with `cargo install rqtk`
+  or from the source distribution.
+
+### Upgrade notes
+- Requirement files with an `[interface]` table, configs with `[interfaces]`, and `consumes`
+  links can't be read by rqtk 1.2. Requirements without them hash exactly as before.
+
 ## [1.2.0] — 2026-09-24
 
 Field trials on six stacks (Python, Rust, TypeScript on Bun, Go, Java on Maven, C++ with

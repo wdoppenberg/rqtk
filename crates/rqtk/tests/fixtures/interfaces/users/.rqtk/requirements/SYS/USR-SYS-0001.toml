@@ -1,0 +1,24 @@
+id = "USR-SYS-0001"
+title = "Get a user"
+category = "SYS"
+type = "Interface"
+state = "Approved"
+priority = "High"
+statement = "The user service shall return the user with a given ID from GET /users/{id}."
+rationale = "Other services look users up by ID."
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "GET /users/{id} returns the User for a known ID and 404 otherwise."
+
+[[verification.activities]]
+id = "VA-SYS-0001-01"
+name = "GET /users/{id} returns the user"
+
+[interface]
+[[interface.specs]]
+format = "openapi"
+path = "api/openapi.yaml"
+element = "#/paths/~1users~1{id}/get"

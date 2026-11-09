@@ -23,11 +23,21 @@ struct RequirementStatus<'a> {
 }
 
 #[derive(Serialize)]
+struct ConsumedStatus {
+    #[serde(flatten)]
+    interface: rqtk_core::query::ConsumedSummary,
+    consumers: Vec<RequirementId>,
+}
+
+#[derive(Serialize)]
 struct Report<'a> {
     summary: BTreeMap<ClosureStatus, usize>,
     requirements: Vec<RequirementStatus<'a>>,
     needs: Vec<NeedStatus>,
     unsatisfied_needs: usize,
+    /// Vendored interface requirements consumed here, with the provider's status. Not
+    /// counted in `summary` and never part of `--strict`.
+    consumed: Vec<ConsumedStatus>,
 }
 
 /// Requirement states `coverage --strict --allow` accepts besides Verified.
@@ -62,6 +72,14 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
         })
         .collect();
     let unsatisfied = needs.iter().filter(|n| n.satisfied_by.is_empty()).count();
+    let consumed: Vec<ConsumedStatus> = set
+        .consumed_interfaces()
+        .into_iter()
+        .map(|(interface, consumers)| ConsumedStatus {
+            interface,
+            consumers,
+        })
+        .collect();
 
     let accepted = |status: &ClosureStatus| match status {
         ClosureStatus::Verified => true,
@@ -81,6 +99,7 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
                 .collect(),
             needs,
             unsatisfied_needs: unsatisfied,
+            consumed,
         })?;
         return Ok(exit);
     }
@@ -151,6 +170,20 @@ pub fn run(ctx: &Ctx, strict: bool, allow: &[Allow], short: bool) -> Result<Exit
                 for entry in &entries {
                     output::item(entry);
                 }
+            }
+        }
+        if !consumed.is_empty() {
+            output::section(
+                "Consumed interfaces",
+                "(provider status at the pinned commit; not counted here)",
+            );
+            for c in &consumed {
+                let consumers: Vec<&str> = c.consumers.iter().map(|r| r.0.as_str()).collect();
+                output::item(&format!(
+                    "{}  ← {}",
+                    output::consumed_line(&c.interface),
+                    consumers.join(", ")
+                ));
             }
         }
     }

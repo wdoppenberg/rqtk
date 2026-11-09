@@ -72,6 +72,25 @@
       },
       "type": "object"
     },
+    "InterfaceSource": {
+      "additionalProperties": false,
+      "description": "A provider repository whose interface requirements this repository consumes.",
+      "properties": {
+        "git": {
+          "description": "Git URL of the provider repository (`https://…` or `ssh://…` / `user@host:path`).",
+          "type": "string"
+        },
+        "ref": {
+          "description": "Tag, commit SHA or branch to pin. The lockfile records the commit it resolved to.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "git",
+        "ref"
+      ],
+      "type": "object"
+    },
     "LifecyclePolicy": {
       "additionalProperties": false,
       "properties": {
@@ -422,6 +441,13 @@
     },
     "identification": {
       "$ref": "#/$defs/IdentificationScheme"
+    },
+    "interfaces": {
+      "additionalProperties": {
+        "$ref": "#/$defs/InterfaceSource"
+      },
+      "description": "Interface sources this repository consumes, by alias: `[interfaces.<alias>]`.",
+      "type": "object"
     },
     "lifecycle": {
       "$ref": "#/$defs/LifecyclePolicy"

@@ -1,0 +1,24 @@
+id = "ORD-SYS-0002"
+title = "OrderPlaced webhook"
+category = "SYS"
+type = "Interface"
+state = "Approved"
+priority = "Medium"
+statement = "The order service shall POST an OrderPlaced event to subscribers within 5 seconds of an order being placed."
+rationale = "Other services react to new orders without polling."
+
+[verification]
+method = "Test"
+level = "System"
+phase = "Development"
+success_criteria = "A subscriber receives OrderPlaced within 5 s of placing an order."
+
+[[verification.activities]]
+id = "VA-SYS-0002-01"
+name = "Subscribers receive OrderPlaced"
+
+[interface]
+[[interface.specs]]
+format = "openapi"
+path = "api/openapi.yaml"
+element = "#/webhooks/orderPlaced"
