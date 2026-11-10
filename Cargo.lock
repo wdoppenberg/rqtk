@@ -3155,7 +3155,10 @@ dependencies = [
  "pyo3",
  "pyo3-build-config 0.28.3",
  "rqtk",
+ "rqtk-client",
  "rqtk-core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

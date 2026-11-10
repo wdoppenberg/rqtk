@@ -23,8 +23,19 @@ mkdir -p "$(dirname "$junit")"
 RUSTC_BOOTSTRAP=1 cargo test --workspace --exclude rqtk-py --tests \
   -- -Z unstable-options --format junit > "$junit"
 
+# The Python package's tests, against the extension built from this checkout, in a virtual
+# environment under target/ ($PYTHON picks the interpreter).
+venv="target/python"
+if [[ ! -x "$venv/bin/python" ]]; then
+  "${PYTHON:-python3}" -m venv "$venv"
+fi
+"$venv/bin/python" -m pip install --quiet --disable-pip-version-check "maturin>=1.9,<2" pytest
+VIRTUAL_ENV="$repo_root/$venv" "$venv/bin/maturin" develop --quiet -m crates/rqtk-py/Cargo.toml
+python_junit="$(dirname "$junit")/pytest.xml"
+"$venv/bin/python" -m pytest -q crates/rqtk-py/tests --junitxml "$python_junit"
+
 cargo build -p rqtk
 ./target/debug/rqtk lint
 # shellcheck disable=SC2086
-./target/debug/rqtk verify $mode --results "$junit"
+./target/debug/rqtk verify $mode --results "$junit" "$python_junit"
 ./target/debug/rqtk coverage --strict

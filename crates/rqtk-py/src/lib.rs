@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 
+mod client;
 mod verification;
 
 use verification::VerificationDecorator;
@@ -17,5 +18,10 @@ fn run_cli(py: Python<'_>, argv: Vec<String>) -> u8 {
 fn rqtk_native(m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<VerificationDecorator>()?;
     m.add_function(wrap_pyfunction!(run_cli, m)?)?;
+    m.add_class::<client::Repository>()?;
+    m.add_function(wrap_pyfunction!(client::open, m)?)?;
+    m.add_function(wrap_pyfunction!(client::open_remote, m)?)?;
+    m.add_function(wrap_pyfunction!(client::cache_dir, m)?)?;
+    m.add_function(wrap_pyfunction!(client::clear_cache, m)?)?;
     Ok(())
 }

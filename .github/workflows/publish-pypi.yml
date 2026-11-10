@@ -11,7 +11,14 @@ on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
   pull_request:
-    paths: ["crates/rqtk-py/**", "crates/rqtk/**", ".github/workflows/publish-pypi.yml"]
+    paths:
+      - "crates/rqtk-py/**"
+      - "crates/rqtk/**"
+      - "crates/rqtk-client/**"
+      - "crates/rqtk-core/**"
+      - "schema/**"
+      - "scripts/generate-client-types.py"
+      - ".github/workflows/publish-pypi.yml"
   workflow_dispatch:
 
 permissions:

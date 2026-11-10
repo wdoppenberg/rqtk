@@ -67,7 +67,7 @@ forbidden_keywords = []
 # Tests of the annotations themselves, not verifications of requirements.
 exclude = [
     "crates/rqtk-macros/tests/compile_fail/**",
-    "crates/rqtk-py/tests/**",
+    "crates/rqtk-py/tests/test_verification.py",
     "crates/rqtk-core/tests/fixtures/ecosystems/**",
     "crates/rqtk/tests/fixtures/interfaces/**",
 ]

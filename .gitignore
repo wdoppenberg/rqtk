@@ -11,3 +11,7 @@
 
 # Python
 __pycache__/
+
+# The extension `maturin develop` builds into the Python source tree.
+crates/rqtk-py/python/rqtk/_rqtk.*.so
+crates/rqtk-py/python/rqtk/_rqtk.*.pyd

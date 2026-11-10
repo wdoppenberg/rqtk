@@ -1,12 +1,18 @@
 # Reading repositories from code
 
-The `rqtk-client` crate reads an rqtk repository from a Rust program: its requirements, needs and stakeholders with their links, verification status, lint findings and change history. It gives the same answers as the command line, because the CLI is built on it: every view below is the same document `rqtk <command> --json` prints.
+The client reads an rqtk repository from a program: its requirements, needs and stakeholders with their links, verification status, lint findings and change history. It gives the same answers as the command line, because the CLI is built on it: every view below is the same document `rqtk <command> --json` prints.
 
-The client only reads. Changes go through the `rqtk` command line.
+It is one Rust library, `rqtk-client`, also available in Python as part of the `rqtk` package. The client only reads. Changes go through the `rqtk` command line.
 
 ```toml
+# Rust
 [dependencies]
 rqtk-client = "2"
+```
+
+```bash
+# Python 3.9 or later
+pip install rqtk
 ```
 
 ## Opening a repository
@@ -26,6 +32,14 @@ let users = Repository::open_remote("https://github.com/acme/user-service", "rqt
 # Ok::<(), rqtk_client::Error>(())
 ```
 
+```python
+import rqtk
+
+repo = rqtk.open(".")
+release = rqtk.open(".", ref="1.4.0")
+users = rqtk.open_remote("https://github.com/acme/user-service", "rqtk/1.4.0")
+```
+
 A repository is a **snapshot**. Everything is loaded and checked when it opens, and every query answers from that state. Edits made afterwards, even to the files of a working tree, are not seen until you call `repo.reload()`, which returns a new snapshot. That keeps a dashboard or an editor from ever showing half an edit.
 
 Verification status is computed at the snapshot's revision too: from the tests linked in that commit and the evidence committed with it. So a repository opened at a baseline shows the coverage that baseline had.
@@ -40,7 +54,7 @@ Verification status is computed at the snapshot's revision too: from the tests l
 | macOS | `~/Library/Caches/rqtk/repos` |
 | Windows | `%LOCALAPPDATA%\rqtk\cache\repos` |
 
-Set `RQTK_CACHE_DIR` to put it elsewhere. Nothing is removed automatically; `rqtk_client::clear_cache()` deletes the whole cache.
+Set `RQTK_CACHE_DIR` to put it elsewhere. Nothing is removed automatically; `clear_cache()` (`rqtk_client::clear_cache()`, `rqtk.clear_cache()`) deletes the whole cache.
 
 ## Items and links
 
@@ -54,6 +68,13 @@ for entry in repo.requirements() {
     }
 }
 # Ok::<(), rqtk_client::Error>(())
+```
+
+```python
+for entry in repo.requirements():
+    print(entry.id, entry.status, entry.requirement.title)
+    for link in entry.links:
+        print(" ", link.kind, link.direction, link.id)
 ```
 
 `requirements()`, `needs()`, `stakeholders()` and `activities()` list everything, and `requirement(id)`, `need(id)` and `stakeholder(id)` look one item up. Every entry carries its links in **both** directions: a requirement lists its parents (`outgoing`) and its children (`incoming`), a need lists its stakeholders and the requirements that satisfy it.
@@ -71,6 +92,14 @@ let open_work = repo.find_requirements(&Filter {
 # Ok::<(), rqtk_client::Error>(())
 ```
 
+```python
+open_work = repo.find_requirements(
+    rqtk.Filter(status=("suspect", "failed"), ancestor="REQ-SYS-0001")
+)
+# or as a dict, e.g. straight from a JSON request:
+open_work = repo.find_requirements({"status": ["suspect", "failed"], "ancestor": "REQ-SYS-0001"})
+```
+
 Every field that is set must match; a list matches when any of its values does. The fields are `status`, `category`, `type`, `state`, `priority`, `ancestor` (anywhere below that requirement), `consumes` (an `<alias>:<ID>`, or just an alias) and `text` (case-insensitive, in the ID, title, statement or rationale). A filter is plain data: it serialises to JSON, with the same field names in every client language.
 
 ## Views
@@ -82,11 +111,11 @@ Every field that is set must match; a list matches when any of its values does. 
 | `coverage()` | `rqtk coverage --json` |
 | `lint()` | `rqtk lint --json` |
 | `impact(base)` | `rqtk impact <BASE> --json` |
-| `diff(from, to)` | `rqtk diff <FROM> <TO> --json` |
+| `diff(from_ref, to_ref)` | `rqtk diff <FROM> <TO> --json` |
 | `baselines()` | `rqtk baseline --list --json` |
 | `history(id)` | `rqtk log <ID> --json` |
 
-Each returns a typed document with the same fields as the JSON, including its `schema` field. `rqtk schema <name>` prints the JSON Schema of any of them.
+Each returns a typed document with the same fields as the JSON, including its `schema` field. `rqtk schema <name>` prints the JSON Schema of any of them. A missing ID (`context`, `trace`, `history`) or ref (`impact`, `diff`) is an error.
 
 ## Errors
 
@@ -94,6 +123,21 @@ A repository fails to open only when it can't be read at all: there is no `.rqtk
 
 Every error has a `code` from a fixed list (`ErrorCode`): `not_a_repository`, `invalid_config`, `unsupported_schema`, `ref_not_found`, `remote_refused`, `remote_failed`, `not_found`, `git` and `io`. Branch on the code, not on the message. The same codes appear in the CLI's JSON errors.
 
+```python
+try:
+    repo = rqtk.open(path)
+except rqtk.Error as e:
+    if e.code == "not_a_repository":
+        ...
+```
+
+## Python
+
+- **Values are frozen dataclasses** from `rqtk.types`, generated from the published JSON Schemas, with the JSON's field names. Lists are tuples. `dataclasses.asdict(value)` gives JSON-ready data, since every enumeration is a `Literal` string (`entry.status == "suspect"`).
+- **A field the JSON can leave out** has its default: `()`, `{}`, `False`, or `None`.
+- **Tagged unions are one dataclass per variant.** `repo.context(id)` returns a `ContextDocRequirement`, `ContextDocNeed`, `ContextDocStakeholder` or `ContextDocInterface`, each with a `kind` field. Branch with `isinstance` or on `kind`. The same holds for activity states (`ActivityEntryPassed`, …) and `RepositoryInfo.origin`.
+- **Calls release the GIL**, so other threads run while a repository loads or a view is computed. One `Repository` answers one call at a time; open several to query in parallel.
+
 ## Versions
 
-`rqtk-client` is released with the same version as the `rqtk` command line, and its public API follows semantic versioning.
+`rqtk-client` and the `rqtk` Python package are released with the same version as the `rqtk` command line, and their public APIs follow semantic versioning.

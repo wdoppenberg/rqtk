@@ -859,6 +859,73 @@ NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769
 RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
 
 [[activity]]
+id = "VA-CLIENT-0013-01"
+requirement = "RQTK-CLIENT-0013"
+requirement_hash = "v1:c62aef9cc8cdd1287b28baafbf598eda8b78a842074b2380a3b0652deca076c8"
+outcome = "passed"
+tests = [
+    "crates/rqtk-py/tests/test_client.py::test_a_snapshot_at_a_ref_and_reload",
+    "crates/rqtk-py/tests/test_client.py::test_errors_carry_a_code",
+    "crates/rqtk-py/tests/test_client.py::test_filters_are_data",
+    "crates/rqtk-py/tests/test_client.py::test_opens_a_checkout_and_lists_its_items",
+    "crates/rqtk-py/tests/test_client.py::test_remote_repositories_open_through_the_cache",
+    "crates/rqtk-py/tests/test_client.py::test_values_are_frozen_dataclasses_with_literal_enums",
+    "crates/rqtk-py/tests/test_client.py::test_views_hold_exactly_what_the_cli_prints",
+]
+commit = "fcba885d9751a37a0368e1b7a61575bfa8d4c3b9"
+tests_hash = "216115872810b8f7+724f9228a49ff93a+74e1c1e6e10b4833+7542b8534141f174+7d1c1f3e5e5f1acf+f6ffe434e810c95d+f88bfc9720dde121"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
+id = "VA-CLIENT-0013-02"
+requirement = "RQTK-CLIENT-0013"
+requirement_hash = "v1:c62aef9cc8cdd1287b28baafbf598eda8b78a842074b2380a3b0652deca076c8"
+outcome = "passed"
+tests = ["crates/rqtk-py/tests/test_client.py::test_loading_releases_the_gil"]
+commit = "fcba885d9751a37a0368e1b7a61575bfa8d4c3b9"
+tests_hash = "deb2af44f2c0cb47"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
+id = "VA-CLIENT-0015-01"
+requirement = "RQTK-CLIENT-0015"
+requirement_hash = "v1:189e07573b9b9939b0947a96e564373e8718283671cea220ce6ce9d5d500e54a"
+outcome = "passed"
+tests = ["crates/rqtk-py/tests/test_types.py::test_field_names_are_the_schema_property_names"]
+commit = "fcba885d9751a37a0368e1b7a61575bfa8d4c3b9"
+tests_hash = "bd8a4fd1ec0c9e73"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
+id = "VA-CLIENT-0016-01"
+requirement = "RQTK-CLIENT-0016"
+requirement_hash = "v1:53b55037d052cb781329626e5d1bf3e2eabb89f8681d5cba54990ae9b2ab7a9f"
+outcome = "passed"
+tests = [
+    "crates/rqtk-py/tests/test_types.py::test_a_changed_client_type_fails_the_check",
+    "crates/rqtk-py/tests/test_types.py::test_committed_types_are_current",
+]
+commit = "fcba885d9751a37a0368e1b7a61575bfa8d4c3b9"
+tests_hash = "384ca73041be66d2+d67115f12afd562f"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
 id = "VA-CLIENT-0019-01"
 requirement = "RQTK-CLIENT-0019"
 requirement_hash = "v1:0e00d9fbf3703bc9662f3bbb02355a42fa206066fab8030266187c9d973c79df"
