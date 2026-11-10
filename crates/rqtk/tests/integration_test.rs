@@ -3028,8 +3028,8 @@ fn skills_list_names_model_and_user_invoked_skills() {
         .filter(|s| s["user_invoked"] == true)
         .map(|s| s["name"].as_str().unwrap())
         .collect();
-    assert_eq!(skills.len(), 4);
-    assert_eq!(user, ["to-requirements", "requirements-review"]);
+    assert_eq!(skills.len(), 6);
+    assert_eq!(user, ["to-requirements", "requirements-review", "design-review"]);
 }
 
 fn actions(report: &serde_json::Value) -> Vec<(String, String)> {
@@ -3071,6 +3071,16 @@ fn skills_install_defaults_to_shared_dir_with_claude_links() {
         fs::read_to_string(link.join("SKILL.md")).unwrap(),
         fs::read_to_string(&shared).unwrap()
     );
+    // A skill's reference files install next to its SKILL.md.
+    for file in ["SKILL.md", "gates.md", "process-template.md"] {
+        assert!(
+            repo_root
+                .join(".claude/skills/design-review")
+                .join(file)
+                .is_file(),
+            "{file}"
+        );
+    }
 
     let (_, again) = json_stdout(&repo_root, &["skills", "install"]);
     assert!(
@@ -3271,12 +3281,17 @@ fn skills_install_dry_run_and_init_agents() {
 #[test]
 fn documented_commands_and_flags_exist() {
     let mut docs: Vec<(String, String)> = Vec::new();
+    // Every Markdown file of every skill: SKILL.md and the references it points to.
     for entry in fs::read_dir(skills_dir()).unwrap() {
-        let path = entry.unwrap().path().join("SKILL.md");
-        docs.push((
-            path.display().to_string(),
-            fs::read_to_string(&path).unwrap(),
-        ));
+        for file in fs::read_dir(entry.unwrap().path()).unwrap() {
+            let path = file.unwrap().path();
+            if path.extension().is_some_and(|e| e == "md") {
+                docs.push((
+                    path.display().to_string(),
+                    fs::read_to_string(&path).unwrap(),
+                ));
+            }
+        }
     }
     let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     docs.push((

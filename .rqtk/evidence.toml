@@ -589,7 +589,7 @@ tests = [
     "crates/rqtk/tests/integration_test.rs::skills_list_names_model_and_user_invoked_skills",
 ]
 commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
-tests_hash = "02e1393c6e6ae196+346d38c4700698fb+450c17e1fc6358d0+600e448eac6e6a70+604338a4113ab960+784709af2f71a172+b6a39a89cb670a2b+cd286f348afae487+e58e8334bb13f4e0"
+tests_hash = "1796d707b0cf307f+346d38c4700698fb+450c17e1fc6358d0+604338a4113ab960+6c9fd70ae49f677c+784709af2f71a172+b6a39a89cb670a2b+cd286f348afae487+e58e8334bb13f4e0"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
@@ -618,7 +618,7 @@ requirement_hash = "v1:73200ee334c47c2aae94a79a3ca8d65686f6c5084b1cc1c409da784eb
 outcome = "passed"
 tests = ["crates/rqtk/tests/integration_test.rs::documented_commands_and_flags_exist"]
 commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
-tests_hash = "5ce686776c9b6f50"
+tests_hash = "2588921cc8bc5096"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"

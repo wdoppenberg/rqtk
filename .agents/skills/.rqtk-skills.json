@@ -1,10 +1,16 @@
 {
-  "requirements-review/SKILL.md": "35b41eb9416c92917e147b8e4c11d18c9125cdfd85a79d6e727f1b4b1686eeb0",
+  "design-review/SKILL.md": "60c8907a6ba65f9c06a150f2eb0d941f56bab9631ace56cf836b0ee02ff4240b",
+  "design-review/agents/openai.yaml": "619660864a165f0be8e8fd58ff1065d574e3beb0e4e9d51cbe1bac57aca449d2",
+  "design-review/gates.md": "36efc2444f9aa2b86674d6451105ab6a44d9958e4822b45e3bff7cb023c36eac",
+  "design-review/process-template.md": "5a38e99dd1285b7da091b005acc4ad7749a3ecaa51d848fb74ada07673aa3299",
+  "requirements-review/SKILL.md": "8a0fab846ed343dcad77a843f454a3eded313e9bc398651bf8ebf54cb944f200",
   "requirements-review/agents/openai.yaml": "e84ca1a37afb0ea5761737e18ab125152db44324c4d8e58207e4809acd3751aa",
-  "rqtk-requirements/SKILL.md": "4dbf4a1a3207f5c47bf28d4dcd8b540522265568f70252088c21f74149737cd5",
+  "rqtk-process/SKILL.md": "01438876b5e025d064cda2dbcb83e0e27964a146aabdc84aeea6b597e65d3ffc",
+  "rqtk-process/agents/openai.yaml": "62f9c78cecda4b762dd3ab03b291496c6e1355baa2c90953d1afed56fe8cb44d",
+  "rqtk-requirements/SKILL.md": "31b883aa6c40b472ed1b292f0779798a88f3137c24b6cfe473e65b7407a43ee4",
   "rqtk-requirements/agents/openai.yaml": "b209e310ffdc1bc71d009c5d0bcf14ce5bd3402363c4e6205a2a0060e3472366",
-  "rqtk-verification/SKILL.md": "ffc3141629eac55ae0ec4ecbb0d33c363081f2252d04d842e5ffaf103f46b2e8",
+  "rqtk-verification/SKILL.md": "f43e0ec20aafba9d5cac66343a6b9654ed78273780e9f9e14a4f40511f1efe72",
   "rqtk-verification/agents/openai.yaml": "26750d76c279e552f360f1b7e499ba8e51b62045ad40a1749bbf9217f03d4c10",
-  "to-requirements/SKILL.md": "6134157b42c0e0577c560caae0dd2310f84ecb8cf4cd277709dccf7cff25ba78",
+  "to-requirements/SKILL.md": "0f9a451a331124d8e946a7ca80812d2cb6a824469dbe23ec494da33aba22cd49",
   "to-requirements/agents/openai.yaml": "c70a36a9970e33ca79b44225e545f24f01c0c8ea81f40f2cfa1ce96878572570"
 }

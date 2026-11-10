@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0030"
+title = "Design review skill"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall ship a skill, run only by the user, that checks a requirement set or one requirement's subtree against the entry and exit criteria of a requirements review, preliminary design review, critical design review or readiness review, or of the gates in the project's `.rqtk/reviews/PROCESS.md`, and records the findings and the user's decision in `.rqtk/reviews/`."
+rationale = "Gates catch an incomplete decomposition before it is built and an unproven one before it ships; a committed record shows who decided what, on which facts."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Inspection"
+level = "System"
+phase = "Development"
+success_criteria = "Reading the skill, every default gate has criteria each tied to the rqtk output or judgement that decides it, the record format holds scope, entry check, verdicts, findings and decision, and the skill leaves the decision, state changes, approvals and baselines to the user."
+
+[[verification.activities]]
+id = "VA-CLI-0030-01"
+name = "Design review skill inspected"

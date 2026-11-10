@@ -18,10 +18,13 @@ Find the requirement that governs the behaviour and read its **briefing**:
 
 The statement is the contract. When the task contradicts it, stop and say so: changing a requirement is the user's decision, and a reworded requirement makes its passing tests **Suspect** until they run again.
 
+Where the requirement stands in the process (the review gate it has passed, and what changing it reopens) is in the `rqtk-process` skill, which also says what to do before implementing one that is still Draft.
+
 ## Writing requirements
 
 - Create items with `rqtk add`, `rqtk add-need`, `rqtk add-stakeholder` and `rqtk add-activity`. Run with `--dry-run` first to show the user what will be written. rqtk assigns IDs; use the ID it prints (`--json` has it as `id`).
 - A statement is one sentence with the project's shall keyword and a measurable criterion. Split a compound requirement into several.
+- Decompose one level at a time, and flag what isn't known yet with `tbd = true` or `tbr = true` and the open question in `notes`; the `rqtk-process` skill has the decomposition rules.
 - Every requirement carries a `rationale` (why it exists), its parents and the needs it satisfies, success criteria, and one activity per independently testable behaviour. `rqtk add` sets all of it:
 
   ```bash

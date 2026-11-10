@@ -22,6 +22,7 @@ Call the Skill tool with "rqtk-requirements" for the authoring rules.
 
 - **Needs**: one per distinct thing a stakeholder needs, with the stakeholder and why. User stories map onto needs.
 - **Requirements**: one shall-sentence each, measurable, with rationale, category, type, parent and the need it satisfies. Testing decisions and acceptance criteria in a spec map onto requirements and their success criteria.
+- **Decomposition**: follow the `rqtk-process` skill: one category level per step, each child's rationale saying which part of its parent it takes, design decisions in the rationale they shape, and `tbd` or `tbr` with the open question in `notes` where the source leaves a value open. Allocate to components where the source says.
 - **Interfaces**: behaviour other systems rely on (an API, an event, a file format) becomes an interface requirement whose `[interface]` table points at the spec; a dependency on another repository's interface becomes a `consumes` link. The `rqtk-requirements` skill has the format.
 - **Verification**: success criteria, plus one activity per independently testable behaviour. Method `Test` unless the behaviour can only be inspected, analysed or demonstrated.
 
@@ -47,4 +48,4 @@ Create needs with `rqtk add-need --json` and requirements with `rqtk add --json`
 
 ### 6. Hand over
 
-Report the IDs created and changed. If the work continues with tickets, put the requirement ID and its activity IDs in each ticket's acceptance criteria, so whoever implements it links the tests.
+Report the IDs created and changed, and the review gate that comes next for them (`rqtk-process`): usually `/design-review requirements` for new system requirements, `/design-review pdr <ID>` for a new decomposition. If the work continues with tickets, put the requirement ID and its activity IDs in each ticket's acceptance criteria, so whoever implements it links the tests.

@@ -7,6 +7,15 @@ All notable changes to the `rqtk` command line. The format follows
 ## [Unreleased]
 
 ### Added
+- **Design reviews and the systems engineering process, as agent skills.** `rqtk-process`
+  takes an agent through needs, system requirements, decomposition, interfaces, allocation and
+  verification, says which review gate closes each step, and has the agent warn before it
+  implements a requirement that hasn't passed its gate. `/design-review <gate> [ID]` holds a
+  requirements review, PDR, CDR or readiness review over the whole set or one requirement's
+  subtree: facts from rqtk, a verdict per criterion, numbered findings, and a record in
+  `.rqtk/reviews/`. The decision, state changes and `rqtk baseline` stay with the user, and
+  `approval.approved_by` is never filled in by the agent. A project tailors its gates, states
+  and criteria in `.rqtk/reviews/PROCESS.md`. The existing skills point at both.
 - **Interfaces across repositories.** A requirement with an `[interface]` table is an
   interface other repositories can consume, specified by `[[interface.specs]]` entries
   (`format`, `path`, `element`). The spec content is part of the content hash.

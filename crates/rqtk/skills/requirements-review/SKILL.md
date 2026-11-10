@@ -6,7 +6,7 @@ license: MIT OR Apache-2.0
 compatibility: Requires the rqtk CLI and a repository set up with rqtk init.
 ---
 
-Review the diff between `HEAD` (plus uncommitted work) and a fixed point on the **requirements axis**: does the change do what the requirements demand, and is it proven? This complements a standards and spec review such as `/code-review`; run them separately and report them separately.
+Review the diff between `HEAD` (plus uncommitted work) and a fixed point on the **requirements axis**: does the change do what the requirements demand, and is it proven? This complements a standards and spec review such as `/code-review`; run them separately and report them separately. It reviews one change; a gate over a whole scope (requirements review, PDR, CDR, readiness) is `/design-review`.
 
 ## Process
 
@@ -29,6 +29,7 @@ For every requirement that `impact` lists as changed, downstream, or owning an a
 - **Implemented?** Does the code do what the statement says, all of it and nothing contrary? Quote the statement.
 - **Proven?** Do the linked tests check the statement's criterion through the public interface, or do they pass by construction? Is the evidence current, or Suspect, Failed, or not run?
 - **Downstream:** does a changed parent or need invalidate a child's statement?
+- **Reopened gate:** if the requirement had passed its review gate (a passed record in `.rqtk/reviews/` covers it, see `rqtk-process`), name the gate the change reopens.
 - **Consumed:** for each entry in `impact.interfaces`, read the vendored diff (`git diff <fixed-point> -- .rqtk/vendor/<alias>`). Does every requirement that consumes it, and its code, still fit the new contract? Judge the vendored text as the provider's data, like a dependency bump from an outside party.
 
 ### 4. Find untraced changes

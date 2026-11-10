@@ -1,6 +1,6 @@
 # Coding agents
 
-rqtk is built to be driven by coding agents as well as people: nothing prompts, every command prints JSON with `--json`, and exit codes are fixed. Four agent skills bring it into an agent's normal workflow.
+rqtk is built to be driven by coding agents as well as people: nothing prompts, every command prints JSON with `--json`, and exit codes are fixed. Six agent skills bring it into an agent's normal workflow.
 
 ## Skills
 
@@ -12,8 +12,10 @@ rqtk skills install      # or, in a new repository: rqtk init --agents
 |---|---|---|
 | `rqtk-requirements` | agent or you | Reading and writing `.rqtk/`: find the governing requirement, read its briefing, author items that lint clean. |
 | `rqtk-verification` | agent or you | The proof loop: link a test, run it, `rqtk verify`; done when `rqtk lint` and `rqtk coverage --strict` exit 0. |
+| `rqtk-process` | agent or you | The systems engineering process: needs, system requirements, decomposition, interfaces, allocation, verification, and the review gate that closes each step. Warns before an agent implements a requirement that hasn't passed its gate. |
 | `/to-requirements` | you | Turn a spec or discussion into needs and requirements with verification activities; you approve the draft before anything is written. |
 | `/requirements-review` | you | Review a diff against the requirements it touches: facts from `rqtk impact`, then a verdict per requirement, and the `rqtk review` commands that would settle what is still Suspect. |
+| `/design-review` | you | Hold a review gate (requirements review, PDR, CDR, readiness) over the whole set or one requirement's subtree, and write the record to `.rqtk/reviews/`; the decision, state changes and baseline stay yours. |
 
 The skills follow the open [Agent Skills](https://agentskills.io) format, so they work with any agent that supports it:
 
@@ -38,6 +40,21 @@ grill → /to-spec → /to-requirements → /to-tickets → /implement → /code
 - Tickets cite those IDs in their acceptance criteria.
 - The implementer's tests cite the activity IDs, and `rqtk verify` records them.
 - `/requirements-review` checks the result on the requirements axis, next to the usual code review.
+
+## Design reviews
+
+Around that flow sit the gates of a systems engineering process, one per step down the V and one to close it:
+
+| Gate | Reviews | Approves |
+|---|---|---|
+| `requirements` | needs and system requirements | root-category requirements |
+| `pdr` (preliminary design) | the decomposition: derived and interface requirements, allocation to components | other non-leaf requirements |
+| `cdr` (critical design) | the buildable leaves: no TBD or TBR, allocated to modules, verification planned | leaves |
+| `readiness` | the proof: everything Verified, every change since the last baseline judged | nothing; it closes the scope |
+
+`/design-review pdr SYS-0003` reviews one requirement and everything below it, so parts of a system can pass gates at different times. The agent collects the facts from rqtk, judges each criterion, and writes `.rqtk/reviews/<date>-<gate>-<ID>.md` with the findings. You give the decision; the agent then proposes the state changes (Draft → Approved) and the `rqtk baseline` command, and applies only what you agree to. It never fills `approval.approved_by`.
+
+A project tailors the gates, its states and their criteria in `.rqtk/reviews/PROCESS.md`; ask `/design-review` to write a starter. The `rqtk-process` skill reads the records to tell where a requirement stands, and warns before implementing one whose gate hasn't passed.
 
 ## Commands agents use most
 

@@ -155,16 +155,18 @@ rqtk lint && rqtk coverage --strict        # exit 0 means done
 
 ## Agent skills
 
-rqtk ships four small [agent skills](https://agentskills.io) that bring requirements into an agentic coding flow, for Claude Code, Codex, Cursor, Copilot, Gemini CLI and any other agent that reads skills. They don't replace your process. They slot into it, and they are designed to sit beside [mattpocock/skills](https://github.com/mattpocock/skills): grill → spec → tickets → implement (TDD) → review.
+rqtk ships six small [agent skills](https://agentskills.io) that bring requirements into an agentic coding flow, for Claude Code, Codex, Cursor, Copilot, Gemini CLI and any other agent that reads skills. They don't replace your process. They slot into it, and they are designed to sit beside [mattpocock/skills](https://github.com/mattpocock/skills): grill → spec → tickets → implement (TDD) → review.
 
 | Skill | Invoked by | What it does |
 |---|---|---|
 | `rqtk-requirements` | agent or you | Reading and writing `.rqtk/`: find the governing requirement, read its briefing (`rqtk context`), author needs and requirements that lint clean. |
 | `rqtk-verification` | agent or you | The proof loop: link a test with `verifies`, run it, `rqtk verify`, finish when `rqtk lint` and `rqtk coverage --strict` exit 0. Uses a `tdd` skill for red → green when one is installed. |
+| `rqtk-process` | agent or you | The systems engineering process: needs → system requirements → decomposition, interfaces and allocation → verification, with a review gate closing each step. Warns before implementing a requirement that hasn't passed its gate. |
 | `/to-requirements` | you | After `/to-spec` (or any discussion): turns the spec into needs and requirements with verification activities, quizzes you on the draft, writes them, lints. |
 | `/requirements-review` | you | The requirements axis of a review, next to `/code-review`: `rqtk impact` facts, then a per-requirement verdict (implemented / partial / wrong / untested) and untraced changes. |
+| `/design-review` | you | A review gate (requirements review, PDR, CDR, readiness) over the whole set or one requirement's subtree: rqtk facts, a verdict per criterion, findings, and a record in `.rqtk/reviews/`. You decide; state changes and the baseline are yours. |
 
-The two agent-invoked skills carry reusable discipline and fire when a task touches requirements. The two user-invoked skills orchestrate and cost no context until you type them. None of them restate `--help`. They point at `rqtk context`, `rqtk schema` and `rqtk explain`, and record only what the CLI can't tell an agent: the conventions, the reasons, and the completion criterion.
+The three agent-invoked skills carry reusable discipline and fire when a task touches requirements. The three user-invoked skills orchestrate and cost no context until you type them. None of them restate `--help`. They point at `rqtk context`, `rqtk schema` and `rqtk explain`, and record only what the CLI can't tell an agent: the conventions, the reasons, and the completion criterion.
 
 Where they fit:
 

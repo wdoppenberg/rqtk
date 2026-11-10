@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0029"
+title = "Systems engineering process skill"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "rqtk shall ship a skill that agents invoke themselves which describes the systems engineering process from stakeholder needs through decomposition, interfaces and allocation to verification, the review gate that closes each step, and a warning to the user before an agent implements a requirement that has not passed its gate."
+rationale = "Agents follow the process only if it is in their context; a requirement implemented before its review should be the user's choice, never a silent one."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Inspection"
+level = "System"
+phase = "Development"
+success_criteria = "Reading the skill, each process step names what it produces and the gate that closes it, the decomposition rules and the change-control rules are stated, and the skill tells the agent to warn before implementing a requirement that has not passed its gate."
+
+[[verification.activities]]
+id = "VA-CLI-0029-01"
+name = "Process skill inspected"

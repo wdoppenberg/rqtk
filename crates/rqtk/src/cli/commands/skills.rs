@@ -30,6 +30,12 @@ const FILES: &[Embedded] = embed![
     "to-requirements/agents/openai.yaml",
     "requirements-review/SKILL.md",
     "requirements-review/agents/openai.yaml",
+    "rqtk-process/SKILL.md",
+    "rqtk-process/agents/openai.yaml",
+    "design-review/SKILL.md",
+    "design-review/gates.md",
+    "design-review/process-template.md",
+    "design-review/agents/openai.yaml",
 ];
 
 /// Records, per installed file, the hash of the content rqtk wrote. A file whose content still
@@ -56,7 +62,8 @@ const BLOCK_BODY: &str = "\
 Requirements, stakeholder needs and verification evidence live in `.rqtk/`, managed with the \
 `rqtk` CLI. Before changing behaviour, read the governing requirement with `rqtk context <ID>`. \
 Work is done when `rqtk lint` and `rqtk coverage --strict` both exit 0. Skills: \
-`rqtk-requirements`, `rqtk-verification`, `/to-requirements`, `/requirements-review`.";
+`rqtk-requirements`, `rqtk-verification`, `rqtk-process`, `/to-requirements`, \
+`/requirements-review`, `/design-review`.";
 
 /// A skill's name, description and who can invoke it, read from its frontmatter.
 /// `rqtk skills list --json`.
