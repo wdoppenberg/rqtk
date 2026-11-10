@@ -111,8 +111,10 @@ pub struct Modified {
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct DiffDoc {
     pub schema: String,
-    pub from: String,
-    pub to: String,
+    /// The revision compared from, as given. Not `from`, a keyword in Python.
+    pub from_ref: String,
+    /// The revision compared to, as given.
+    pub to_ref: String,
     pub added: Vec<String>,
     pub removed: Vec<String>,
     pub modified: Vec<Modified>,

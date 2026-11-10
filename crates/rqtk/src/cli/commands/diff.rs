@@ -21,8 +21,8 @@ pub fn run(ctx: &Ctx, from: String, to: String) -> Result<Exit, CliError> {
         "Diff",
         &format!(
             "{} → {}  ({} added, {} removed, {} modified)",
-            diff.from,
-            diff.to,
+            diff.from_ref,
+            diff.to_ref,
             diff.added.len(),
             diff.removed.len(),
             modified.len()

@@ -545,8 +545,8 @@ impl Repository {
         let diff = self.set.diff(from, to)?;
         Ok(DiffDoc {
             schema: schema_id("diff"),
-            from: from.to_owned(),
-            to: to.to_owned(),
+            from_ref: from.to_owned(),
+            to_ref: to.to_owned(),
             added: diff.added.into_iter().map(|r| r.0).collect(),
             removed: diff.removed.into_iter().map(|r| r.0).collect(),
             modified: diff

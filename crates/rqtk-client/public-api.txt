@@ -474,11 +474,11 @@ impl<T> typenum::type_operators::Same for rqtk_client::views::CoverageDoc
 pub type rqtk_client::views::CoverageDoc::Output = T
 pub struct rqtk_client::views::DiffDoc
 pub rqtk_client::views::DiffDoc::added: alloc::vec::Vec<alloc::string::String>
-pub rqtk_client::views::DiffDoc::from: alloc::string::String
+pub rqtk_client::views::DiffDoc::from_ref: alloc::string::String
 pub rqtk_client::views::DiffDoc::modified: alloc::vec::Vec<rqtk_client::views::Modified>
 pub rqtk_client::views::DiffDoc::removed: alloc::vec::Vec<alloc::string::String>
 pub rqtk_client::views::DiffDoc::schema: alloc::string::String
-pub rqtk_client::views::DiffDoc::to: alloc::string::String
+pub rqtk_client::views::DiffDoc::to_ref: alloc::string::String
 impl core::clone::Clone for rqtk_client::views::DiffDoc
 pub fn rqtk_client::views::DiffDoc::clone(&self) -> rqtk_client::views::DiffDoc
 impl core::fmt::Debug for rqtk_client::views::DiffDoc

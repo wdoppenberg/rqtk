@@ -41,7 +41,8 @@
       },
       "type": "array"
     },
-    "from": {
+    "from_ref": {
+      "description": "The revision compared from, as given. Not `from`, a keyword in Python.",
       "type": "string"
     },
     "modified": {
@@ -60,14 +61,15 @@
       "const": "rqtk/diff/2",
       "type": "string"
     },
-    "to": {
+    "to_ref": {
+      "description": "The revision compared to, as given.",
       "type": "string"
     }
   },
   "required": [
     "schema",
-    "from",
-    "to",
+    "from_ref",
+    "to_ref",
     "added",
     "removed",
     "modified"
