@@ -4,8 +4,8 @@ category = "CLIENT"
 type = "Functional"
 state = "Draft"
 priority = "Medium"
-statement = "One opened repository shall answer queries from several threads at the same time, in Rust, Python and TypeScript."
-rationale = "A dashboard serves every request from one snapshot; a lock per repository would queue those requests behind each other."
+statement = "One opened repository shall answer queries from several threads at the same time, in Rust and Python."
+rationale = "A dashboard serves every request from one snapshot; a lock per repository would queue those requests behind each other. TypeScript is left out: JavaScript calls a repository from one thread only, and a native object cannot pass between workers."
 
 [trace]
 parents = ["RQTK-SYS-0007"]

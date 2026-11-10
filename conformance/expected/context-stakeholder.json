@@ -1,0 +1,21 @@
+{
+  "result": {
+    "diagnostics": [],
+    "kind": "stakeholder",
+    "needs": [
+      {
+        "id": "NEED-0001",
+        "statement": "Operators need commands executed promptly.",
+        "title": "Commanding"
+      }
+    ],
+    "path": ".rqtk/stakeholders/STK-001.toml",
+    "schema": "rqtk/context/2",
+    "stakeholder": {
+      "id": "STK-001",
+      "name": "Mission operations",
+      "organization": null,
+      "role": null
+    }
+  }
+}

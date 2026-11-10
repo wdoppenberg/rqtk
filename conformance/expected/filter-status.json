@@ -1,0 +1,161 @@
+{
+  "result": [
+    {
+      "id": "FOBC-ICD-0001",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SW-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-ICD-001-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/ICD/FOBC-ICD-0001.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "ICD",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-ICD-0001",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "Standardised CCSDS framing ensures interoperability with the ground station uplink chain.",
+        "risk": null,
+        "state": "Draft",
+        "statement": "The OBC shall accept command uplink packets formatted as CCSDS TC Transfer Frames with a maximum length of 1024 octets.",
+        "title": "Uplink Packet Format",
+        "trace": {
+          "parents": [
+            "FOBC-SW-0001"
+          ]
+        },
+        "type": "Interface",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Uplink packet format matches CCSDS TC Transfer Frame standard",
+              "id": "FOBC-VA-ICD-001-01",
+              "name": "ICD review",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Inspection",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": null
+        }
+      },
+      "status": "gap"
+    },
+    {
+      "id": "FOBC-SW-0002",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-SW-002-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/SW/FOBC-SW-0002.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SW-0002",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "A 1 Hz downlink rate ensures sufficient telemetry throughput for nominal housekeeping monitoring.",
+        "risk": null,
+        "state": "Implemented",
+        "statement": "The OBC software shall always schedule telemetry downlink frames at a rate of no less than 1 Hz during ground-station contact windows.",
+        "title": "Telemetry Downlink Scheduling",
+        "trace": {
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Frame rate >= 1 Hz",
+              "id": "FOBC-VA-SW-002-01",
+              "name": "Downlink throughput test",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": "Downlink frame rate of at least 1 Hz sustained over a 10-minute contact window."
+        }
+      },
+      "status": "suspect"
+    },
+    {
+      "id": "FOBC-SW-0003",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        }
+      ],
+      "path": ".rqtk/requirements/SW/FOBC-SW-0003.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SW-0003",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "Critical",
+        "rationale": "Automatic watchdog resets prevent the OBC from becoming permanently unresponsive due to software faults.",
+        "risk": null,
+        "state": "Draft",
+        "statement": "The OBC software shall trigger a hardware watchdog timer reset if the main task loop fails to execute within 10 seconds.",
+        "title": "Watchdog Timer Reset",
+        "trace": {
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": null
+        }
+      },
+      "status": "gap"
+    }
+  ]
+}

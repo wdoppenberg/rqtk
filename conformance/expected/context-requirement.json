@@ -1,0 +1,118 @@
+{
+  "result": {
+    "ancestors": [
+      {
+        "id": "FOBC-SYS-0001",
+        "statement": "The OBC shall execute all ground-uplinked commands within 500 ms of receipt.",
+        "title": "On-Board Computer Command Execution"
+      }
+    ],
+    "children": [],
+    "consumes": [],
+    "diagnostics": [
+      {
+        "code": "RQ029",
+        "location": {
+          "column": null,
+          "line": null,
+          "path": ".rqtk/requirements/SW/FOBC-SW-0002.toml"
+        },
+        "message": "activity `FOBC-VA-SW-002-01` is linked to tests, so its status comes from `rqtk verify`; remove the hand-written `status`",
+        "severity": "warning",
+        "subject": {
+          "id": "FOBC-SW-0002",
+          "kind": "requirement"
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "commit": null,
+        "id": "FOBC-VA-SW-002-01",
+        "outcome": "passed",
+        "requirement": "FOBC-SW-0002",
+        "requirement_hash": "v1:d3c92101c52ddd60e55d294f901032213dbea5995619733675f33dd59139a2ad",
+        "tests": [
+          "tests/test_obc.py::test_telemetry"
+        ],
+        "tests_hash": "996e3d7ae8f062db",
+        "upstream": {
+          "FOBC-SYS-0001": "v1:9f05936ae841507e7e4c943909cd95b6768b3a5585425e436b9da645008b4047",
+          "NEED-0001": "v1:d397047c7df95a83e8a16570ca0b8c346c1fe681e08d0c0cb634011412c4b2ff"
+        }
+      }
+    ],
+    "kind": "requirement",
+    "links": [],
+    "needs": [],
+    "path": ".rqtk/requirements/SW/FOBC-SW-0002.toml",
+    "requirement": {
+      "allocation": null,
+      "approval": null,
+      "category": "SW",
+      "content_hash": null,
+      "criticality": null,
+      "id": "FOBC-SW-0002",
+      "interface": null,
+      "maturity": null,
+      "notes": null,
+      "priority": "High",
+      "rationale": "A 1 Hz downlink rate ensures sufficient telemetry throughput for nominal housekeeping monitoring.",
+      "risk": null,
+      "state": "Implemented",
+      "statement": "The OBC software shall always schedule telemetry downlink frames at a rate of no less than 1 Hz during ground-station contact windows.",
+      "title": "Telemetry Downlink Scheduling",
+      "trace": {
+        "parents": [
+          "FOBC-SYS-0001"
+        ]
+      },
+      "type": "Functional",
+      "validation": null,
+      "verification": {
+        "activities": [
+          {
+            "expected_result": "Frame rate >= 1 Hz",
+            "id": "FOBC-VA-SW-002-01",
+            "name": "Downlink throughput test",
+            "procedure": null,
+            "status": "Passed"
+          }
+        ],
+        "level": "System",
+        "method": "Test",
+        "owner": null,
+        "phase": "Development",
+        "success_criteria": "Downlink frame rate of at least 1 Hz sustained over a 10-minute contact window."
+      }
+    },
+    "schema": "rqtk/context/2",
+    "tests": [
+      {
+        "activity": "FOBC-VA-SW-002-01",
+        "line": 9,
+        "path": "tests/test_obc.py",
+        "source_hash": "996e3d7ae8f062db",
+        "test_line": 10,
+        "test_name": "test_telemetry"
+      }
+    ],
+    "verification": {
+      "activities": [
+        {
+          "id": "FOBC-VA-SW-002-01",
+          "state": "suspect"
+        }
+      ],
+      "status": "suspect",
+      "suspect_reasons": [
+        {
+          "activities": [
+            "FOBC-VA-SW-002-01"
+          ],
+          "reason": "requirement_changed"
+        }
+      ]
+    }
+  }
+}

@@ -37,16 +37,18 @@ python_junit="$(dirname "$junit")/pytest.xml"
 # The TypeScript package's tests, against the addon built from this checkout. Node's results
 # are the evidence; Bun and Deno run the same tests, and CI requires both. The tests compare
 # views with the CLI's, so build it first. Remote opens use a cache under target/.
+# Each language also runs the conformance suite in conformance/.
 cargo build -p rqtk
 export RQTK_CACHE_DIR="$repo_root/target/client-cache"
 node_junit="$(dirname "$junit")/node.xml"
+js_tests=(./tests/client.test.mjs ./tests/conformance.test.mjs)
 (
   cd crates/rqtk-node
   npm ci --silent --no-audit --no-fund
   npx napi build --platform --js native.cjs --dts native.d.ts
   npm run --silent typecheck
   node --test --test-reporter=spec --test-reporter-destination=stdout \
-    --test-reporter=junit --test-reporter-destination="$repo_root/$node_junit" tests/client.test.mjs
+    --test-reporter=junit --test-reporter-destination="$repo_root/$node_junit" "${js_tests[@]}"
   for runtime in bun deno; do
     if ! command -v "$runtime" > /dev/null; then
       if [[ -n "${CI:-}" ]]; then
@@ -57,8 +59,8 @@ node_junit="$(dirname "$junit")/node.xml"
       continue
     fi
     case "$runtime" in
-      bun) bun test tests/client.test.mjs ;;
-      deno) deno test --allow-all tests/client.test.mjs ;;
+      bun) bun test "${js_tests[@]}" ;;
+      deno) deno test --allow-all "${js_tests[@]}" ;;
     esac
   done
 )

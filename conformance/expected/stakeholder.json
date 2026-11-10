@@ -1,0 +1,19 @@
+{
+  "result": {
+    "id": "STK-001",
+    "links": [
+      {
+        "direction": "incoming",
+        "id": "NEED-0001",
+        "kind": "stakeholders"
+      }
+    ],
+    "path": ".rqtk/stakeholders/STK-001.toml",
+    "stakeholder": {
+      "id": "STK-001",
+      "name": "Mission operations",
+      "organization": null,
+      "role": null
+    }
+  }
+}

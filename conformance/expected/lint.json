@@ -1,0 +1,52 @@
+{
+  "result": {
+    "checked": 9,
+    "diagnostics": [
+      {
+        "code": "RQ038",
+        "location": {
+          "column": 1,
+          "line": 12,
+          "path": ".rqtk/requirements/SW/FOBC-SW-0001.toml"
+        },
+        "message": "consumes link `ground:GS-ICD-0001` names undeclared interface source `ground`; add it with `rqtk interfaces add`",
+        "severity": "error",
+        "subject": {
+          "id": "FOBC-SW-0001",
+          "kind": "requirement"
+        }
+      },
+      {
+        "code": "RQ029",
+        "location": {
+          "column": null,
+          "line": null,
+          "path": ".rqtk/requirements/SW/FOBC-SW-0001.toml"
+        },
+        "message": "activity `FOBC-VA-SW-001-01` is linked to tests, so its status comes from `rqtk verify`; remove the hand-written `status`",
+        "severity": "warning",
+        "subject": {
+          "id": "FOBC-SW-0001",
+          "kind": "requirement"
+        }
+      },
+      {
+        "code": "RQ029",
+        "location": {
+          "column": null,
+          "line": null,
+          "path": ".rqtk/requirements/SW/FOBC-SW-0002.toml"
+        },
+        "message": "activity `FOBC-VA-SW-002-01` is linked to tests, so its status comes from `rqtk verify`; remove the hand-written `status`",
+        "severity": "warning",
+        "subject": {
+          "id": "FOBC-SW-0002",
+          "kind": "requirement"
+        }
+      }
+    ],
+    "errors": 1,
+    "schema": "rqtk/lint/2",
+    "warnings": 2
+  }
+}

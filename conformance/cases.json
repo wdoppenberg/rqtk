@@ -1,0 +1,515 @@
+{
+  "$comment": "The client conformance suite: every client opens each case's repository, makes the call and compares with expected/<name>.json. See conformance/README.md.",
+  "fixtures": {
+    "firesat": {
+      "bundle": "conformance/firesat.bundle"
+    },
+    "no-git": {
+      "copy": "crates/rqtk/tests/fixtures/firesat-obc"
+    },
+    "empty": {
+      "files": {}
+    },
+    "broken": {
+      "files": {
+        ".rqtk/config.toml": "not = [toml\n"
+      }
+    },
+    "future": {
+      "files": {
+        ".rqtk/config.toml": "schema_version = 99\n"
+      }
+    },
+    "unreadable": {
+      "directories": [
+        ".rqtk/config.toml"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "info",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "info-at-v1",
+      "open": {
+        "fixture": "firesat",
+        "ref": "v1"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "info-at-baseline",
+      "open": {
+        "fixture": "firesat",
+        "ref": "rqtk/1.0.0"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "info-remote",
+      "open": {
+        "remote": "firesat",
+        "ref": "v1"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "requirements",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "requirements",
+      "args": []
+    },
+    {
+      "name": "requirements-at-v1",
+      "open": {
+        "fixture": "firesat",
+        "ref": "v1"
+      },
+      "call": "requirements",
+      "args": []
+    },
+    {
+      "name": "requirements-remote",
+      "open": {
+        "remote": "firesat",
+        "ref": "v1"
+      },
+      "call": "requirements",
+      "args": []
+    },
+    {
+      "name": "requirement",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "requirement",
+      "args": [
+        "FOBC-SYS-0001"
+      ]
+    },
+    {
+      "name": "requirement-missing",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "requirement",
+      "args": [
+        "FOBC-SYS-9999"
+      ]
+    },
+    {
+      "name": "needs",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "needs",
+      "args": []
+    },
+    {
+      "name": "need",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "need",
+      "args": [
+        "NEED-0001"
+      ]
+    },
+    {
+      "name": "need-missing",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "need",
+      "args": [
+        "NEED-9999"
+      ]
+    },
+    {
+      "name": "stakeholders",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "stakeholders",
+      "args": []
+    },
+    {
+      "name": "stakeholder",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "stakeholder",
+      "args": [
+        "STK-001"
+      ]
+    },
+    {
+      "name": "stakeholder-missing",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "stakeholder",
+      "args": [
+        "STK-999"
+      ]
+    },
+    {
+      "name": "activities",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "activities",
+      "args": []
+    },
+    {
+      "name": "context-requirement",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "context",
+      "args": [
+        "FOBC-SW-0002"
+      ]
+    },
+    {
+      "name": "context-need",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "context",
+      "args": [
+        "NEED-0001"
+      ]
+    },
+    {
+      "name": "context-stakeholder",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "context",
+      "args": [
+        "STK-001"
+      ]
+    },
+    {
+      "name": "trace",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "trace",
+      "args": [
+        "FOBC-SW-0001"
+      ]
+    },
+    {
+      "name": "coverage",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "coverage",
+      "args": []
+    },
+    {
+      "name": "coverage-at-v1",
+      "open": {
+        "fixture": "firesat",
+        "ref": "v1"
+      },
+      "call": "coverage",
+      "args": []
+    },
+    {
+      "name": "lint",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "lint",
+      "args": []
+    },
+    {
+      "name": "impact",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "impact",
+      "args": [
+        "v1"
+      ]
+    },
+    {
+      "name": "diff",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "diff",
+      "args": [
+        "v1",
+        "HEAD"
+      ]
+    },
+    {
+      "name": "baselines",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "baselines",
+      "args": []
+    },
+    {
+      "name": "history",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "history",
+      "args": [
+        "FOBC-SW-0002"
+      ]
+    },
+    {
+      "name": "filter-none",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {}
+      ]
+    },
+    {
+      "name": "filter-status",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "status": [
+            "suspect",
+            "gap"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter-category",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "category": [
+            "SW",
+            "HW"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter-type",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "type": [
+            "Interface"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter-state",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "state": [
+            "Draft"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter-priority",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "priority": [
+            "High"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter-ancestor",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "ancestor": "FOBC-SYS-0001"
+        }
+      ]
+    },
+    {
+      "name": "filter-consumes",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "consumes": "ground"
+        }
+      ]
+    },
+    {
+      "name": "filter-text",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "text": "telemetry"
+        }
+      ]
+    },
+    {
+      "name": "filter-combined",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "find_requirements",
+      "args": [
+        {
+          "ancestor": "FOBC-SYS-0001",
+          "category": [
+            "SW"
+          ],
+          "status": [
+            "verified"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "error-not-a-repository",
+      "open": {
+        "fixture": "empty"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-invalid-config",
+      "open": {
+        "fixture": "broken"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-unsupported-schema",
+      "open": {
+        "fixture": "future"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-io",
+      "open": {
+        "fixture": "unreadable"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-ref-not-found",
+      "open": {
+        "fixture": "firesat",
+        "ref": "no-such-ref"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-remote-refused",
+      "open": {
+        "url": "http://example.com/firesat.git",
+        "ref": "v1"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-remote-refused-file",
+      "open": {
+        "remote": "firesat",
+        "ref": "v1",
+        "allow_file_url": false
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-remote-failed",
+      "open": {
+        "remote": "missing",
+        "ref": "v1"
+      },
+      "call": "info",
+      "args": []
+    },
+    {
+      "name": "error-not-found",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "context",
+      "args": [
+        "FOBC-SYS-9999"
+      ]
+    },
+    {
+      "name": "error-ref-not-found-in-query",
+      "open": {
+        "fixture": "firesat"
+      },
+      "call": "impact",
+      "args": [
+        "no-such-ref"
+      ]
+    },
+    {
+      "name": "error-git",
+      "open": {
+        "fixture": "no-git"
+      },
+      "call": "history",
+      "args": [
+        "FOBC-SW-0002"
+      ]
+    }
+  ]
+}

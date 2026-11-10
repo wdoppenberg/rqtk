@@ -1,0 +1,138 @@
+{
+  "result": [
+    {
+      "activity": {
+        "expected_result": "Full functionality at temperature extremes",
+        "id": "FOBC-VA-HW-001-01",
+        "name": "Thermal vacuum qualification test",
+        "procedure": null,
+        "status": "Passed"
+      },
+      "evidence": null,
+      "id": "FOBC-VA-HW-001-01",
+      "requirement": "FOBC-HW-0001",
+      "state": "manual",
+      "status": "Passed",
+      "tests": []
+    },
+    {
+      "activity": {
+        "expected_result": "Uplink packet format matches CCSDS TC Transfer Frame standard",
+        "id": "FOBC-VA-ICD-001-01",
+        "name": "ICD review",
+        "procedure": null,
+        "status": "Passed"
+      },
+      "evidence": null,
+      "id": "FOBC-VA-ICD-001-01",
+      "requirement": "FOBC-ICD-0001",
+      "state": "manual",
+      "status": "Passed",
+      "tests": []
+    },
+    {
+      "activity": {
+        "expected_result": "All CCSDS TC packets parsed without error",
+        "id": "FOBC-VA-SW-001-01",
+        "name": "Command packet parsing test",
+        "procedure": null,
+        "status": "Passed"
+      },
+      "evidence": {
+        "commit": null,
+        "id": "FOBC-VA-SW-001-01",
+        "outcome": "passed",
+        "requirement": "FOBC-SW-0001",
+        "requirement_hash": "v1:36a838fae48ac7849f539e7d03f65dc754b8bafbd1a1cf6560e1fef51f1fd5af",
+        "tests": [
+          "tests/test_obc.py::test_commands"
+        ],
+        "tests_hash": "9cbe033e70051e06",
+        "upstream": {
+          "FOBC-SYS-0001": "v1:9f05936ae841507e7e4c943909cd95b6768b3a5585425e436b9da645008b4047",
+          "NEED-0001": "v1:d397047c7df95a83e8a16570ca0b8c346c1fe681e08d0c0cb634011412c4b2ff"
+        }
+      },
+      "id": "FOBC-VA-SW-001-01",
+      "requirement": "FOBC-SW-0001",
+      "state": "passed",
+      "tests": [
+        {
+          "activity": "FOBC-VA-SW-001-01",
+          "line": 4,
+          "path": "tests/test_obc.py",
+          "source_hash": "9cbe033e70051e06",
+          "test_line": 5,
+          "test_name": "test_commands"
+        }
+      ]
+    },
+    {
+      "activity": {
+        "expected_result": "Frame rate >= 1 Hz",
+        "id": "FOBC-VA-SW-002-01",
+        "name": "Downlink throughput test",
+        "procedure": null,
+        "status": "Passed"
+      },
+      "evidence": {
+        "commit": null,
+        "id": "FOBC-VA-SW-002-01",
+        "outcome": "passed",
+        "requirement": "FOBC-SW-0002",
+        "requirement_hash": "v1:d3c92101c52ddd60e55d294f901032213dbea5995619733675f33dd59139a2ad",
+        "tests": [
+          "tests/test_obc.py::test_telemetry"
+        ],
+        "tests_hash": "996e3d7ae8f062db",
+        "upstream": {
+          "FOBC-SYS-0001": "v1:9f05936ae841507e7e4c943909cd95b6768b3a5585425e436b9da645008b4047",
+          "NEED-0001": "v1:d397047c7df95a83e8a16570ca0b8c346c1fe681e08d0c0cb634011412c4b2ff"
+        }
+      },
+      "id": "FOBC-VA-SW-002-01",
+      "requirement": "FOBC-SW-0002",
+      "state": "suspect",
+      "tests": [
+        {
+          "activity": "FOBC-VA-SW-002-01",
+          "line": 9,
+          "path": "tests/test_obc.py",
+          "source_hash": "996e3d7ae8f062db",
+          "test_line": 10,
+          "test_name": "test_telemetry"
+        }
+      ]
+    },
+    {
+      "activity": {
+        "expected_result": "Command execution latency < 500 ms",
+        "id": "FOBC-VA-SYS-001-01",
+        "name": "Command latency test",
+        "procedure": null,
+        "status": "Passed"
+      },
+      "evidence": null,
+      "id": "FOBC-VA-SYS-001-01",
+      "requirement": "FOBC-SYS-0001",
+      "state": "manual",
+      "status": "Passed",
+      "tests": []
+    },
+    {
+      "activity": {
+        "expected_result": "OBC mass <= 2.5 kg",
+        "id": "FOBC-VA-SYS-002-01",
+        "name": "Mass measurement",
+        "procedure": null,
+        "status": "Passed"
+      },
+      "evidence": null,
+      "id": "FOBC-VA-SYS-002-01",
+      "requirement": "FOBC-SYS-0002",
+      "state": "manual",
+      "status": "Passed",
+      "tests": []
+    }
+  ]
+}

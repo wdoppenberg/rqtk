@@ -1,0 +1,11 @@
+{
+  "result": {
+    "commit": "95d96990610ad8d0c0560ce7f4ba68920aa17f04",
+    "origin": {
+      "kind": "ref",
+      "path": "$ROOT",
+      "reference": "v1"
+    },
+    "project": "FireSat OBC"
+  }
+}

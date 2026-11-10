@@ -1,0 +1,21 @@
+{
+  "result": {
+    "ancestors": [
+      "FOBC-SYS-0001"
+    ],
+    "consumes": [
+      {
+        "id": "ground:GS-ICD-0001",
+        "provider_status": null,
+        "resolved": false,
+        "statement": null,
+        "title": null
+      }
+    ],
+    "descendants": [
+      "FOBC-ICD-0001"
+    ],
+    "id": "FOBC-SW-0001",
+    "schema": "rqtk/trace/2"
+  }
+}

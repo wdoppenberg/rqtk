@@ -1,0 +1,32 @@
+{
+  "result": {
+    "id": "NEED-0001",
+    "links": [
+      {
+        "direction": "outgoing",
+        "id": "STK-001",
+        "kind": "stakeholders"
+      },
+      {
+        "direction": "incoming",
+        "id": "FOBC-SYS-0001",
+        "kind": "satisfies"
+      }
+    ],
+    "need": {
+      "acceptance": null,
+      "content_hash": null,
+      "id": "NEED-0001",
+      "priority": null,
+      "rationale": null,
+      "stakeholders": [
+        "STK-001"
+      ],
+      "state": "Approved",
+      "statement": "Operators need commands executed promptly.",
+      "title": "Commanding"
+    },
+    "path": ".rqtk/needs/NEED-0001.toml",
+    "satisfied": true
+  }
+}

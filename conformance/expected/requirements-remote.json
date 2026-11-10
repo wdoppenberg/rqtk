@@ -1,0 +1,412 @@
+{
+  "result": [
+    {
+      "id": "FOBC-HW-0001",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-HW-001-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/HW/FOBC-HW-0001.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "HW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-HW-0001",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "Critical",
+        "rationale": "The selected orbit profile exposes the OBC to thermal cycles requiring operation across a wide temperature range.",
+        "risk": null,
+        "state": "Approved",
+        "statement": "The OBC hardware shall operate within specification across a temperature range of -40 to +85 degrees Celsius.",
+        "title": "Operating Temperature Range",
+        "trace": {
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Constraint",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Full functionality at temperature extremes",
+              "id": "FOBC-VA-HW-001-01",
+              "name": "Thermal vacuum qualification test",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Pre-release",
+          "success_criteria": "OBC meets all functional requirements at both temperature extremes with no failures."
+        }
+      },
+      "status": "verified"
+    },
+    {
+      "id": "FOBC-ICD-0001",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SW-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-ICD-001-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/ICD/FOBC-ICD-0001.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "ICD",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-ICD-0001",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "Standardised CCSDS framing ensures interoperability with the ground station uplink chain.",
+        "risk": null,
+        "state": "Draft",
+        "statement": "The OBC shall accept command uplink packets formatted as CCSDS TC Transfer Frames with a maximum length of 1024 octets.",
+        "title": "Uplink Packet Format",
+        "trace": {
+          "parents": [
+            "FOBC-SW-0001"
+          ]
+        },
+        "type": "Interface",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Uplink packet format matches CCSDS TC Transfer Frame standard",
+              "id": "FOBC-VA-ICD-001-01",
+              "name": "ICD review",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Inspection",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": null
+        }
+      },
+      "status": "gap"
+    },
+    {
+      "id": "FOBC-SW-0001",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "ground:GS-ICD-0001",
+          "kind": "consumes"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-SW-001-01",
+          "kind": "activities"
+        },
+        {
+          "direction": "incoming",
+          "id": "FOBC-ICD-0001",
+          "kind": "parents"
+        }
+      ],
+      "path": ".rqtk/requirements/SW/FOBC-SW-0001.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SW-0001",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "Critical",
+        "rationale": "Correct parsing ensures reliable command execution and prevents erroneous spacecraft operations.",
+        "risk": null,
+        "state": "Implemented",
+        "statement": "The OBC software shall parse all uplinked command packets according to the CCSDS TC Space Data Link Protocol.",
+        "title": "Command Parsing",
+        "trace": {
+          "consumes": [
+            "ground:GS-ICD-0001"
+          ],
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "All CCSDS TC packets parsed without error",
+              "id": "FOBC-VA-SW-001-01",
+              "name": "Command packet parsing test",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": "100% of test command packets parsed correctly with no errors."
+        }
+      },
+      "status": "verified"
+    },
+    {
+      "id": "FOBC-SW-0002",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-SW-002-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/SW/FOBC-SW-0002.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SW-0002",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "A 1 Hz downlink rate ensures sufficient telemetry throughput for nominal housekeeping monitoring.",
+        "risk": null,
+        "state": "Implemented",
+        "statement": "The OBC software shall schedule telemetry downlink frames at a rate of no less than 1 Hz during ground-station contact windows.",
+        "title": "Telemetry Downlink Scheduling",
+        "trace": {
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Frame rate >= 1 Hz",
+              "id": "FOBC-VA-SW-002-01",
+              "name": "Downlink throughput test",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": "Downlink frame rate of at least 1 Hz sustained over a 10-minute contact window."
+        }
+      },
+      "status": "verified"
+    },
+    {
+      "id": "FOBC-SW-0003",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        }
+      ],
+      "path": ".rqtk/requirements/SW/FOBC-SW-0003.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SW-0003",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "Critical",
+        "rationale": "Automatic watchdog resets prevent the OBC from becoming permanently unresponsive due to software faults.",
+        "risk": null,
+        "state": "Draft",
+        "statement": "The OBC software shall trigger a hardware watchdog timer reset if the main task loop fails to execute within 10 seconds.",
+        "title": "Watchdog Timer Reset",
+        "trace": {
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": null
+        }
+      },
+      "status": "gap"
+    },
+    {
+      "id": "FOBC-SYS-0001",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "NEED-0001",
+          "kind": "satisfies"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-SYS-001-01",
+          "kind": "activities"
+        },
+        {
+          "direction": "incoming",
+          "id": "FOBC-HW-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "incoming",
+          "id": "FOBC-SW-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "incoming",
+          "id": "FOBC-SW-0002",
+          "kind": "parents"
+        },
+        {
+          "direction": "incoming",
+          "id": "FOBC-SW-0003",
+          "kind": "parents"
+        }
+      ],
+      "path": ".rqtk/requirements/SYS/FOBC-SYS-0001.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SYS",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SYS-0001",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "Critical",
+        "rationale": "Timely command execution is essential for mission operations and safe spacecraft control.",
+        "risk": null,
+        "state": "Approved",
+        "statement": "The OBC shall execute all ground-uplinked commands within 500 ms of receipt.",
+        "title": "On-Board Computer Command Execution",
+        "trace": {
+          "satisfies": [
+            "NEED-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Command execution latency < 500 ms",
+              "id": "FOBC-VA-SYS-001-01",
+              "name": "Command latency test",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": "All uplinked commands execute within 500 ms in 100% of test cases."
+        }
+      },
+      "status": "verified"
+    },
+    {
+      "id": "FOBC-SYS-0002",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-SYS-002-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/SYS/FOBC-SYS-0002.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SYS",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SYS-0002",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "The spacecraft mass budget constrains the OBC to 2.5 kg to achieve the required launch mass.",
+        "risk": null,
+        "state": "Approved",
+        "statement": "The OBC assembly shall not exceed a total mass of 2.5 kg.",
+        "title": "OBC Mass Budget",
+        "type": "Constraint",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "OBC mass <= 2.5 kg",
+              "id": "FOBC-VA-SYS-002-01",
+              "name": "Mass measurement",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Inspection",
+          "owner": null,
+          "phase": "Pre-release",
+          "success_criteria": "Measured OBC mass does not exceed 2.5 kg."
+        }
+      },
+      "status": "verified"
+    }
+  ]
+}

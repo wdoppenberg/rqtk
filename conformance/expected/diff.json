@@ -1,0 +1,15 @@
+{
+  "result": {
+    "added": [],
+    "from_ref": "v1",
+    "modified": [
+      {
+        "change": "semantic",
+        "id": "FOBC-SW-0002"
+      }
+    ],
+    "removed": [],
+    "schema": "rqtk/diff/2",
+    "to_ref": "HEAD"
+  }
+}

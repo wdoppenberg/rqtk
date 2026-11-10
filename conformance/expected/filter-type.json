@@ -1,0 +1,61 @@
+{
+  "result": [
+    {
+      "id": "FOBC-ICD-0001",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SW-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-ICD-001-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/ICD/FOBC-ICD-0001.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "ICD",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-ICD-0001",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "Standardised CCSDS framing ensures interoperability with the ground station uplink chain.",
+        "risk": null,
+        "state": "Draft",
+        "statement": "The OBC shall accept command uplink packets formatted as CCSDS TC Transfer Frames with a maximum length of 1024 octets.",
+        "title": "Uplink Packet Format",
+        "trace": {
+          "parents": [
+            "FOBC-SW-0001"
+          ]
+        },
+        "type": "Interface",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Uplink packet format matches CCSDS TC Transfer Frame standard",
+              "id": "FOBC-VA-ICD-001-01",
+              "name": "ICD review",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Inspection",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": null
+        }
+      },
+      "status": "gap"
+    }
+  ]
+}

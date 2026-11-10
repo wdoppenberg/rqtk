@@ -1,0 +1,13 @@
+{
+  "result": {
+    "baselines": [
+      {
+        "message": "Requirements baseline 1.0.0",
+        "name": "1.0.0",
+        "tag": "rqtk/1.0.0",
+        "timestamp": "2026-01-01T00:00:00+00:00"
+      }
+    ],
+    "schema": "rqtk/baselines/2"
+  }
+}

@@ -22,7 +22,7 @@
       "types": "./types.d.ts"
     }
   },
-  "files": ["index.js", "index.d.ts", "types.d.ts", "native.cjs", "native.d.ts", "*.node"],
+  "files": ["index.js", "index.d.ts", "types.d.ts", "native.cjs", "native.d.ts", "LICENSE-MIT", "LICENSE-APACHE"],
   "engines": {
     "node": ">=18"
   },
@@ -42,7 +42,7 @@
     "build": "napi build --platform --js native.cjs --dts native.d.ts --release",
     "build:debug": "napi build --platform --js native.cjs --dts native.d.ts",
     "typecheck": "tsc -p tests/tsconfig.json",
-    "test": "node --test tests/client.test.mjs"
+    "test": "node --test tests/client.test.mjs tests/conformance.test.mjs"
   },
   "devDependencies": {
     "@napi-rs/cli": "3.10.9",
