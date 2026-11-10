@@ -2264,6 +2264,30 @@ fn scan_lists_links_with_test_names() {
         .stdout(predicate::str::contains("boots"));
 }
 
+#[verifies("VA-CORE-006-01")]
+#[test]
+fn scan_reads_module_flavoured_javascript_and_typescript_by_default() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1", "VA-2", "VA-3", "VA-4"], &[]);
+    for (i, ext) in ["mjs", "cjs", "mts", "cts"].iter().enumerate() {
+        fs::write(
+            repo_root.join(format!("tests/app.test.{ext}")),
+            format!(
+                "// rqtk: verifies VA-{}\ntest(\"works in {ext}\", () => {{}});\n",
+                i + 1
+            ),
+        )
+        .unwrap();
+    }
+    let out = rqtk(&repo_root).arg("scan").assert().success();
+    let stdout = String::from_utf8_lossy(&out.get_output().stdout).into_owned();
+    for ext in ["mjs", "cjs", "mts", "cts"] {
+        assert!(
+            stdout.contains(&format!("works in {ext}")),
+            "{ext}: {stdout}"
+        );
+    }
+}
+
 #[verifies("VA-SYS-002-01")]
 #[test]
 fn verify_then_edit_makes_requirement_suspect_until_reverified() {
