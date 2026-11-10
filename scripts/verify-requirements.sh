@@ -66,4 +66,17 @@ node_junit="$(dirname "$junit")/node.xml"
 ./target/debug/rqtk lint
 # shellcheck disable=SC2086
 ./target/debug/rqtk verify $mode --results "$junit" "$python_junit" "$node_junit"
-./target/debug/rqtk coverage --strict
+
+# RQTK_ALLOW_UNFINISHED: a branch built in stages may leave requirements Planned or In Progress
+# (never Suspect or Failed) while later stages are open. Once nothing is unfinished the
+# setting must go, so that what merges is checked strictly.
+if [[ -n "${RQTK_ALLOW_UNFINISHED:-}" ]]; then
+  if ./target/debug/rqtk coverage --strict > /dev/null; then
+    echo "error: every requirement is Verified; remove RQTK_ALLOW_UNFINISHED from CI" >&2
+    exit 1
+  fi
+  echo "warning: RQTK_ALLOW_UNFINISHED is set; accepting Planned and In Progress requirements" >&2
+  ./target/debug/rqtk coverage --strict --allow planned --allow in-progress
+else
+  ./target/debug/rqtk coverage --strict
+fi
