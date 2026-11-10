@@ -47,13 +47,15 @@ All notable changes to the `rqtk` command line. The format follows
   cache). A repository is a snapshot: queries answer from the state at opening until
   `reload()`. It lists requirements, needs, stakeholders and activities with their links in
   both directions, filters requirements by a `Filter` given as data, and returns the same
-  views the CLI prints. Errors carry a stable code. The crate is released with the CLI's
+  views the CLI prints. A repository is `Send + Sync`, so one snapshot can serve queries from
+  many threads at once. Errors carry a stable code. The crate is released with the CLI's
   version, and its public API follows semantic versioning.
 - **The client in Python.** The `rqtk` package has `rqtk.open(path, ref=…)` and
   `rqtk.open_remote(url, ref)`, returning a `Repository` with the same queries and views as
   the Rust client. Values are frozen dataclasses with the JSON's field names, and
   enumerations are `Literal` strings (`rqtk.types`, generated from the published schemas).
-  Errors raise `rqtk.Error` with the same `code`. Calls release the GIL.
+  Errors raise `rqtk.Error` with the same `code`. Calls release the GIL, and one repository
+  answers calls from several threads at the same time.
 - **`rqtk baseline --list`** lists the baselines, oldest first.
 - **Published JSON Schemas for every `--json` document**, under `schema/output/` (and the
   client's types under `schema/client/`). `rqtk schema` lists them next to the file kinds and

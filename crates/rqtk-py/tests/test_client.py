@@ -260,3 +260,38 @@ def test_loading_releases_the_gil(tmp_path: Path) -> None:
     middle = [x for x in ticks if start + (end - start) / 4 < x < end - (end - start) / 4]
     assert end - start > 0.02, "the load is too quick to tell"
     assert middle, f"no other thread ran during the {end - start:.3f} s load"
+
+
+@rqtk.verifies("VA-CLIENT-0021-02")
+def test_calls_on_one_repository_run_at_the_same_time(tmp_path: Path) -> None:
+    import os
+
+    threads = min(4, os.cpu_count() or 1)
+    if threads < 2:
+        pytest.skip("needs two CPUs")
+    root = tmp_path / "large"
+    write_large_repository(root, 2000)
+    repo = rqtk.open(root)
+
+    def work() -> None:
+        # A full text scan with an empty answer: nearly all the time is spent without the GIL.
+        for _ in range(20):
+            assert repo.find_requirements({"text": "no such text"}) == []
+
+    start = time.perf_counter()
+    work()
+    alone = time.perf_counter() - start
+
+    workers = [threading.Thread(target=work) for _ in range(threads)]
+    start = time.perf_counter()
+    for w in workers:
+        w.start()
+    for w in workers:
+        w.join()
+    together = time.perf_counter() - start
+
+    # Run one after another, `threads` workers would take `threads` times as long.
+    limit = alone * (1 + 0.6 * (threads - 1))
+    assert together < limit, (
+        f"{threads} threads took {together:.3f} s, one took {alone:.3f} s: calls were serialised"
+    )

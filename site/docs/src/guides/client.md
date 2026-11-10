@@ -40,7 +40,7 @@ release = rqtk.open(".", ref="1.4.0")
 users = rqtk.open_remote("https://github.com/acme/user-service", "rqtk/1.4.0")
 ```
 
-A repository is a **snapshot**. Everything is loaded and checked when it opens, and every query answers from that state. Edits made afterwards, even to the files of a working tree, are not seen until you call `repo.reload()`, which returns a new snapshot. That keeps a dashboard or an editor from ever showing half an edit.
+A repository is a **snapshot**. Everything is loaded and checked when it opens, and every query answers from that state. Edits made afterwards, even to the files of a working tree, are not seen until you call `repo.reload()`, which returns a new snapshot. That keeps a dashboard or an editor from ever showing half an edit. A repository can be shared between threads (it is `Send + Sync`) and queried from all of them at once.
 
 Verification status is computed at the snapshot's revision too: from the tests linked in that commit and the evidence committed with it. So a repository opened at a baseline shows the coverage that baseline had.
 
@@ -136,7 +136,7 @@ except rqtk.Error as e:
 - **Values are frozen dataclasses** from `rqtk.types`, generated from the published JSON Schemas, with the JSON's field names. Lists are tuples. `dataclasses.asdict(value)` gives JSON-ready data, since every enumeration is a `Literal` string (`entry.status == "suspect"`).
 - **A field the JSON can leave out** has its default: `()`, `{}`, `False`, or `None`.
 - **Tagged unions are one dataclass per variant.** `repo.context(id)` returns a `ContextDocRequirement`, `ContextDocNeed`, `ContextDocStakeholder` or `ContextDocInterface`, each with a `kind` field. Branch with `isinstance` or on `kind`. The same holds for activity states (`ActivityEntryPassed`, …) and `RepositoryInfo.origin`.
-- **Calls release the GIL**, so other threads run while a repository loads or a view is computed. One `Repository` answers one call at a time; open several to query in parallel.
+- **Calls release the GIL**, so other threads run while a repository loads or a view is computed, and one `Repository` answers calls from several threads at once. A web server can open a repository once and share it between all its requests.
 
 ## Versions
 

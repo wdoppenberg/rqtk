@@ -2,22 +2,18 @@
 //!
 //! Every method returns the client's JSON, which `rqtk.types` decodes into dataclasses, and
 //! releases the GIL while the client works.
-//!
-//! A client repository is `Send` but not `Sync` (git's object database handle isn't), so each
-//! handle is behind a mutex, locked only once the GIL is released: queries on one handle run
-//! one at a time, while separate handles run in parallel.
+//! A repository is shared between threads (RQTK-CLIENT-0021): calls on one handle from
+//! several Python threads run at the same time.
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use rqtk_client::{Filter, RemoteOptions};
 use serde::Serialize;
-use std::sync::{Mutex, PoisonError};
-
 type Inner = rqtk_client::Repository;
 
 /// An open repository snapshot.
 #[pyclass(frozen, module = "rqtk._rqtk", name = "Repository")]
-pub struct Repository(Mutex<Inner>);
+pub struct Repository(Inner);
 
 fn to_json<T: Serialize>(value: &T) -> String {
     serde_json::to_string(value).expect("client values serialise to JSON")
@@ -39,15 +35,13 @@ fn opened(
     py: Python<'_>,
     f: impl FnOnce() -> rqtk_client::Result<Inner> + Send,
 ) -> PyResult<Repository> {
-    py.detach(f)
-        .map(|repo| Repository(Mutex::new(repo)))
-        .map_err(|e| error(py, e))
+    py.detach(f).map(Repository).map_err(|e| error(py, e))
 }
 
 impl Repository {
     /// Run `f` on the snapshot without the GIL.
     fn with<T: Send>(&self, py: Python<'_>, f: impl FnOnce(&Inner) -> T + Send) -> T {
-        py.detach(|| f(&self.0.lock().unwrap_or_else(PoisonError::into_inner)))
+        py.detach(|| f(&self.0))
     }
 
     /// Run query `f` without the GIL and return its JSON.
@@ -74,9 +68,7 @@ impl Repository {
 impl Repository {
     fn reload(&self, py: Python<'_>) -> PyResult<Repository> {
         let reloaded = self.with(py, |repo| repo.reload());
-        reloaded
-            .map(|repo| Repository(Mutex::new(repo)))
-            .map_err(|e| error(py, e))
+        reloaded.map(Repository).map_err(|e| error(py, e))
     }
 
     fn info(&self, py: Python<'_>) -> PyResult<String> {

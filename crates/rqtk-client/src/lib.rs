@@ -51,8 +51,9 @@ pub use rqtk_core::{
     Stakeholder, SuspectReason, VerificationActivity,
 };
 
-// Bindings move a repository between threads (Python releases the GIL while loading).
+// Bindings move a repository between threads and query it from several at once
+// (RQTK-CLIENT-0021).
 const _: fn() = || {
-    fn send<T: Send>() {}
-    send::<Repository>();
+    fn shareable<T: Send + Sync>() {}
+    shareable::<Repository>();
 };

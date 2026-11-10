@@ -46,6 +46,8 @@ pub struct RepositoryInfo {
 
 /// One repository at one revision. Everything is loaded and checked when it opens; queries
 /// answer from that snapshot until [`Repository::reload`].
+///
+/// A repository is `Send + Sync`: open it once and query it from as many threads as you like.
 pub struct Repository {
     set: RequirementSet<Validated>,
     diagnostics: Vec<Diagnostic>,
@@ -87,7 +89,7 @@ impl Repository {
     pub fn open_ref(path: impl AsRef<Path>, reference: &str) -> Result<Self> {
         let path = path.as_ref().to_path_buf();
         let git = GitContext::open(&path)?;
-        let repo = git.repository().cloned().ok_or_else(|| {
+        let repo = git.repository().ok_or_else(|| {
             Error::new(
                 ErrorCode::Git,
                 format!("`{}` is not inside a git repository", path.display()),

@@ -562,3 +562,46 @@ fn each_filter_field_selects_its_requirements() {
     assert_eq!(find(filter), ["DEMO-SW-0002"]);
     assert!(serde_json::from_str::<Filter>(r#"{"colour": "red"}"#).is_err());
 }
+
+#[verifies("VA-CLIENT-0021-01")]
+#[test]
+fn one_repository_answers_queries_from_many_threads() {
+    let f = Fixture::new();
+    f.write(
+        ".rqtk/requirements/SW/DEMO-SW-0002.toml",
+        &requirement(
+            "DEMO-SW-0002",
+            "SW",
+            "The software shall always send telemetry.",
+            "[trace]\nparents = [\"DEMO-SYS-0001\"]\n",
+        ),
+    )
+    .commit("v2");
+    let repo = Repository::open(&f.root).unwrap();
+    // Every query, including those that read git objects (impact, diff, history).
+    let answers = |repo: &Repository| {
+        serde_json::json!([
+            repo.requirements(),
+            repo.activities(),
+            repo.context("DEMO-SW-0002").unwrap(),
+            repo.coverage(),
+            repo.lint(),
+            repo.impact("v1").unwrap(),
+            repo.diff("v1", "HEAD").unwrap(),
+            repo.history("DEMO-SW-0002").unwrap(),
+            repo.baselines().unwrap(),
+        ])
+    };
+    let expected = answers(&repo);
+    let shared = &repo;
+    std::thread::scope(|scope| {
+        let threads: Vec<_> = (0..8)
+            .map(|_| scope.spawn(move || (0..10).map(|_| answers(shared)).collect::<Vec<_>>()))
+            .collect();
+        for thread in threads {
+            for answer in thread.join().unwrap() {
+                assert_eq!(answer, expected);
+            }
+        }
+    });
+}

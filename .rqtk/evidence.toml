@@ -954,6 +954,34 @@ NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769
 RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
 
 [[activity]]
+id = "VA-CLIENT-0021-01"
+requirement = "RQTK-CLIENT-0021"
+requirement_hash = "v1:6e27869a51d326ea4613c2065d57b9338b35932d1826fa43e339c56ba065ced7"
+outcome = "passed"
+tests = ["crates/rqtk-client/tests/client.rs::one_repository_answers_queries_from_many_threads"]
+commit = "5aa138a1028eee06d6bfce172cbe71299369d8b3"
+tests_hash = "f5f40d3f5b97ccca"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
+id = "VA-CLIENT-0021-02"
+requirement = "RQTK-CLIENT-0021"
+requirement_hash = "v1:6e27869a51d326ea4613c2065d57b9338b35932d1826fa43e339c56ba065ced7"
+outcome = "passed"
+tests = ["crates/rqtk-py/tests/test_client.py::test_calls_on_one_repository_run_at_the_same_time"]
+commit = "5aa138a1028eee06d6bfce172cbe71299369d8b3"
+tests_hash = "5280992eef82d4c8"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
 id = "VA-CORE-0007-01"
 requirement = "RQTK-CORE-0007"
 requirement_hash = "v1:e809005c5177d9b0e89c9e0a05137fa536a7d183b202a387b440f07c6cb2e9c0"

@@ -1660,7 +1660,7 @@ impl core::fmt::Debug for rqtk_client::Repository
 pub fn rqtk_client::Repository::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl !core::marker::Freeze for rqtk_client::Repository
 impl core::marker::Send for rqtk_client::Repository
-impl !core::marker::Sync for rqtk_client::Repository
+impl core::marker::Sync for rqtk_client::Repository
 impl core::marker::Unpin for rqtk_client::Repository
 impl core::marker::UnsafeUnpin for rqtk_client::Repository
 impl !core::panic::unwind_safe::RefUnwindSafe for rqtk_client::Repository
