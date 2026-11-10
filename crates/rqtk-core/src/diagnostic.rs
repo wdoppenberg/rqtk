@@ -1,9 +1,10 @@
 use crate::model::EntityRef;
+use schemars::JsonSchema;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Error,
@@ -11,7 +12,7 @@ pub enum Severity {
 }
 
 /// A position in a source file. `line` and `column` are 1-based.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct Location {
     pub path: PathBuf,
     pub line: Option<usize>,
@@ -19,7 +20,7 @@ pub struct Location {
 }
 
 /// A single finding from loading or linting a requirement set.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Diagnostic {
     pub severity: Severity,
     /// Stable rule code, e.g. `RQ007`. See [`crate::rules::RULES`].

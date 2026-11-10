@@ -9,6 +9,7 @@
       "content_hash": "string",
       "criticality": "null",
       "id": "string",
+      "interface": "null",
       "maturity": "null",
       "notes": "null",
       "priority": "string",
@@ -27,7 +28,8 @@
         "success_criteria": "null"
       }
     },
-    "path": "string"
+    "path": "string",
+    "schema": "string"
   },
   "add-activity FOBC-SW-0001 --name Telemetry frame test --dry-run": {
     "dry_run": "bool",
@@ -39,7 +41,12 @@
       "procedure": "null",
       "status": "null"
     },
-    "path": "string"
+    "path": "string",
+    "schema": "string"
+  },
+  "baseline --list": {
+    "baselines": [],
+    "schema": "string"
   },
   "context FOBC-SW-0001": {
     "ancestors": [
@@ -56,6 +63,7 @@
         "title": "string"
       }
     ],
+    "consumes": [],
     "diagnostics": [],
     "evidence": [],
     "kind": "string",
@@ -69,6 +77,7 @@
       "content_hash": "null",
       "criticality": "null",
       "id": "string",
+      "interface": "null",
       "maturity": "null",
       "notes": "null",
       "priority": "string",
@@ -101,14 +110,10 @@
         "success_criteria": "string"
       }
     },
+    "schema": "string",
     "tests": [],
     "verification": {
       "activities": [
-        [
-          "string"
-        ]
-      ],
-      "activity_states": [
         {
           "id": "string",
           "state": "string",
@@ -119,15 +124,11 @@
     }
   },
   "coverage": {
+    "consumed": [],
     "needs": [],
     "requirements": [
       {
         "activities": [
-          [
-            "string"
-          ]
-        ],
-        "activity_states": [
           {
             "id": "string",
             "state": "string",
@@ -138,34 +139,57 @@
         "status": "string"
       }
     ],
+    "schema": "string",
     "summary": {
       "gap": "number",
       "verified": "number"
     },
     "unsatisfied_needs": "number"
   },
-  "explain": [
-    {
-      "code": "string",
-      "fix": "string",
-      "severity": "string",
-      "summary": "string"
-    }
-  ],
+  "explain": {
+    "rules": [
+      {
+        "code": "string",
+        "fix": "string",
+        "severity": "string",
+        "summary": "string"
+      }
+    ],
+    "schema": "string"
+  },
   "explain RQ001": {
-    "code": "string",
-    "fix": "string",
-    "severity": "string",
-    "summary": "string"
+    "rules": [
+      {
+        "code": "string",
+        "fix": "string",
+        "severity": "string",
+        "summary": "string"
+      }
+    ],
+    "schema": "string"
   },
   "lint": {
     "checked": "number",
     "diagnostics": [],
     "errors": "number",
+    "schema": "string",
     "warnings": "number"
+  },
+  "log FOBC-SW-0001": {
+    "commits": [
+      {
+        "author": "string",
+        "hash": "string",
+        "message": "string",
+        "timestamp": "string"
+      }
+    ],
+    "id": "string",
+    "schema": "string"
   },
   "rehash --all --dry-run": {
     "dry_run": "bool",
+    "schema": "string",
     "updated": [
       {
         "hash": "string",
@@ -188,21 +212,27 @@
         "FOBC-SYS-0001": "string"
       }
     },
+    "schema": "string",
     "written": "bool"
   },
   "scan": {
     "diagnostics": [],
     "links": [],
+    "schema": "string",
     "unlinked_activities": [
       "string"
     ]
   },
-  "schema": [
-    {
-      "file": "string",
-      "kind": "string"
-    }
-  ],
+  "schema": {
+    "kinds": [
+      {
+        "category": "string",
+        "describes": "string",
+        "kind": "string"
+      }
+    ],
+    "schema": "string"
+  },
   "search telemetry -i": {
     "hits": [
       {
@@ -223,22 +253,28 @@
           "kind": "string"
         }
       }
+    ],
+    "schema": "string"
+  },
+  "skills list": {
+    "schema": "string",
+    "skills": [
+      {
+        "description": "string",
+        "name": "string",
+        "user_invoked": "bool"
+      }
     ]
   },
-  "skills list": [
-    {
-      "description": "string",
-      "name": "string",
-      "user_invoked": "bool"
-    }
-  ],
   "trace FOBC-SW-0001": {
     "ancestors": [
       "string"
     ],
+    "consumes": [],
     "descendants": [
       "string"
     ],
-    "id": "string"
+    "id": "string",
+    "schema": "string"
   }
 }

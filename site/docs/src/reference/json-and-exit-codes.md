@@ -2,14 +2,19 @@
 
 ## `--json`
 
-Every command accepts `--json` and prints exactly one JSON document on stdout.
+Every command accepts `--json` and prints exactly one JSON object on stdout.
 
+- Every document has a `schema` field naming its shape and version, such as `"rqtk/coverage/2"`.
 - Paths are relative to the repository root.
 - Diagnostics carry `code`, `severity`, `message`, `subject` (the item they concern) and `location` (`path`, `line`, `column`).
-- Errors go to **stderr** as `{"error": {"kind": "usage" | "error", "message": "…"}}`, and stdout stays empty.
+- Errors go to **stderr** as `{"schema": "rqtk/error/2", "error": {"kind": "usage" | "error", "message": "…", "code": "…"}}`, and stdout stays empty. `code` is there when opening or querying the repository failed: `not_a_repository`, `invalid_config`, `unsupported_schema`, `ref_not_found`, `remote_refused`, `remote_failed`, `not_found`, `git` or `io`.
 - Commands whose output is a document in another format (`report`, `graph`, `open`) reject `--json` with a usage error.
 
-Within 1.x, JSON output only **gains** fields. No field is removed, renamed or given a different type; a test in the rqtk repository enforces this against a recorded snapshot of every command's output. Parse leniently and ignore fields you don't know.
+Every document has a published JSON Schema. `rqtk schema` lists them next to the file kinds, `rqtk schema <name>` prints one (for example `rqtk schema coverage`), and the rqtk repository keeps them under [`schema/output/`](https://github.com/wdoppenberg/rqtk/tree/master/schema/output). A test runs every command and validates its output against its schema.
+
+Within a major version, JSON output only **gains** fields. No field is removed, renamed or given a different type; a test in the rqtk repository enforces this against a recorded snapshot of every command's output. Parse leniently and ignore fields you don't know.
+
+The views (`context`, `trace`, `coverage`, `lint`, `impact`, `diff`, `baseline --list` and `log`) are the same documents the [client library](../guides/client.md) returns, so a program gets the same answers either way.
 
 ## Exit codes
 
@@ -17,7 +22,7 @@ Within 1.x, JSON output only **gains** fields. No field is removed, renamed or g
 |---|---|
 | 0 | Success, nothing to report. |
 | 1 | Findings: lint errors, any requirement not Verified under `coverage --strict`, failed or ambiguous tests in `verify` or results that match no linked test, stale evidence under `verify --check`, link errors in `scan`. |
-| 2 | Usage error: bad arguments, an unknown category, type, rule or schema kind, or `--json` on a command that doesn't support it. |
+| 2 | Usage error: bad arguments, an unknown ID, category, type, rule or schema kind, or `--json` on a command that doesn't support it. |
 | 3 | Error: missing or invalid configuration, I/O or git failure. |
 
 ## Dry runs

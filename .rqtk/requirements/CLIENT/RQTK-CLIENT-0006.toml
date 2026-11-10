@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0006"
+title = "Status at a ref"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "For a repository opened at a ref, the client shall compute verification status from the `verifies` links in that commit's tree and the evidence committed in it."
+rationale = "Coverage trends across baselines are the main thing a dashboard shows; status computed from the current working tree would be wrong for any other revision."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0008"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "The status of each requirement opened at a tag equals what `rqtk coverage --json` reports in a checkout of that tag."
+
+[[verification.activities]]
+id = "VA-CLIENT-0006-01"
+name = "Status at a tag equals coverage in its checkout"

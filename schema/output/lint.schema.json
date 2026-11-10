@@ -1,0 +1,190 @@
+{
+  "$defs": {
+    "Diagnostic": {
+      "description": "A single finding from loading or linting a requirement set.",
+      "properties": {
+        "code": {
+          "description": "Stable rule code, e.g. `RQ007`. See [`crate::rules::RULES`].",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The item the finding is about, if any."
+        }
+      },
+      "required": [
+        "severity",
+        "code",
+        "message",
+        "subject",
+        "location"
+      ],
+      "type": "object"
+    },
+    "EntityRef": {
+      "description": "A reference to any tracked item.",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/RequirementId"
+            },
+            "kind": {
+              "const": "requirement",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/NeedId"
+            },
+            "kind": {
+              "const": "need",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            "kind": {
+              "const": "stakeholder",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Location": {
+      "description": "A position in a source file. `line` and `column` are 1-based.",
+      "properties": {
+        "column": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "line": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "line",
+        "column"
+      ],
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "error",
+        "warning"
+      ],
+      "type": "string"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/lint/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Lint findings (`rqtk lint`).",
+  "properties": {
+    "checked": {
+      "description": "Requirements, needs and stakeholders checked.",
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "diagnostics": {
+      "items": {
+        "$ref": "#/$defs/Diagnostic"
+      },
+      "type": "array"
+    },
+    "errors": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "schema": {
+      "const": "rqtk/lint/2",
+      "type": "string"
+    },
+    "warnings": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "errors",
+    "warnings",
+    "checked",
+    "diagnostics"
+  ],
+  "title": "LintDoc",
+  "type": "object"
+}

@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "Listed": {
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "requirements": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "alias",
+        "git",
+        "ref",
+        "commit",
+        "requirements"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/interfaces-list/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "schema": {
+      "const": "rqtk/interfaces-list/2",
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/Listed"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "sources"
+  ],
+  "title": "ListReport",
+  "type": "object"
+}

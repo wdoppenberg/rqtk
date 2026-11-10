@@ -1,0 +1,88 @@
+{
+  "$defs": {
+    "Action": {
+      "oneOf": [
+        {
+          "enum": [
+            "created",
+            "updated",
+            "unchanged"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "linked",
+          "description": "A symlink to the shared copy in `.agents/skills` was created.",
+          "type": "string"
+        },
+        {
+          "const": "skipped_modified",
+          "description": "The file differs from the shipped version and `--force` was not given.",
+          "type": "string"
+        }
+      ]
+    },
+    "Written": {
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "link_target": {
+          "description": "For symlinks: where the link points, relative to the link's directory.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "action"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/skills-install/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "dirs": {
+      "description": "Skill directories installed into, relative to the repo root.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/Written"
+      },
+      "type": "array"
+    },
+    "instructions": {
+      "description": "Instruction files that received the rqtk block. Empty when none exists or was named.",
+      "items": {
+        "$ref": "#/$defs/Written"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/skills-install/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "dirs",
+    "files",
+    "instructions",
+    "dry_run"
+  ],
+  "title": "Report",
+  "type": "object"
+}

@@ -1,0 +1,61 @@
+{
+  "result": [
+    {
+      "id": "FOBC-SW-0002",
+      "links": [
+        {
+          "direction": "outgoing",
+          "id": "FOBC-SYS-0001",
+          "kind": "parents"
+        },
+        {
+          "direction": "outgoing",
+          "id": "FOBC-VA-SW-002-01",
+          "kind": "activities"
+        }
+      ],
+      "path": ".rqtk/requirements/SW/FOBC-SW-0002.toml",
+      "requirement": {
+        "allocation": null,
+        "approval": null,
+        "category": "SW",
+        "content_hash": null,
+        "criticality": null,
+        "id": "FOBC-SW-0002",
+        "interface": null,
+        "maturity": null,
+        "notes": null,
+        "priority": "High",
+        "rationale": "A 1 Hz downlink rate ensures sufficient telemetry throughput for nominal housekeeping monitoring.",
+        "risk": null,
+        "state": "Implemented",
+        "statement": "The OBC software shall always schedule telemetry downlink frames at a rate of no less than 1 Hz during ground-station contact windows.",
+        "title": "Telemetry Downlink Scheduling",
+        "trace": {
+          "parents": [
+            "FOBC-SYS-0001"
+          ]
+        },
+        "type": "Functional",
+        "validation": null,
+        "verification": {
+          "activities": [
+            {
+              "expected_result": "Frame rate >= 1 Hz",
+              "id": "FOBC-VA-SW-002-01",
+              "name": "Downlink throughput test",
+              "procedure": null,
+              "status": "Passed"
+            }
+          ],
+          "level": "System",
+          "method": "Test",
+          "owner": null,
+          "phase": "Development",
+          "success_criteria": "Downlink frame rate of at least 1 Hz sustained over a 10-minute contact window."
+        }
+      },
+      "status": "suspect"
+    }
+  ]
+}

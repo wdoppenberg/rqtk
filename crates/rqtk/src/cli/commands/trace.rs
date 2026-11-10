@@ -1,64 +1,41 @@
-use std::error::Error;
-
-use rqtk_core::query::ConsumedSummary;
-use rqtk_core::{RequirementId, RequirementSet};
-use serde::Serialize;
-
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
-#[derive(Serialize)]
-struct Report<'a> {
-    id: &'a RequirementId,
-    ancestors: &'a [RequirementId],
-    descendants: &'a [RequirementId],
-    /// Vendored interface requirements it consumes.
-    consumes: &'a [ConsumedSummary],
-}
-
-pub fn run(ctx: &Ctx, id: String) -> Result<Exit, Box<dyn Error>> {
-    let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let req_id = RequirementId(id);
-    let view = set.trace_view(&req_id)?;
-    let consumes: Vec<ConsumedSummary> = set.requirements()[&req_id]
-        .trace
-        .consumes
-        .iter()
-        .map(|c| set.consumed_summary(c))
-        .collect();
+pub fn run(ctx: &Ctx, id: String) -> Result<Exit, CliError> {
+    let repo = super::open(ctx)?;
+    let doc = repo.trace(&id)?;
     if ctx.json() {
-        output::json(&Report {
-            id: &req_id,
-            ancestors: &view.upward,
-            descendants: &view.downward,
-            consumes: &consumes,
-        })?;
+        output::json(&doc)?;
         return Ok(Exit::Ok);
     }
-    let title = |id: &RequirementId| {
+    let set = repo.requirement_set();
+    let req_id = &doc.id;
+    let consumes = &doc.consumes;
+    let title = |id: &str| {
         set.requirements()
-            .get(id)
-            .map_or_else(|| id.to_string(), |r| format!("{id}  {}", r.title))
+            .get(&rqtk_core::RequirementId(id.to_owned()))
+            .map_or_else(|| id.to_owned(), |r| format!("{id}  {}", r.title))
     };
-    output::section("Traceability", &title(&req_id));
-    if view.upward.is_empty() {
+    output::section("Traceability", &title(req_id));
+    if doc.ancestors.is_empty() {
         output::subsection("▲", "Parents: none, a top-level requirement");
     } else {
-        output::subsection("▲", &format!("Parents ({})", view.upward.len()));
-        for id in &view.upward {
+        output::subsection("▲", &format!("Parents ({})", doc.ancestors.len()));
+        for id in &doc.ancestors {
             output::item(&title(id));
         }
     }
-    if view.downward.is_empty() {
+    if doc.descendants.is_empty() {
         output::subsection("▼", "Children: none, no requirement derives from it");
     } else {
-        output::subsection("▼", &format!("Children ({})", view.downward.len()));
-        for id in &view.downward {
+        output::subsection("▼", &format!("Children ({})", doc.descendants.len()));
+        for id in &doc.descendants {
             output::item(&title(id));
         }
     }
     if !consumes.is_empty() {
         output::subsection("◆", &format!("Consumes ({})", consumes.len()));
-        for c in &consumes {
+        for c in consumes {
             output::item(&output::consumed_line(c));
         }
     }

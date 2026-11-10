@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0015"
+title = "Same field names everywhere"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "Data field names shall be identical in Rust, Python, TypeScript and `--json`."
+rationale = "Docs, schemas, JSON and code then describe one model; methods still follow each language's conventions."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Every field of every generated Python and TypeScript type has the name of the corresponding JSON Schema property."
+
+[[verification.activities]]
+id = "VA-CLIENT-0015-01"
+name = "Generated field names equal schema properties"

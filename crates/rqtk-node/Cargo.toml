@@ -1,0 +1,24 @@
+[package]
+name = "rqtk-node"
+# Released to npm as `@rqtk/client`, in step with the rqtk command line.
+version = "1.2.0"
+description = "The @rqtk/client npm package: the rqtk client for Node, Bun and Deno."
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3.14.2", default-features = false, features = ["napi6"] }
+napi-derive = "3.6.12"
+rqtk-client = { workspace = true }
+serde = { workspace = true }
+serde_json = "1"
+
+[build-dependencies]
+napi-build = "2.6.0"

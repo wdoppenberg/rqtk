@@ -4,8 +4,8 @@ category = "CLI"
 type = "Functional"
 state = "Approved"
 priority = "Critical"
-statement = "Every rqtk command that reports data shall print a single JSON document when given `--json` and only add fields within a major version."
-rationale = "Agents and scripts parse the output; removing or retyping a field breaks them."
+statement = "Every rqtk command that reports data shall print a single JSON document when given `--json`, serialising the client's types with a `schema` field naming its version, and shall only add fields within a major version."
+rationale = "Agents and scripts parse the output; removing or retyping a field breaks them. Serialising the client's types makes the CLI and the client libraries report the same thing, and the `schema` field tells a reader which version of the shape it has. rqtk 2.0 changes the shapes once, to the client's types."
 
 [trace]
 parents = ["RQTK-SYS-0003"]
@@ -14,7 +14,7 @@ parents = ["RQTK-SYS-0003"]
 method = "Test"
 level = "System"
 phase = "Release"
-success_criteria = "Every command's JSON parses and keeps every field and type of the recorded snapshot."
+success_criteria = "Every command's JSON parses, carries its `schema` version, and keeps every field and type of the recorded snapshot."
 
 [[verification.activities]]
 id = "VA-CLI-001-01"

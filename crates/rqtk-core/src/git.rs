@@ -3,9 +3,12 @@ use crate::model::{Requirement, RequirementId};
 use chrono::{DateTime, Utc};
 use gix::refs::transaction::PreviousValue;
 use serde::de::DeserializeOwned;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+
+/// The git library rqtk uses, for clients that hand repositories and object IDs around.
+pub use gix;
 
 pub const BASELINE_TAG_PREFIX: &str = "rqtk/";
 
@@ -114,14 +117,18 @@ pub struct RequirementDiff {
 
 pub struct GitContext {
     /// `None` outside a git repository: loading and linting work, history doesn't.
-    repository: Option<gix::Repository>,
+    repository: Option<gix::ThreadSafeRepository>,
     pub workdir: PathBuf,
+    /// Set for a snapshot: the files under `workdir` are this commit's tree, extracted, and
+    /// it stands in for HEAD.
+    snapshot: Option<gix::ObjectId>,
 }
 
 impl std::fmt::Debug for GitContext {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("GitContext")
             .field("workdir", &self.workdir)
+            .field("snapshot", &self.snapshot)
             .finish()
     }
 }
@@ -134,6 +141,7 @@ impl GitContext {
             return Ok(Self {
                 repository: None,
                 workdir: path.to_path_buf(),
+                snapshot: None,
             });
         };
         let workdir = repo
@@ -141,9 +149,152 @@ impl GitContext {
             .ok_or_else(|| RqtkError::Git("bare repositories are not supported".into()))?
             .to_path_buf();
         Ok(Self {
-            repository: Some(repo),
+            repository: Some(repo.into_sync()),
             workdir,
+            snapshot: None,
         })
+    }
+
+    /// A snapshot of `repo` at `commit`, whose tree has been extracted to `workdir`: files
+    /// are read from there, history and other revisions from `repo`, and `commit` is HEAD.
+    pub fn snapshot(repo: gix::Repository, workdir: PathBuf, commit: gix::ObjectId) -> Self {
+        Self {
+            repository: Some(repo.into_sync()),
+            workdir,
+            snapshot: Some(commit),
+        }
+    }
+
+    /// The commit a snapshot was taken at; `None` for a working tree.
+    pub fn snapshot_commit(&self) -> Option<CommitHash> {
+        self.snapshot.map(|c| CommitHash::from(c.to_string()))
+    }
+
+    /// The commit standing for HEAD: the snapshot's, or the repository's HEAD.
+    fn head(&self) -> Option<gix::ObjectId> {
+        if let Some(commit) = self.snapshot {
+            return Some(commit);
+        }
+        Some(
+            self.repository
+                .as_ref()?
+                .to_thread_local()
+                .head_id()
+                .ok()?
+                .detach(),
+        )
+    }
+
+    /// The commit `spec` names (a tag, baseline name, branch, SHA or anything `git
+    /// rev-parse` understands).
+    pub fn resolve_commit(&self, spec: &str) -> Result<gix::ObjectId, RqtkError> {
+        self.resolve_ref_commit_id(spec)
+    }
+
+    /// Write the tree of `commit` below `dest`, without symbolic links or submodules.
+    pub fn extract_commit(&self, commit: gix::ObjectId, dest: &Path) -> Result<(), RqtkError> {
+        extract(&self.repo()?, commit, dest)
+            .map(|_| ())
+            .map_err(RqtkError::Git)
+    }
+
+    /// The ID git would give `bytes` as a blob in this repository; `None` outside git.
+    pub(crate) fn blob_id(&self, bytes: &[u8]) -> Option<gix::ObjectId> {
+        let repo = self.repository.as_ref()?.to_thread_local();
+        gix::objs::compute_hash(repo.object_hash(), gix::objs::Kind::Blob, bytes).ok()
+    }
+
+    /// The blob of every file below `dir` at `spec`, by path relative to the git work tree.
+    pub(crate) fn blobs_at(
+        &self,
+        spec: &str,
+        dir: &Path,
+    ) -> Result<BTreeMap<PathBuf, gix::ObjectId>, RqtkError> {
+        self.blobs_in_tree(self.resolve_ref_tree_id(spec)?, dir)
+    }
+
+    fn blobs_in_tree(
+        &self,
+        tree_id: gix::ObjectId,
+        dir: &Path,
+    ) -> Result<BTreeMap<PathBuf, gix::ObjectId>, RqtkError> {
+        let repo = self.repo()?;
+        let rel = self.relative(dir);
+        let tree = repo
+            .find_object(tree_id)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        let Some(entry) = tree
+            .lookup_entry_by_path(&rel)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+        else {
+            return Ok(BTreeMap::new());
+        };
+        let subtree = repo
+            .find_object(entry.oid().to_owned())
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        Ok(subtree
+            .traverse()
+            .breadthfirst
+            .files()
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_iter()
+            .filter(|e| e.mode.is_blob())
+            .map(|e| (rel.join(e.filepath.to_string()), e.oid))
+            .collect())
+    }
+
+    /// The blob `oid` parsed as TOML; `None` when it is not a `T`.
+    pub(crate) fn parse_blob<T: DeserializeOwned>(&self, oid: gix::ObjectId) -> Option<T> {
+        let repo = self.repo().ok()?;
+        let object = repo.find_object(oid).ok()?;
+        toml::from_str(std::str::from_utf8(&object.data).ok()?).ok()
+    }
+
+    /// The bytes of `rel` (relative to `root`, the directory holding `.rqtk/`) at `spec`, or
+    /// `None` when it is not a file there. Looks up one path; reads no other object.
+    pub fn read_at(
+        &self,
+        spec: &str,
+        root: &Path,
+        rel: &str,
+    ) -> Result<Option<Vec<u8>>, RqtkError> {
+        let repo = self.repo()?;
+        let tree = repo
+            .find_object(self.resolve_ref_tree_id(spec)?)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+            .into_tree();
+        let path = self.relative(root).join(rel);
+        let Some(entry) = tree
+            .lookup_entry_by_path(&path)
+            .map_err(|e| RqtkError::Git(e.to_string()))?
+        else {
+            return Ok(None);
+        };
+        if !entry.mode().is_blob() {
+            return Ok(None);
+        }
+        Ok(self.blob(entry.oid().to_owned()))
+    }
+
+    /// The raw bytes of blob `oid`.
+    pub(crate) fn blob(&self, oid: gix::ObjectId) -> Option<Vec<u8>> {
+        Some(self.repo().ok()?.find_object(oid).ok()?.data.to_vec())
+    }
+
+    /// `path` relative to the git work tree, comparing canonical paths.
+    pub(crate) fn relative(&self, path: &Path) -> PathBuf {
+        let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+        canonical(path)
+            .strip_prefix(canonical(&self.workdir))
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|_| path.to_path_buf())
+    }
+
+    /// The underlying repository, for opening a snapshot of it.
+    pub fn repository(&self) -> Option<gix::Repository> {
+        self.repository.as_ref().map(|r| r.to_thread_local())
     }
 
     /// Whether the requirements live in a git repository.
@@ -151,18 +302,27 @@ impl GitContext {
         self.repository.is_some()
     }
 
-    fn repo(&self) -> Result<&gix::Repository, RqtkError> {
-        self.repository.as_ref().ok_or_else(|| {
-            RqtkError::Git(format!(
-                "`{}` is not inside a git repository; this command needs git history",
-                self.workdir.display()
-            ))
-        })
+    fn repo(&self) -> Result<gix::Repository, RqtkError> {
+        self.repository
+            .as_ref()
+            .map(|r| r.to_thread_local())
+            .ok_or_else(|| {
+                RqtkError::Git(format!(
+                    "`{}` is not inside a git repository; this command needs git history",
+                    self.workdir.display()
+                ))
+            })
     }
 
     /// Repository-relative paths that differ between revision `base` and the working tree,
     /// including uncommitted and untracked (non-ignored) files. Uses the `git` executable.
     pub fn changed_files_since(&self, base: &str) -> Result<Vec<PathBuf>, RqtkError> {
+        if let Some(commit) = self.snapshot {
+            return self.changed_between(
+                self.resolve_ref_tree_id(base)?,
+                self.commit_oid_to_tree_id(commit)?,
+            );
+        }
         self.repo()?;
         let git = |args: &[&str]| -> Result<String, RqtkError> {
             let out = std::process::Command::new("git")
@@ -190,10 +350,47 @@ impl GitContext {
         Ok(files)
     }
 
-    /// Full SHA of the commit HEAD points to, or `None` in a repository without commits.
+    /// Paths whose blob differs between two trees, sorted.
+    fn changed_between(
+        &self,
+        from: gix::ObjectId,
+        to: gix::ObjectId,
+    ) -> Result<Vec<PathBuf>, RqtkError> {
+        let blobs = |tree: gix::ObjectId| -> Result<BTreeMap<String, gix::ObjectId>, RqtkError> {
+            let repo = self.repo()?;
+            let tree = repo
+                .find_object(tree)
+                .map_err(|e| RqtkError::Git(e.to_string()))?
+                .into_tree();
+            Ok(tree
+                .traverse()
+                .breadthfirst
+                .files()
+                .map_err(|e| RqtkError::Git(e.to_string()))?
+                .into_iter()
+                .filter(|e| !e.mode.is_tree())
+                .map(|e| (e.filepath.to_string(), e.oid))
+                .collect())
+        };
+        let (from, to) = (blobs(from)?, blobs(to)?);
+        let mut changed: Vec<PathBuf> = from
+            .iter()
+            .filter(|(p, oid)| to.get(*p) != Some(*oid))
+            .map(|(p, _)| PathBuf::from(p))
+            .chain(
+                to.keys()
+                    .filter(|p| !from.contains_key(*p))
+                    .map(PathBuf::from),
+            )
+            .collect();
+        changed.sort();
+        Ok(changed)
+    }
+
+    /// Full SHA of the commit HEAD points to, or `None` in a repository without commits. For
+    /// a snapshot, the snapshot's commit.
     pub fn head_commit(&self) -> Option<CommitHash> {
-        let id = self.repository.as_ref()?.head_id().ok()?;
-        Some(CommitHash::from(id.to_string()))
+        Some(CommitHash::from(self.head()?.to_string()))
     }
 
     pub fn committer_name(&self) -> Result<String, RqtkError> {
@@ -206,12 +403,15 @@ impl GitContext {
 
     /// Create an annotated tag `rqtk/<name>` at HEAD.
     pub fn create_baseline_tag(&self, name: &BaselineName, message: &str) -> Result<(), RqtkError> {
-        let head_id = self
-            .repo()?
-            .head_id()
-            .map_err(|e| RqtkError::Git(e.to_string()))?;
-        let sig = self
-            .repo()?
+        if self.snapshot.is_some() {
+            return Err(RqtkError::Git(
+                "a snapshot is read-only; baselines are created in a working tree".into(),
+            ));
+        }
+        let repo = self.repo()?;
+        let head_id = repo.head_id().map_err(|e| RqtkError::Git(e.to_string()))?;
+        let repo = self.repo()?;
+        let sig = repo
             .committer()
             .ok_or_else(|| RqtkError::Git("no committer identity configured".into()))
             .and_then(|r| r.map_err(|e| RqtkError::Git(e.to_string())))?;
@@ -234,8 +434,9 @@ impl GitContext {
         let prefix = format!("refs/tags/{BASELINE_TAG_PREFIX}");
         let mut baselines = Vec::new();
 
-        let refs = self
-            .repo()?
+        let repo = self.repo()?;
+
+        let refs = repo
             .references()
             .map_err(|e| RqtkError::Git(e.to_string()))?;
 
@@ -255,7 +456,7 @@ impl GitContext {
                 None => continue,
             };
 
-            let obj = match self.repo()?.find_object(direct_oid) {
+            let obj = match repo.find_object(direct_oid) {
                 Ok(o) => o,
                 Err(_) => continue,
             };
@@ -316,9 +517,8 @@ impl GitContext {
             .unwrap_or(req_path)
             .to_path_buf();
 
-        let head_id = match repo.head_id() {
-            Ok(id) => id.detach(),
-            Err(_) => return Ok(None),
+        let Some(head_id) = self.head() else {
+            return Ok(None);
         };
 
         // Collect all commits and reverse to walk oldest-first.
@@ -391,9 +591,8 @@ impl GitContext {
             .unwrap_or(req_path)
             .to_path_buf();
 
-        let head_id = match repo.head_id() {
-            Ok(id) => id.detach(),
-            Err(_) => return Ok(Vec::new()),
+        let Some(head_id) = self.head() else {
+            return Ok(Vec::new());
         };
 
         let walk = repo
@@ -467,12 +666,13 @@ impl GitContext {
         let from_tree_id = self.resolve_baseline_tree_id(from)?;
         let to_tree_id = self.resolve_baseline_tree_id(to)?;
         self.diff_tree_ids(
-            from_tree_id,
-            to_tree_id,
-            from.to_string(),
-            to.to_string(),
-            req_dir,
-            spec_root,
+            (from_tree_id, from.to_string()),
+            (to_tree_id, to.to_string()),
+            &DiffScope {
+                req_dir,
+                spec_root,
+                known: &BTreeMap::new(),
+            },
         )
     }
 
@@ -486,44 +686,80 @@ impl GitContext {
         to: &str,
         req_dir: &Path,
         spec_root: &Path,
+        known: &BTreeMap<gix::ObjectId, bool>,
     ) -> Result<RequirementDiff, RqtkError> {
         let from_tree_id = self.resolve_ref_tree_id(from)?;
         let to_tree_id = self.resolve_ref_tree_id(to)?;
         self.diff_tree_ids(
-            from_tree_id,
-            to_tree_id,
-            from.to_string(),
-            to.to_string(),
-            req_dir,
-            spec_root,
+            (from_tree_id, from.to_string()),
+            (to_tree_id, to.to_string()),
+            &DiffScope {
+                req_dir,
+                spec_root,
+                known,
+            },
         )
     }
 
     fn diff_tree_ids(
         &self,
-        from_tree_id: gix::ObjectId,
-        to_tree_id: gix::ObjectId,
-        from_label: String,
-        to_label: String,
-        req_dir: &Path,
-        spec_root: &Path,
+        (from_tree_id, from_label): (gix::ObjectId, String),
+        (to_tree_id, to_label): (gix::ObjectId, String),
+        scope: &DiffScope<'_>,
     ) -> Result<RequirementDiff, RqtkError> {
-        let from_tree = self
-            .repo()?
-            .find_object(from_tree_id)
-            .map_err(|e| RqtkError::Git(e.to_string()))?
-            .into_tree();
-        let to_tree = self
-            .repo()?
-            .find_object(to_tree_id)
-            .map_err(|e| RqtkError::Git(e.to_string()))?
-            .into_tree();
-
-        let repo_root = self.workdir.as_path();
-        let from_reqs = read_requirements_from_tree(self.repo()?, &from_tree, req_dir, repo_root)?;
-        let to_reqs = read_requirements_from_tree(self.repo()?, &to_tree, req_dir, repo_root)?;
-        let from_files = self.tree_files(from_tree_id, spec_root)?;
-        let to_files = self.tree_files(to_tree_id, spec_root)?;
+        let DiffScope {
+            req_dir,
+            spec_root,
+            known,
+        } = *scope;
+        // A file whose blob is the same on both sides is unchanged, unless it is an interface
+        // requirement (its spec files may differ): only the rest is parsed.
+        let from_blobs = self.blobs_in_tree(from_tree_id, req_dir)?;
+        let to_blobs = self.blobs_in_tree(to_tree_id, req_dir)?;
+        let unchanged: BTreeSet<&PathBuf> = to_blobs
+            .iter()
+            .filter(|(path, oid)| {
+                from_blobs.get(*path) == Some(*oid)
+                    && match known.get(*oid) {
+                        // A blob the caller has loaded: it knows whether it is an interface.
+                        Some(interface) => !interface,
+                        None => self
+                            .blob(**oid)
+                            .is_some_and(|bytes| !contains(&bytes, b"interface")),
+                    }
+            })
+            .map(|(path, _)| path)
+            .collect();
+        let parse =
+            |blobs: &BTreeMap<PathBuf, gix::ObjectId>| -> BTreeMap<RequirementId, Requirement> {
+                blobs
+                    .iter()
+                    .filter(|(path, _)| {
+                        path.extension().is_some_and(|e| e == "toml") && !unchanged.contains(path)
+                    })
+                    .filter_map(|(_, oid)| self.parse_blob::<Requirement>(*oid))
+                    .map(|r| (r.id.clone(), r))
+                    .collect()
+            };
+        let from_reqs = parse(&from_blobs);
+        let to_reqs = parse(&to_blobs);
+        // Spec files are only read when an interface requirement is compared.
+        let needs_specs = from_reqs
+            .values()
+            .chain(to_reqs.values())
+            .any(|r| r.interface.is_some());
+        let (from_files, to_files) = if needs_specs {
+            (
+                Some(self.tree_files(from_tree_id, spec_root)?),
+                Some(self.tree_files(to_tree_id, spec_root)?),
+            )
+        } else {
+            (None, None)
+        };
+        let hash = |r: &Requirement, files: &Option<TreeFiles>| match files {
+            Some(files) => hash_in(r, files),
+            None => r.compute_content_hash(None),
+        };
 
         let from_ids: std::collections::HashSet<_> = from_reqs.keys().cloned().collect();
         let to_ids: std::collections::HashSet<_> = to_reqs.keys().cloned().collect();
@@ -543,7 +779,7 @@ impl GitContext {
 
             // Always recompute: a stored hash may be stale. An interface requirement can
             // change through its spec files alone.
-            let change_kind = if hash_in(from_r, &from_files) != hash_in(to_r, &to_files) {
+            let change_kind = if hash(from_r, &from_files) != hash(to_r, &to_files) {
                 ChangeKind::Semantic
             } else if toml::to_string(from_r).ok() != toml::to_string(to_r).ok() {
                 ChangeKind::Cosmetic
@@ -571,13 +807,17 @@ impl GitContext {
     /// - `origin/branch` style → `refs/remotes/origin/branch`
     /// - bare names → tried as rqtk baseline tag, local branch, then tag
     fn resolve_ref_tree_id(&self, spec: &str) -> Result<gix::ObjectId, RqtkError> {
+        let commit = self.resolve_ref_commit_id(spec)?;
+        self.commit_oid_to_tree_id(commit)
+    }
+
+    /// [`Self::resolve_ref_tree_id`], stopping at the commit.
+    fn resolve_ref_commit_id(&self, spec: &str) -> Result<gix::ObjectId, RqtkError> {
+        self.repo()?;
         if spec == "HEAD" {
-            let head_id = self
-                .repo()?
-                .head_id()
-                .map_err(|e| RqtkError::Git(e.to_string()))?
-                .detach();
-            return self.commit_oid_to_tree_id(head_id);
+            return self
+                .head()
+                .ok_or_else(|| RqtkError::Git("HEAD does not point to a commit".into()));
         }
 
         let candidates: Vec<String> = if spec.starts_with("refs/") {
@@ -598,7 +838,7 @@ impl GitContext {
                     .peel_to_id()
                     .map_err(|e| RqtkError::Git(e.to_string()))?
                     .detach();
-                return self.commit_oid_to_tree_id(commit_id);
+                return Ok(commit_id);
             }
         }
 
@@ -611,7 +851,7 @@ impl GitContext {
                 .peel_to_commit()
                 .map_err(|e| git_err(&e))?
                 .id;
-            return self.commit_oid_to_tree_id(commit_id);
+            return Ok(commit_id);
         }
 
         Err(RqtkError::Git(format!(
@@ -620,8 +860,8 @@ impl GitContext {
     }
 
     fn commit_oid_to_tree_id(&self, oid: gix::ObjectId) -> Result<gix::ObjectId, RqtkError> {
-        let commit = self
-            .repo()?
+        let repo = self.repo()?;
+        let commit = repo
             .find_object(oid)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .try_into_commit()
@@ -635,8 +875,8 @@ impl GitContext {
     /// The text of repository-relative file `rel` at `spec`, or `None` if it does not exist
     /// there.
     pub fn file_at_ref(&self, spec: &str, rel: &Path) -> Result<Option<String>, RqtkError> {
-        let tree = self
-            .repo()?
+        let repo = self.repo()?;
+        let tree = repo
             .find_object(self.resolve_ref_tree_id(spec)?)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
@@ -646,8 +886,8 @@ impl GitContext {
         else {
             return Ok(None);
         };
-        let obj = self
-            .repo()?
+        let repo = self.repo()?;
+        let obj = repo
             .find_object(entry.oid().to_owned())
             .map_err(|e| RqtkError::Git(e.to_string()))?;
         Ok(Some(String::from_utf8_lossy(&obj.data).into_owned()))
@@ -655,15 +895,11 @@ impl GitContext {
 
     /// The files below `spec_root` (the directory holding `.rqtk/`) as they are at `spec`,
     /// for resolving interface specs at that ref.
-    pub fn spec_files_at(&self, spec: &str, spec_root: &Path) -> Result<TreeFiles<'_>, RqtkError> {
+    pub fn spec_files_at(&self, spec: &str, spec_root: &Path) -> Result<TreeFiles, RqtkError> {
         self.tree_files(self.resolve_ref_tree_id(spec)?, spec_root)
     }
 
-    fn tree_files(
-        &self,
-        tree_id: gix::ObjectId,
-        spec_root: &Path,
-    ) -> Result<TreeFiles<'_>, RqtkError> {
+    fn tree_files(&self, tree_id: gix::ObjectId, spec_root: &Path) -> Result<TreeFiles, RqtkError> {
         let repo = self.repo()?;
         let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
         let prefix = canonical(spec_root)
@@ -699,6 +935,7 @@ impl GitContext {
                 blobs.insert(rel.to_owned(), entry.oid);
             }
         }
+        drop(tree);
         Ok(TreeFiles { repo, blobs })
     }
 
@@ -709,12 +946,12 @@ impl GitContext {
         spec: &str,
         dir: &Path,
     ) -> Result<Vec<T>, RqtkError> {
-        let tree = self
-            .repo()?
+        let repo = self.repo()?;
+        let tree = repo
             .find_object(self.resolve_ref_tree_id(spec)?)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
-        read_items_from_tree(self.repo()?, &tree, dir, &self.workdir)
+        read_items_from_tree(&self.repo()?, &tree, dir, &self.workdir)
     }
 
     /// Return the parsed requirement file as it existed at a given baseline.
@@ -724,8 +961,8 @@ impl GitContext {
         req_path: &Path,
     ) -> Result<Option<Requirement>, RqtkError> {
         let tree_id = self.resolve_baseline_tree_id(baseline)?;
-        let tree = self
-            .repo()?
+        let repo = self.repo()?;
+        let tree = repo
             .find_object(tree_id)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .into_tree();
@@ -748,8 +985,8 @@ impl GitContext {
         {
             Some(entry) => {
                 let blob_oid = entry.oid().to_owned();
-                let obj = self
-                    .repo()?
+                let repo = self.repo()?;
+                let obj = repo
                     .find_object(blob_oid)
                     .map_err(|e| RqtkError::Git(e.to_string()))?;
                 let content =
@@ -767,8 +1004,8 @@ impl GitContext {
 
     fn resolve_baseline_tree_id(&self, name: &BaselineName) -> Result<gix::ObjectId, RqtkError> {
         let ref_name = format!("refs/tags/{BASELINE_TAG_PREFIX}{name}");
-        let mut ref_ = self
-            .repo()?
+        let repo = self.repo()?;
+        let mut ref_ = repo
             .find_reference(ref_name.as_str())
             .map_err(|_| RqtkError::BaselineNotFound(name.to_string()))?;
         // peel_to_id follows symrefs and tag objects to reach the commit
@@ -776,8 +1013,8 @@ impl GitContext {
             .peel_to_id()
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .detach();
-        let commit = self
-            .repo()?
+        let repo = self.repo()?;
+        let commit = repo
             .find_object(commit_id)
             .map_err(|e| RqtkError::Git(e.to_string()))?
             .try_into_commit()
@@ -789,14 +1026,29 @@ impl GitContext {
     }
 }
 
+/// What a requirement diff compares within the two trees.
+#[derive(Clone, Copy)]
+struct DiffScope<'a> {
+    /// The requirements directory.
+    req_dir: &'a Path,
+    /// The directory holding `.rqtk/`, which interface spec paths are relative to.
+    spec_root: &'a Path,
+    /// Whether each blob the caller has loaded is an interface requirement.
+    known: &'a BTreeMap<gix::ObjectId, bool>,
+}
+
+fn contains(haystack: &[u8], needle: &[u8]) -> bool {
+    haystack.windows(needle.len()).any(|w| w == needle)
+}
+
 /// Files as they are in a git tree, read for resolving interface specs at a ref.
-pub struct TreeFiles<'r> {
-    repo: &'r gix::Repository,
+pub struct TreeFiles {
+    repo: gix::Repository,
     /// Blob of each file, by path relative to the spec root.
     blobs: BTreeMap<String, gix::ObjectId>,
 }
 
-impl crate::spec::SpecFiles for TreeFiles<'_> {
+impl crate::spec::SpecFiles for TreeFiles {
     fn read(&self, path: &str) -> std::io::Result<Option<Vec<u8>>> {
         let Some(oid) = self.blobs.get(path) else {
             return Ok(None);
@@ -822,20 +1074,6 @@ pub(crate) fn hash_in(req: &Requirement, files: &dyn crate::spec::SpecFiles) -> 
         .as_ref()
         .map(|i| crate::spec::resolve(files, i).digest);
     req.compute_content_hash(digest.as_deref())
-}
-
-fn read_requirements_from_tree(
-    repo: &gix::Repository,
-    tree: &gix::Tree<'_>,
-    req_dir: &Path,
-    repo_root: &Path,
-) -> Result<BTreeMap<RequirementId, Requirement>, RqtkError> {
-    Ok(
-        read_items_from_tree::<Requirement>(repo, tree, req_dir, repo_root)?
-            .into_iter()
-            .map(|r| (r.id.clone(), r))
-            .collect(),
-    )
 }
 
 /// Parse every `.toml` file below `dir` in `tree` as a `T`. A directory missing from the
@@ -887,4 +1125,73 @@ fn read_items_from_tree<T: DeserializeOwned>(
         }
     }
     Ok(items)
+}
+
+/// Write the tree of `commit` below `dest`. Symbolic links and submodules are not written;
+/// the paths of symbolic links are returned.
+pub(crate) fn extract(
+    repo: &gix::Repository,
+    commit: gix::ObjectId,
+    dest: &Path,
+) -> Result<BTreeSet<String>, String> {
+    let tree = repo
+        .find_object(commit)
+        .map_err(|e| e.to_string())?
+        .peel_to_commit()
+        .map_err(|e| e.to_string())?
+        .tree()
+        .map_err(|e| e.to_string())?;
+    let mut symlinks = BTreeSet::new();
+    write_tree(repo, tree, dest, "", &mut symlinks)?;
+    Ok(symlinks)
+}
+
+fn write_tree(
+    repo: &gix::Repository,
+    tree: gix::Tree<'_>,
+    dest: &Path,
+    prefix: &str,
+    symlinks: &mut BTreeSet<String>,
+) -> Result<(), String> {
+    use gix::objs::tree::EntryKind;
+    std::fs::create_dir_all(dest).map_err(|e| e.to_string())?;
+    for entry in tree.iter() {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.filename().to_string();
+        if name.is_empty()
+            || name == "."
+            || name == ".."
+            || name.contains(['/', '\\'])
+            || name.chars().any(char::is_control)
+        {
+            return Err(format!(
+                "provider tree has an invalid file name `{}`",
+                name.escape_debug()
+            ));
+        }
+        let rel = if prefix.is_empty() {
+            name.clone()
+        } else {
+            format!("{prefix}/{name}")
+        };
+        let oid = entry.oid().to_owned();
+        match entry.mode().kind() {
+            EntryKind::Tree => {
+                let sub = repo
+                    .find_object(oid)
+                    .map_err(|e| e.to_string())?
+                    .into_tree();
+                write_tree(repo, sub, &dest.join(&name), &rel, symlinks)?;
+            }
+            EntryKind::Blob | EntryKind::BlobExecutable => {
+                let blob = repo.find_object(oid).map_err(|e| e.to_string())?;
+                std::fs::write(dest.join(&name), &blob.data).map_err(|e| e.to_string())?;
+            }
+            EntryKind::Link => {
+                symlinks.insert(rel);
+            }
+            EntryKind::Commit => {}
+        }
+    }
+    Ok(())
 }

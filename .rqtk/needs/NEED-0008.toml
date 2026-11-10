@@ -1,0 +1,6 @@
+id = "NEED-0008"
+title = "Many repositories, any revision"
+state = "Draft"
+stakeholders = ["STK-004"]
+statement = "Tool builders need to read many repositories, at any revision, including ones they have no checkout of."
+rationale = "A portal shows every system of a programme and how its coverage changed between baselines; it should not have to manage a working tree per repository and revision."

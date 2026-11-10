@@ -1,7 +1,6 @@
-use std::error::Error;
-
 use rqtk_core::{EntityRef, RequirementId, RequirementSet, VerificationActivity};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{Ctx, Exit, Usage};
 
 pub struct AddActivityArgs {
@@ -12,7 +11,7 @@ pub struct AddActivityArgs {
 }
 
 /// Append a verification activity to a requirement file, keeping its comments and layout.
-pub fn run(ctx: &Ctx, args: AddActivityArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: AddActivityArgs) -> Result<Exit, CliError> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     super::refuse_vendored(&set, &args.requirement, "add-activity")?;
     let req_id = RequirementId(args.requirement.clone());

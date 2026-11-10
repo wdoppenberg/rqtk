@@ -2264,6 +2264,30 @@ fn scan_lists_links_with_test_names() {
         .stdout(predicate::str::contains("boots"));
 }
 
+#[verifies("VA-CORE-006-01")]
+#[test]
+fn scan_reads_module_flavoured_javascript_and_typescript_by_default() {
+    let (_dir, repo_root) = evidence_fixture(&["VA-1", "VA-2", "VA-3", "VA-4"], &[]);
+    for (i, ext) in ["mjs", "cjs", "mts", "cts"].iter().enumerate() {
+        fs::write(
+            repo_root.join(format!("tests/app.test.{ext}")),
+            format!(
+                "// rqtk: verifies VA-{}\ntest(\"works in {ext}\", () => {{}});\n",
+                i + 1
+            ),
+        )
+        .unwrap();
+    }
+    let out = rqtk(&repo_root).arg("scan").assert().success();
+    let stdout = String::from_utf8_lossy(&out.get_output().stdout).into_owned();
+    for ext in ["mjs", "cjs", "mts", "cts"] {
+        assert!(
+            stdout.contains(&format!("works in {ext}")),
+            "{ext}: {stdout}"
+        );
+    }
+}
+
 #[verifies("VA-SYS-002-01")]
 #[test]
 fn verify_then_edit_makes_requirement_suspect_until_reverified() {
@@ -2851,9 +2875,11 @@ fn explain_describes_rules_and_fixes() {
         .stdout(predicate::str::contains("shall"))
         .stdout(predicate::str::contains("Fix:"));
     let (_, one) = json_stdout(&repo_root, &["explain", "RQ021"]);
-    assert_eq!(one["severity"], "warning");
+    assert_eq!(one["schema"], "rqtk/explain/2");
+    assert_eq!(one["rules"].as_array().unwrap().len(), 1);
+    assert_eq!(one["rules"][0]["severity"], "warning");
     let (_, all) = json_stdout(&repo_root, &["explain"]);
-    assert!(all.as_array().unwrap().len() >= 30);
+    assert!(all["rules"].as_array().unwrap().len() >= 30);
     rqtk(&repo_root).args(["explain", "RQ999"]).assert().code(2);
 }
 
@@ -2995,7 +3021,8 @@ fn skills_list_names_model_and_user_invoked_skills() {
     let repo_root = fixture_root("firesat-obc");
     let (code, skills) = json_stdout(&repo_root, &["skills", "list"]);
     assert_eq!(code, 0);
-    let skills = skills.as_array().unwrap();
+    assert_eq!(skills["schema"], "rqtk/skills/2");
+    let skills = skills["skills"].as_array().unwrap();
     let user: Vec<&str> = skills
         .iter()
         .filter(|s| s["user_invoked"] == true)
@@ -3474,8 +3501,8 @@ fn missing_from(
     }
 }
 
-/// Commands whose `--json` output is covered by the 1.x compatibility promise, run on the
-/// FireSat fixture.
+/// Commands whose `--json` output is covered by the compatibility promise (fields are only
+/// added within a major version), run on the FireSat fixture.
 const JSON_CONTRACT: &[&[&str]] = &[
     &["lint"],
     &["coverage"],
@@ -3508,6 +3535,8 @@ const JSON_CONTRACT: &[&[&str]] = &[
     &["explain"],
     &["schema"],
     &["skills", "list"],
+    &["baseline", "--list"],
+    &["log", "FOBC-SW-0001"],
 ];
 
 #[verifies("VA-CLI-001-01")]
@@ -3518,6 +3547,12 @@ fn json_output_only_grows() {
         .iter()
         .map(|args| {
             let (_, value) = json_stdout(&repo_root, args);
+            let schema = value["schema"].as_str().unwrap_or_default();
+            assert!(
+                schema.starts_with("rqtk/") && schema.ends_with("/2"),
+                "`rqtk {}` has no schema field: {value}",
+                args.join(" ")
+            );
             (args.join(" "), shape(&value))
         })
         .collect();
@@ -3540,7 +3575,7 @@ fn json_output_only_grows() {
     missing_from(&snapshot, &current, "", &mut broken);
     assert!(
         broken.is_empty(),
-        "JSON output lost fields or changed types (a breaking change in 1.x):\n{}",
+        "JSON output lost fields or changed types (a breaking change within 2.x):\n{}",
         broken.join("\n")
     );
 }

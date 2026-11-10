@@ -12,7 +12,7 @@ name = "rqtk"
 version = "1.2.0"
 
 [identification]
-id_pattern = "^RQTK-(SYS|CLI|CORE)-\\d{4}$"
+id_pattern = "^RQTK-(SYS|CLI|CORE|CLIENT)-\\d{4}$"
 id_separator = "-"
 prefix = "RQTK"
 zero_padding = 4
@@ -28,6 +28,10 @@ level = 2
 
 [categories.CORE]
 name = "Core Library"
+level = 2
+
+[categories.CLIENT]
+name = "Client libraries"
 level = 2
 
 [types]
@@ -63,7 +67,7 @@ forbidden_keywords = []
 # Tests of the annotations themselves, not verifications of requirements.
 exclude = [
     "crates/rqtk-macros/tests/compile_fail/**",
-    "crates/rqtk-py/tests/**",
+    "crates/rqtk-py/tests/test_verification.py",
     "crates/rqtk-core/tests/fixtures/ecosystems/**",
     "crates/rqtk/tests/fixtures/interfaces/**",
 ]

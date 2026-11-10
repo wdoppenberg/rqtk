@@ -1,0 +1,22 @@
+id = "RQTK-CLI-0028"
+title = "Published JSON schemas"
+category = "CLI"
+type = "Interface"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk shall publish a JSON Schema for every `--json` document and every client type."
+rationale = "Programs in any language can then validate what they read, and the Python and TypeScript types are generated from these schemas."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Every `--json` document of every command validates against its published schema."
+
+[[verification.activities]]
+id = "VA-CLI-0028-01"
+name = "Every --json document validates"

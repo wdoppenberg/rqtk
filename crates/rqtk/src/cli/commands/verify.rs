@@ -1,10 +1,11 @@
-use std::{collections::BTreeMap, error::Error, path::PathBuf};
+use std::{collections::BTreeMap, path::PathBuf};
 
 use console::style;
 use rqtk_core::evidence::{self, ActivityRun, EVIDENCE_PATH};
 use rqtk_core::{Evidence, EvidenceChange, Outcome, RequirementSet, SourceLink, scan};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 pub struct VerifyArgs {
@@ -13,8 +14,8 @@ pub struct VerifyArgs {
     pub dry_run: bool,
 }
 
-#[derive(Serialize)]
-struct Report<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
     test_results: usize,
     activities: &'a BTreeMap<String, ActivityRun>,
     changes: &'a [EvidenceChange],
@@ -35,7 +36,7 @@ struct Report<'a> {
 /// Exits 1 if a linked test failed, if a linked test matched several distinct tests, if the
 /// results matched no linked test at all, or with `--check` if the evidence file is out of
 /// date.
-pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, CliError> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     let links = scan::scan(set.repo_root(), &set.config().scan)?;
     let mut results = Vec::new();
@@ -65,16 +66,19 @@ pub fn run(ctx: &Ctx, args: VerifyArgs) -> Result<Exit, Box<dyn Error>> {
     );
 
     if ctx.json() {
-        output::json(&Report {
-            test_results: results.len(),
-            activities: &runs,
-            changes: &changes,
-            written: write,
-            up_to_date: changes.is_empty(),
-            commit: commit.as_deref(),
-            unattached_links: unattached,
-            not_in_results,
-        })?;
+        output::document(
+            "verify",
+            &Report {
+                test_results: results.len(),
+                activities: &runs,
+                changes: &changes,
+                written: write,
+                up_to_date: changes.is_empty(),
+                commit: commit.as_deref(),
+                unattached_links: unattached,
+                not_in_results,
+            },
+        )?;
         return Ok(exit);
     }
 

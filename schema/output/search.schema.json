@@ -1,0 +1,149 @@
+{
+  "$defs": {
+    "EntityRef": {
+      "description": "A reference to any tracked item.",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/RequirementId"
+            },
+            "kind": {
+              "const": "requirement",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/NeedId"
+            },
+            "kind": {
+              "const": "need",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            "kind": {
+              "const": "stakeholder",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "FieldMatch": {
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "ranges": {
+          "description": "Byte ranges of each match within `value`.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "format": "uint",
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "value",
+        "ranges"
+      ],
+      "type": "object"
+    },
+    "Hit": {
+      "properties": {
+        "matches": {
+          "items": {
+            "$ref": "#/$defs/FieldMatch"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/EntityRef"
+        }
+      },
+      "required": [
+        "subject",
+        "path",
+        "matches"
+      ],
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/search/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`rqtk search --json`.",
+  "properties": {
+    "hits": {
+      "items": {
+        "$ref": "#/$defs/Hit"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/search/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "hits"
+  ],
+  "title": "Report",
+  "type": "object"
+}

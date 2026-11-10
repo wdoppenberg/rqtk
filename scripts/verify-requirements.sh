@@ -23,8 +23,52 @@ mkdir -p "$(dirname "$junit")"
 RUSTC_BOOTSTRAP=1 cargo test --workspace --exclude rqtk-py --tests \
   -- -Z unstable-options --format junit > "$junit"
 
+# The Python package's tests, against the extension built from this checkout, in a virtual
+# environment under target/ ($PYTHON picks the interpreter).
+venv="target/python"
+# CI's Rust cache can restore target/ with part of a venv in it, so rebuild an incomplete one.
+if [[ ! -x "$venv/bin/python" || ! -x "$venv/bin/maturin" || ! -x "$venv/bin/pytest" ]]; then
+  rm -rf "$venv"
+  "${PYTHON:-python3}" -m venv "$venv"
+fi
+"$venv/bin/python" -m pip install --quiet --disable-pip-version-check "maturin>=1.9,<2" pytest
+VIRTUAL_ENV="$repo_root/$venv" "$venv/bin/maturin" develop --quiet -m crates/rqtk-py/Cargo.toml
+python_junit="$(dirname "$junit")/pytest.xml"
+"$venv/bin/python" -m pytest -q crates/rqtk-py/tests --junitxml "$python_junit"
+
+# The TypeScript package's tests, against the addon built from this checkout. Node's results
+# are the evidence; Bun and Deno run the same tests, and CI requires both. The tests compare
+# views with the CLI's, so build it first. Remote opens use a cache under target/.
+# Each language also runs the conformance suite in conformance/.
 cargo build -p rqtk
+export RQTK_CACHE_DIR="$repo_root/target/client-cache"
+node_junit="$(dirname "$junit")/node.xml"
+js_tests=(./tests/client.test.mjs ./tests/conformance.test.mjs)
+(
+  cd crates/rqtk-node
+  npm ci --silent --no-audit --no-fund
+  npx napi build --platform --js native.cjs --dts native.d.ts
+  npm run --silent typecheck
+  node --test --test-reporter=spec --test-reporter-destination=stdout \
+    --test-reporter=junit --test-reporter-destination="$repo_root/$node_junit" "${js_tests[@]}"
+  for runtime in bun deno; do
+    if ! command -v "$runtime" > /dev/null; then
+      if [[ -n "${CI:-}" ]]; then
+        echo "error: $runtime is required in CI" >&2
+        exit 1
+      fi
+      echo "warning: $runtime is not installed; skipping its run of the TypeScript tests" >&2
+      continue
+    fi
+    case "$runtime" in
+      bun) bun test "${js_tests[@]}" ;;
+      deno) deno test --allow-all "${js_tests[@]}" ;;
+    esac
+  done
+)
+
 ./target/debug/rqtk lint
 # shellcheck disable=SC2086
-./target/debug/rqtk verify $mode --results "$junit"
+./target/debug/rqtk verify $mode --results "$junit" "$python_junit" "$node_junit"
+
 ./target/debug/rqtk coverage --strict

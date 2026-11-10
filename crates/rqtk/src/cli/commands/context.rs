@@ -1,37 +1,23 @@
-use std::error::Error;
-
 use console::style;
+use rqtk_core::ActivityState;
 use rqtk_core::query::{Context, Summary};
-use rqtk_core::{ActivityState, RequirementSet};
 
-use crate::cli::output::{self, Ctx, Exit, Usage, consumed_line, printable};
+use crate::cli::error::CliError;
+use crate::cli::output::{self, Ctx, Exit, consumed_line, printable};
 
-pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
-    let (set, mut diagnostics) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
-    let (links, evidence) = super::load_links_and_evidence(&set)?;
-    diagnostics.extend(set.link_diagnostics(&links));
-    for d in &mut diagnostics {
-        if let Some(loc) = d.location.as_mut() {
-            loc.path = output::relative(&loc.path, &ctx.root);
-        }
-    }
-    let verification = set.verification_status(&links, &evidence);
-    let context = set
-        .context(id, &links, &evidence, &verification, &diagnostics)
-        .ok_or_else(|| {
-            Usage(format!(
-                "no requirement, need or stakeholder with ID `{id}`"
-            ))
-        })?;
+pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, CliError> {
+    let repo = super::open(ctx)?;
+    let doc = repo.context(id)?;
 
     if ctx.json() {
-        output::json(&context)?;
+        output::json(&doc)?;
         return Ok(Exit::Ok);
     }
 
+    let context = &doc.context;
     match &context {
         Context::Requirement(c) => {
-            let r = c.requirement;
+            let r = &c.requirement;
             header(&r.id.0, &r.title, &c.path.display().to_string());
             println!(
                 "  {}",
@@ -50,7 +36,7 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
             if !c.links.is_empty() {
                 output::section("Links", "");
                 for l in &c.links {
-                    let arrow = if l.direction == "outgoing" {
+                    let arrow = if l.direction == rqtk_core::query::Direction::Outgoing {
                         "→"
                     } else {
                         "←"
@@ -72,7 +58,11 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
             }
             if let Some(v) = &c.verification {
                 output::section("Verification", &format!("{:?}", v.status));
-                for (activity, state) in &v.activities {
+                for rqtk_core::ActivityStatus {
+                    id: activity,
+                    state,
+                } in &v.activities
+                {
                     let tests: Vec<String> = c
                         .tests
                         .iter()
@@ -122,7 +112,7 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
             findings(&c.diagnostics);
         }
         Context::Interface(c) => {
-            let r = c.requirement;
+            let r = &c.requirement;
             header(&c.id, &printable(&r.title), &c.path.display().to_string());
             println!(
                 "  {}",
@@ -151,7 +141,7 @@ pub fn run(ctx: &Ctx, id: &str) -> Result<Exit, Box<dyn Error>> {
             list("Consumed by", &c.consumers);
         }
         Context::Stakeholder(c) => {
-            let s = c.stakeholder;
+            let s = &c.stakeholder;
             header(&s.id.0, &s.name, &c.path.display().to_string());
             if let Some(role) = &s.role {
                 field("Role", role);

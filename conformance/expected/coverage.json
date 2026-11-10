@@ -1,0 +1,110 @@
+{
+  "result": {
+    "consumed": [
+      {
+        "consumers": [
+          "FOBC-SW-0001"
+        ],
+        "id": "ground:GS-ICD-0001",
+        "provider_status": null,
+        "resolved": false,
+        "statement": null,
+        "title": null
+      }
+    ],
+    "needs": [
+      {
+        "id": "NEED-0001",
+        "satisfied_by": [
+          "FOBC-SYS-0001"
+        ]
+      }
+    ],
+    "requirements": [
+      {
+        "activities": [
+          {
+            "id": "FOBC-VA-HW-001-01",
+            "state": "manual",
+            "status": "Passed"
+          }
+        ],
+        "id": "FOBC-HW-0001",
+        "status": "verified"
+      },
+      {
+        "activities": [
+          {
+            "id": "FOBC-VA-ICD-001-01",
+            "state": "manual",
+            "status": "Passed"
+          }
+        ],
+        "id": "FOBC-ICD-0001",
+        "status": "gap"
+      },
+      {
+        "activities": [
+          {
+            "id": "FOBC-VA-SW-001-01",
+            "state": "passed"
+          }
+        ],
+        "id": "FOBC-SW-0001",
+        "status": "verified"
+      },
+      {
+        "activities": [
+          {
+            "id": "FOBC-VA-SW-002-01",
+            "state": "suspect"
+          }
+        ],
+        "id": "FOBC-SW-0002",
+        "status": "suspect",
+        "suspect_reasons": [
+          {
+            "activities": [
+              "FOBC-VA-SW-002-01"
+            ],
+            "reason": "requirement_changed"
+          }
+        ]
+      },
+      {
+        "activities": [],
+        "id": "FOBC-SW-0003",
+        "status": "gap"
+      },
+      {
+        "activities": [
+          {
+            "id": "FOBC-VA-SYS-001-01",
+            "state": "manual",
+            "status": "Passed"
+          }
+        ],
+        "id": "FOBC-SYS-0001",
+        "status": "verified"
+      },
+      {
+        "activities": [
+          {
+            "id": "FOBC-VA-SYS-002-01",
+            "state": "manual",
+            "status": "Passed"
+          }
+        ],
+        "id": "FOBC-SYS-0002",
+        "status": "verified"
+      }
+    ],
+    "schema": "rqtk/coverage/2",
+    "summary": {
+      "gap": 2,
+      "suspect": 1,
+      "verified": 4
+    },
+    "unsatisfied_needs": 0
+  }
+}

@@ -1,0 +1,312 @@
+{
+  "$defs": {
+    "ActivityEvidence": {
+      "description": "The latest recorded result for one verification activity.\n\nUnknown fields are ignored so that files written by a later rqtk still load.",
+      "properties": {
+        "commit": {
+          "description": "Commit checked out when the evidence was recorded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Verification activity ID.",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "requirement": {
+          "$ref": "#/$defs/RequirementId",
+          "description": "Requirement that owned the activity when the evidence was recorded."
+        },
+        "requirement_hash": {
+          "description": "The requirement's content hash when the evidence was recorded. If the requirement's\ncurrent hash differs, the evidence is stale and the activity is Suspect.",
+          "type": "string"
+        },
+        "tests": {
+          "description": "Test cases that produced the outcome, as `path::name`: the linked test's source file\nand the name the runner gave the case.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tests_hash": {
+          "description": "Hash of the linked tests' source when they last ran.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unchanged_tests": {
+          "description": "The requirement was re-verified after it changed, by the same tests that passed for\nits earlier wording. It stays Suspect until someone runs `rqtk review`.",
+          "type": "boolean"
+        },
+        "upstream": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Content hashes of the requirement's ancestors and of the needs they satisfy, when this\nversion of the requirement was first verified. A later change to any of them makes\nthe requirement Suspect until it is reviewed.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "requirement",
+        "requirement_hash",
+        "outcome",
+        "tests",
+        "commit"
+      ],
+      "type": "object"
+    },
+    "Outcome": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "SourceLink": {
+      "description": "A `verifies` annotation found in source code.",
+      "properties": {
+        "activity": {
+          "description": "Verification activity ID named by the annotation.",
+          "type": "string"
+        },
+        "aliases": {
+          "description": "Other names runners report the test under: JUnit `@DisplayName` and\n`@ParameterizedTest(name = …)` (Gradle uses them), xUnit `DisplayName`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "case": {
+          "description": "One case of a table-driven or parameterised test.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "group": {
+          "description": "The annotation names a group of tests (`describe`, `context`) rather than one test.",
+          "type": "boolean"
+        },
+        "line": {
+          "description": "1-based line of the annotation.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "path": {
+          "description": "Path relative to the repository root.",
+          "type": "string"
+        },
+        "source_hash": {
+          "description": "Hash of the test's source (its attributes, declaration and body), used to tell\nwhether a test changed between runs.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suite": {
+          "description": "Suite the test runner reports with the name, such as `Suite` in GoogleTest's\n`TEST(Suite, Name)`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "test_line": {
+          "description": "1-based line of the test declaration.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "test_name": {
+          "description": "Name of the annotated test, or of the test group for a `describe` block. `None` when\nno test declaration follows the annotation.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "activity",
+        "path",
+        "line",
+        "test_name"
+      ],
+      "type": "object"
+    },
+    "VerificationActivity": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "executed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected_result": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "procedure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "procedure",
+        "expected_result",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A verification activity with its state, the tests linked to it and its recorded evidence.",
+  "oneOf": [
+    {
+      "description": "Linked tests passed against the requirement's current content.",
+      "properties": {
+        "state": {
+          "const": "passed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "A linked test failed in the recorded evidence.",
+      "properties": {
+        "state": {
+          "const": "failed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "Linked tests passed, but the requirement has changed since.",
+      "properties": {
+        "state": {
+          "const": "suspect",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "Linked to tests, but no evidence has been recorded yet.",
+      "properties": {
+        "state": {
+          "const": "not_run",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "Not linked to any test; the activity's hand-written `status` applies. Used for\ninspections, analyses and demonstrations.",
+      "properties": {
+        "state": {
+          "const": "manual",
+          "type": "string"
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "status"
+      ],
+      "type": "object"
+    }
+  ],
+  "properties": {
+    "activity": {
+      "$ref": "#/$defs/VerificationActivity"
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ActivityEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "requirement": {
+      "description": "The requirement it belongs to.",
+      "type": "string"
+    },
+    "tests": {
+      "items": {
+        "$ref": "#/$defs/SourceLink"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "requirement",
+    "activity",
+    "tests",
+    "evidence"
+  ],
+  "title": "ActivityEntry",
+  "type": "object"
+}

@@ -1,56 +1,26 @@
-use std::error::Error;
-
-use rqtk_core::{Diagnostic, RequirementSet, Severity};
-use serde::Serialize;
-
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
-#[derive(Serialize)]
-struct Report<'a> {
-    errors: usize,
-    warnings: usize,
-    checked: usize,
-    diagnostics: &'a [Diagnostic],
-}
-
-pub fn run(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
-    let set = RequirementSet::load_from_repo_root(&ctx.root)?;
-    let counts = [
-        (set.requirements().len(), "requirement"),
-        (set.needs().len(), "need"),
-        (set.stakeholders().len(), "stakeholder"),
-    ];
-    let checked: usize = counts.iter().map(|(n, _)| n).sum();
-    let what = counts
+pub fn run(ctx: &Ctx) -> Result<Exit, CliError> {
+    let repo = super::open(ctx)?;
+    let doc = repo.lint();
+    if ctx.json() {
+        output::json(&doc)?;
+    } else if doc.diagnostics.is_empty() {
+        let set = repo.requirement_set();
+        let what = [
+            (set.requirements().len(), "requirement"),
+            (set.needs().len(), "need"),
+            (set.stakeholders().len(), "stakeholder"),
+        ]
         .iter()
         .map(|(n, noun)| format!("{n} {noun}{}", if *n == 1 { "" } else { "s" }))
         .collect::<Vec<_>>()
         .join(", ");
-    let (set, mut issues) = set.validate();
-    let links = rqtk_core::scan::scan(set.repo_root(), &set.config().scan)?;
-    issues.extend(set.link_diagnostics(&links));
-    for issue in &mut issues {
-        if let Some(loc) = issue.location.as_mut() {
-            loc.path = output::relative(&loc.path, &ctx.root);
-        }
-    }
-
-    let errors = issues
-        .iter()
-        .filter(|d| d.severity == Severity::Error)
-        .count();
-    if ctx.json() {
-        output::json(&Report {
-            errors,
-            warnings: issues.len() - errors,
-            checked,
-            diagnostics: &issues,
-        })?;
-    } else if issues.is_empty() {
         output::success(&format!("No lint findings ({what})"), &[]);
     } else {
-        let (errors, warnings) = output::lint_table(&issues, &ctx.root);
-        output::lint_summary(errors, warnings, checked);
+        let (errors, warnings) = output::lint_table(&doc.diagnostics, std::path::Path::new(""));
+        output::lint_summary(errors, warnings, doc.checked);
     }
-    Ok(Exit::findings_if(errors > 0))
+    Ok(Exit::findings_if(doc.errors > 0))
 }

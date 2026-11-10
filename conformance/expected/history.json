@@ -1,0 +1,20 @@
+{
+  "result": {
+    "commits": [
+      {
+        "author": "Test",
+        "hash": "e9452b7ced4a843384f84f3bb7c5b80ec2137834",
+        "message": "v2: reword FOBC-SW-0002",
+        "timestamp": "2026-01-02T00:00:00+00:00"
+      },
+      {
+        "author": "Test",
+        "hash": "95d96990610ad8d0c0560ce7f4ba68920aa17f04",
+        "message": "v1",
+        "timestamp": "2026-01-01T00:00:00+00:00"
+      }
+    ],
+    "id": "FOBC-SW-0002",
+    "schema": "rqtk/history/2"
+  }
+}

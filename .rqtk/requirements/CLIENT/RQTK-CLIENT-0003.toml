@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0003"
+title = "Open at a ref"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall open a repository at a tag, baseline name or commit, reading git objects without a checkout."
+rationale = "Dashboards show coverage at past baselines and compare revisions; checking out each one would be slow and stateful."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0008"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Opening a fixture at an older tag returns the requirements as they were at that tag, with the working tree untouched."
+
+[[verification.activities]]
+id = "VA-CLIENT-0003-01"
+name = "Open at a tag, baseline and commit"

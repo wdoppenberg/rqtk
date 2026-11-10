@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0019"
+title = "Versions in lockstep"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "Medium"
+statement = "The rqtk-client crate and the Python and npm packages shall carry the same version as the rqtk CLI."
+rationale = "One engine, one version: a dashboard and the CLI in CI that report the same version agree on every answer."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A test reads every manifest and fails when any version differs."
+
+[[verification.activities]]
+id = "VA-CLIENT-0019-01"
+name = "Manifest versions agree"

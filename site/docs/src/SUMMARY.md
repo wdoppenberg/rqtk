@@ -14,6 +14,7 @@
 - [Baselines and change control](guides/change-control.md)
 - [Interfaces across repositories](guides/interfaces.md)
 - [Coding agents](guides/agents.md)
+- [Reading repositories from code](guides/client.md)
 - [Continuous integration](guides/ci.md)
 
 # Reference

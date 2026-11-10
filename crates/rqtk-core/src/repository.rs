@@ -65,6 +65,9 @@ pub struct RequirementSet<S = Loaded> {
     pub(crate) repo_root: PathBuf,
     pub(crate) config_path: PathBuf,
     pub(crate) git: GitContext,
+    /// The git blob ID of each requirement and need file as it was read, so comparisons with
+    /// other revisions can skip files that are byte-for-byte the same. Empty outside git.
+    pub(crate) blob_ids: BTreeMap<PathBuf, gix::ObjectId>,
     /// Spec files and digest of each local interface requirement.
     pub(crate) specs: BTreeMap<RequirementId, crate::spec::SpecResolution>,
     /// Vendored interface snapshots and the lockfile.
@@ -131,6 +134,13 @@ impl RequirementSet<Loaded> {
     pub fn load_from_repo_root(repo_root: impl AsRef<Path>) -> Result<Self, RqtkError> {
         let repo_root = repo_root.as_ref().to_path_buf();
         let git = GitContext::open(&repo_root)?;
+        Self::load_with_git(repo_root, git)
+    }
+
+    /// Load the repository whose files are under `repo_root`, with `git` for history: the
+    /// repository's own, or a [`GitContext::snapshot`] when `repo_root` holds a commit's
+    /// extracted tree.
+    pub fn load_with_git(repo_root: PathBuf, git: GitContext) -> Result<Self, RqtkError> {
         let config_path = repo_root.join(CONFIG_PATH);
         let config = load_config(&config_path)?;
 
@@ -142,37 +152,40 @@ impl RequirementSet<Loaded> {
         let needs_root = repo_root.join(&config.repository.needs_dir);
         let stakeholders_root = repo_root.join(&config.repository.stakeholders_dir);
 
-        let mut diagnostics = Vec::new();
-        let mut seen_ids: HashMap<String, PathBuf> = HashMap::new();
-        let mut unloaded_ids = HashSet::new();
-
+        let mut loading = Loading {
+            git: &git,
+            seen_ids: HashMap::new(),
+            unloaded_ids: HashSet::new(),
+            diagnostics: Vec::new(),
+            blob_ids: BTreeMap::new(),
+        };
         let (requirements, files_by_id) = load_items(
             &root,
             true,
             |r: &Requirement| r.id.clone(),
             EntityRef::Requirement,
-            &mut seen_ids,
-            &mut unloaded_ids,
-            &mut diagnostics,
+            &mut loading,
         )?;
         let (needs, needs_by_id) = load_items(
             &needs_root,
             false,
             |n: &Need| n.id.clone(),
             EntityRef::Need,
-            &mut seen_ids,
-            &mut unloaded_ids,
-            &mut diagnostics,
+            &mut loading,
         )?;
         let (stakeholders, stakeholders_by_id) = load_items(
             &stakeholders_root,
             false,
             |s: &Stakeholder| s.id.clone(),
             EntityRef::Stakeholder,
-            &mut seen_ids,
-            &mut unloaded_ids,
-            &mut diagnostics,
+            &mut loading,
         )?;
+        let Loading {
+            unloaded_ids,
+            diagnostics,
+            blob_ids,
+            ..
+        } = loading;
 
         let specs = requirements
             .iter()
@@ -204,6 +217,7 @@ impl RequirementSet<Loaded> {
             stakeholders_root,
             repo_root,
             config_path,
+            blob_ids,
             git,
             load_diagnostics: diagnostics,
             unloaded_ids,
@@ -282,6 +296,7 @@ impl RequirementSet<Loaded> {
             repo_root: self.repo_root,
             config_path: self.config_path,
             git: self.git,
+            blob_ids: self.blob_ids,
             load_diagnostics: Vec::new(),
             unloaded_ids: self.unloaded_ids,
             id_regex: self.id_regex,
@@ -1257,15 +1272,32 @@ type Items<K, T> = (BTreeMap<K, T>, BTreeMap<K, PathBuf>);
 /// Parse every `.toml` file under `dir` as a `T`. Files that fail to parse, reuse an ID
 /// already seen (across all kinds), or whose name does not match their ID produce a
 /// diagnostic; the first two are skipped.
+/// What [`load_items`] accumulates across requirements, needs and stakeholders.
+struct Loading<'a> {
+    git: &'a GitContext,
+    /// Every ID loaded so far, with its file, to report duplicates.
+    seen_ids: HashMap<String, PathBuf>,
+    /// IDs in files that failed to parse.
+    unloaded_ids: HashSet<String>,
+    diagnostics: Vec<Diagnostic>,
+    /// The git blob ID of every file loaded.
+    blob_ids: BTreeMap<PathBuf, gix::ObjectId>,
+}
+
 fn load_items<K: Ord + Clone + AsRef<str>, T: DeserializeOwned>(
     dir: &Path,
     required: bool,
     id_of: impl Fn(&T) -> K,
     entity: impl Fn(K) -> EntityRef,
-    seen_ids: &mut HashMap<String, PathBuf>,
-    unloaded_ids: &mut HashSet<String>,
-    diagnostics: &mut Vec<Diagnostic>,
+    loading: &mut Loading<'_>,
 ) -> Result<Items<K, T>, RqtkError> {
+    let Loading {
+        git,
+        seen_ids,
+        unloaded_ids,
+        diagnostics,
+        blob_ids,
+    } = loading;
     let mut items = BTreeMap::new();
     let mut paths = BTreeMap::new();
     if !required && !dir.is_dir() {
@@ -1333,6 +1365,9 @@ fn load_items<K: Ord + Clone + AsRef<str>, T: DeserializeOwned>(
             );
         }
         seen_ids.insert(id.as_ref().to_owned(), path.clone());
+        if let Some(oid) = git.blob_id(text.as_bytes()) {
+            blob_ids.insert(path.clone(), oid);
+        }
         paths.insert(id.clone(), path);
         items.insert(id, item);
     }

@@ -1,0 +1,34 @@
+{
+  "$id": "https://rqtk.dev/schema/baseline/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "by": {
+      "type": "string"
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "rqtk/baseline/2",
+      "type": "string"
+    },
+    "stamped": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "tag": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "tag",
+    "by",
+    "stamped",
+    "dry_run"
+  ],
+  "title": "Report",
+  "type": "object"
+}

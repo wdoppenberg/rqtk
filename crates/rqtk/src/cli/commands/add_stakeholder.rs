@@ -1,7 +1,6 @@
-use std::error::Error;
-
 use rqtk_core::{RequirementSet, StakeholderId};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{Ctx, Exit};
 
 pub struct AddStakeholderArgs {
@@ -12,7 +11,7 @@ pub struct AddStakeholderArgs {
     pub dry_run: bool,
 }
 
-pub fn run(ctx: &Ctx, args: AddStakeholderArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: AddStakeholderArgs) -> Result<Exit, CliError> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let id = args
         .id

@@ -1,0 +1,30 @@
+id = "RQTK-CLIENT-0017"
+title = "Conformance across languages"
+category = "CLIENT"
+type = "Constraint"
+state = "Draft"
+priority = "High"
+statement = "The client shall return identical results in Rust, Python and TypeScript for every fixture in a shared conformance suite."
+rationale = "Three bindings of one engine can still drift in their glue code; one shared suite catches that."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Every fixture's expected JSON matches the result in all three languages."
+
+[[verification.activities]]
+id = "VA-CLIENT-0017-01"
+name = "Rust conformance run"
+
+[[verification.activities]]
+id = "VA-CLIENT-0017-02"
+name = "Python conformance run"
+
+[[verification.activities]]
+id = "VA-CLIENT-0017-03"
+name = "TypeScript conformance run"

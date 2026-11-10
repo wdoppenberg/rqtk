@@ -49,7 +49,7 @@ id_newtype!(
 );
 
 /// A reference to any tracked item.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(tag = "kind", content = "id", rename_all = "lowercase")]
 pub enum EntityRef {
     Requirement(RequirementId),
@@ -792,8 +792,8 @@ fn default_scan_paths() -> Vec<String> {
 
 fn default_scan_extensions() -> Vec<String> {
     [
-        "rs", "py", "go", "ts", "tsx", "js", "jsx", "java", "kt", "c", "cc", "cpp", "h", "hpp",
-        "cs", "swift", "rb",
+        "rs", "py", "go", "ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs", "java", "kt", "c",
+        "cc", "cpp", "h", "hpp", "cs", "swift", "rb",
     ]
     .map(str::to_owned)
     .to_vec()

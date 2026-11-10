@@ -1,13 +1,12 @@
 //! `rqtk interfaces add | sync | remove | list`: consume interface requirements published
 //! by other repositories.
 
-use std::error::Error;
-
 use rqtk_core::sync::{SyncOptions, SyncedSource};
 use rqtk_core::vendor::{self, LOCK_PATH, Lockfile, VENDOR_DIR};
 use rqtk_core::{InterfaceSource, load_config};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 /// Printed by every `add` and `sync`: what is vendored comes from someone else.
@@ -35,8 +34,8 @@ pub struct AddArgs {
     pub dry_run: bool,
 }
 
-#[derive(Serialize)]
-struct AddReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct AddReport<'a> {
     alias: &'a str,
     git: &'a str,
     #[serde(rename = "ref")]
@@ -45,7 +44,7 @@ struct AddReport<'a> {
     warning: &'static str,
 }
 
-pub fn add(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn add(ctx: &Ctx, args: AddArgs) -> Result<Exit, CliError> {
     warn(ctx);
     if !vendor::valid_alias(&args.alias) {
         return Err(Usage(format!(
@@ -71,13 +70,16 @@ pub fn add(ctx: &Ctx, args: AddArgs) -> Result<Exit, Box<dyn Error>> {
         vendor::declare_source(&ctx.root, &args.alias, &source)?;
     }
     if ctx.json() {
-        output::json(&AddReport {
-            alias: &args.alias,
-            git: &args.url,
-            reference: &args.reference,
-            written: !args.dry_run,
-            warning: UNTRUSTED_WARNING,
-        })?;
+        output::document(
+            "interfaces-add",
+            &AddReport {
+                alias: &args.alias,
+                git: &args.url,
+                reference: &args.reference,
+                written: !args.dry_run,
+                warning: UNTRUSTED_WARNING,
+            },
+        )?;
     } else {
         let label = if args.dry_run {
             "Dry run: interface source not written"
@@ -102,13 +104,13 @@ pub struct SyncArgs {
     pub allow_file_url: bool,
 }
 
-#[derive(Serialize)]
-struct SyncReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct SyncReport<'a> {
     sources: &'a [SyncedSource],
     warning: &'static str,
 }
 
-pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, CliError> {
     warn(ctx);
     let config = load_config(&config_path(ctx))?;
     let options = SyncOptions {
@@ -126,10 +128,13 @@ pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
         }
     }
     if ctx.json() {
-        output::json(&SyncReport {
-            sources: &sources,
-            warning: UNTRUSTED_WARNING,
-        })?;
+        output::document(
+            "interfaces-sync",
+            &SyncReport {
+                sources: &sources,
+                warning: UNTRUSTED_WARNING,
+            },
+        )?;
         return Ok(Exit::Ok);
     }
     if sources.is_empty() {
@@ -164,13 +169,13 @@ pub fn sync(ctx: &Ctx, args: SyncArgs) -> Result<Exit, Box<dyn Error>> {
     Ok(Exit::Ok)
 }
 
-#[derive(Serialize)]
-struct RemoveReport<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct RemoveReport<'a> {
     alias: &'a str,
     removed: bool,
 }
 
-pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
+pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, CliError> {
     // Read the lockfile before touching anything, so a corrupt one stops the removal
     // before the config is edited.
     Lockfile::read(&ctx.root)?;
@@ -183,10 +188,13 @@ pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
         .into());
     }
     if ctx.json() {
-        output::json(&RemoveReport {
-            alias,
-            removed: true,
-        })?;
+        output::document(
+            "interfaces-remove",
+            &RemoveReport {
+                alias,
+                removed: true,
+            },
+        )?;
     } else {
         output::success(
             "Interface source removed",
@@ -202,8 +210,13 @@ pub fn remove(ctx: &Ctx, alias: &str) -> Result<Exit, Box<dyn Error>> {
     Ok(Exit::Ok)
 }
 
-#[derive(Serialize)]
-struct Listed {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct ListReport<'a> {
+    sources: &'a [Listed],
+}
+
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Listed {
     alias: String,
     git: String,
     #[serde(rename = "ref")]
@@ -212,7 +225,7 @@ struct Listed {
     requirements: usize,
 }
 
-pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+pub fn list(ctx: &Ctx) -> Result<Exit, CliError> {
     let config = load_config(&config_path(ctx))?;
     let lock = Lockfile::read(&ctx.root)?.unwrap_or_default();
     let listed: Vec<Listed> = config
@@ -230,7 +243,7 @@ pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
         })
         .collect();
     if ctx.json() {
-        output::json(&listed)?;
+        output::document("interfaces-list", &ListReport { sources: &listed })?;
         return Ok(Exit::Ok);
     }
     if listed.is_empty() {

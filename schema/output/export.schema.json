@@ -1,0 +1,39 @@
+{
+  "$defs": {
+    "ExportFormat": {
+      "enum": [
+        "csv",
+        "json",
+        "markdown"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/export/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "format": {
+      "$ref": "#/$defs/ExportFormat"
+    },
+    "path": {
+      "type": "string"
+    },
+    "requirements": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "schema": {
+      "const": "rqtk/export/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "format",
+    "path",
+    "requirements"
+  ],
+  "title": "Report",
+  "type": "object"
+}

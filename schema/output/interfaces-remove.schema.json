@@ -1,0 +1,23 @@
+{
+  "$id": "https://rqtk.dev/schema/interfaces-remove/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "alias": {
+      "type": "string"
+    },
+    "removed": {
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "rqtk/interfaces-remove/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "alias",
+    "removed"
+  ],
+  "title": "RemoveReport",
+  "type": "object"
+}

@@ -1,0 +1,11 @@
+{
+  "result": {
+    "commit": "95d96990610ad8d0c0560ce7f4ba68920aa17f04",
+    "origin": {
+      "kind": "remote",
+      "reference": "v1",
+      "url": "$URL"
+    },
+    "project": "FireSat OBC"
+  }
+}

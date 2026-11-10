@@ -1,0 +1,141 @@
+{
+  "$defs": {
+    "Action": {
+      "oneOf": [
+        {
+          "enum": [
+            "created",
+            "updated",
+            "unchanged"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "linked",
+          "description": "A symlink to the shared copy in `.agents/skills` was created.",
+          "type": "string"
+        },
+        {
+          "const": "skipped_modified",
+          "description": "The file differs from the shipped version and `--force` was not given.",
+          "type": "string"
+        }
+      ]
+    },
+    "Report": {
+      "properties": {
+        "created": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "hook": {
+          "description": "The pre-commit hook, when `--hook` installed it.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "project": {
+          "description": "The project name written to the config, taken from the project manifest or the\ndirectory name.",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "created",
+        "dry_run",
+        "project",
+        "warnings"
+      ],
+      "type": "object"
+    },
+    "Report2": {
+      "properties": {
+        "dirs": {
+          "description": "Skill directories installed into, relative to the repo root.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/Written"
+          },
+          "type": "array"
+        },
+        "instructions": {
+          "description": "Instruction files that received the rqtk block. Empty when none exists or was named.",
+          "items": {
+            "$ref": "#/$defs/Written"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dirs",
+        "files",
+        "instructions",
+        "dry_run"
+      ],
+      "type": "object"
+    },
+    "Written": {
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "link_target": {
+          "description": "For symlinks: where the link points, relative to the link's directory.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "action"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/init-agents/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`rqtk init --agents --json`: what init and the skill install did.",
+  "properties": {
+    "init": {
+      "$ref": "#/$defs/Report"
+    },
+    "schema": {
+      "const": "rqtk/init-agents/2",
+      "type": "string"
+    },
+    "skills": {
+      "$ref": "#/$defs/Report2"
+    }
+  },
+  "required": [
+    "schema",
+    "init",
+    "skills"
+  ],
+  "title": "WithSkills",
+  "type": "object"
+}

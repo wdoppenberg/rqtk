@@ -112,7 +112,7 @@ pub struct Evidence {
 }
 
 /// How one activity's entry changed when new results were applied.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum EvidenceChange {
     Added(ActivityEvidence),
@@ -497,7 +497,7 @@ fn evidence_test_id(link: &SourceLink, r: &TestResult) -> String {
 // ── Matching results to links ────────────────────────────────────────────────
 
 /// What a test run says about one activity.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct ActivityRun {
     /// IDs of the matched test cases, sorted.
     pub tests: Vec<String>,
@@ -515,7 +515,7 @@ pub struct ActivityRun {
 }
 
 /// A linked test that matched several distinct tests in the results.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct Ambiguity {
     /// The linked test, as `path:line name`.
     pub link: String,

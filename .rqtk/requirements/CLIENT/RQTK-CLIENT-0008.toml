@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0008"
+title = "When opening fails"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall fail to open a repository only when its config is missing or unreadable, its schema version is unsupported, or the ref or URL cannot be resolved, and shall report every other problem as a lint finding."
+rationale = "One broken requirement file must not take a whole dashboard down; lint findings are data the caller can show."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Each of the four failure causes fails with its error code; a repository with an unparseable requirement file opens and reports it as a finding."
+
+[[verification.activities]]
+id = "VA-CLIENT-0008-01"
+name = "Fatal causes fail"
+
+[[verification.activities]]
+id = "VA-CLIENT-0008-02"
+name = "Other problems become findings"

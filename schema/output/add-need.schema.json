@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "Acceptance": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "criteria",
+        "validated_by"
+      ],
+      "type": "object"
+    },
+    "Need": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Acceptance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/NeedId"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "priority": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stakeholders": {
+          "items": {
+            "$ref": "#/$defs/StakeholderId"
+          },
+          "type": "array"
+        },
+        "state": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "state",
+        "priority",
+        "statement",
+        "rationale",
+        "content_hash",
+        "acceptance"
+      ],
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/add-need/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "JSON shape shared by the `add*` commands.",
+  "properties": {
+    "dry_run": {
+      "type": "boolean"
+    },
+    "id": {
+      "type": "string"
+    },
+    "item": {
+      "$ref": "#/$defs/Need"
+    },
+    "path": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "rqtk/add-need/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "path",
+    "dry_run",
+    "item"
+  ],
+  "title": "Created",
+  "type": "object"
+}

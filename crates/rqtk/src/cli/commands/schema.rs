@@ -1,34 +1,41 @@
-use std::error::Error;
-
 use console::style;
-use rqtk_core::schema::{KINDS, json_schema};
 
+use crate::cli::documents::{self, SchemaKinds};
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
-/// Print the JSON Schema for a file kind. Without a kind, list the kinds.
-/// The schema is JSON either way; `--json` only changes the listing.
-pub fn run(ctx: &Ctx, kind: Option<&str>) -> Result<Exit, Box<dyn Error>> {
+/// Print the JSON Schema of a file kind, a `--json` document or a client type. Without a
+/// kind, list them. The schema is JSON either way; `--json` only changes the listing.
+pub fn run(ctx: &Ctx, kind: Option<&str>) -> Result<Exit, CliError> {
+    let all = documents::all();
     let Some(kind) = kind else {
         if ctx.json() {
-            let kinds: Vec<_> = KINDS
-                .iter()
-                .map(|(kind, file)| serde_json::json!({ "kind": kind, "file": file }))
-                .collect();
-            output::json(&kinds)?;
+            output::document(
+                "schema-kinds",
+                &SchemaKinds {
+                    kinds: all.into_iter().map(|(k, _)| k).collect(),
+                },
+            )?;
         } else {
-            for (kind, file) in KINDS {
-                println!("  {:<12} {}", style(kind).bold(), style(file).dim());
+            for (k, _) in &all {
+                println!(
+                    "  {:<20} {:<9} {}",
+                    style(&k.kind).bold(),
+                    serde_json::to_value(k.category)?
+                        .as_str()
+                        .unwrap_or_default(),
+                    style(&k.describes).dim()
+                );
             }
         }
         return Ok(Exit::Ok);
     };
-    let schema = json_schema(kind).ok_or_else(|| {
-        let known: Vec<&str> = KINDS.iter().map(|(k, _)| *k).collect();
-        Usage(format!(
-            "unknown schema kind `{kind}`; expected one of: {}",
-            known.join(", ")
+    let Some((_, schema)) = all.into_iter().find(|(k, _)| k.kind == kind) else {
+        return Err(Usage(format!(
+            "unknown schema kind `{kind}`; run `rqtk schema` to list them"
         ))
-    })?;
+        .into());
+    };
     output::json(&schema)?;
     Ok(Exit::Ok)
 }

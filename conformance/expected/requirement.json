@@ -1,0 +1,79 @@
+{
+  "result": {
+    "id": "FOBC-SYS-0001",
+    "links": [
+      {
+        "direction": "outgoing",
+        "id": "NEED-0001",
+        "kind": "satisfies"
+      },
+      {
+        "direction": "outgoing",
+        "id": "FOBC-VA-SYS-001-01",
+        "kind": "activities"
+      },
+      {
+        "direction": "incoming",
+        "id": "FOBC-HW-0001",
+        "kind": "parents"
+      },
+      {
+        "direction": "incoming",
+        "id": "FOBC-SW-0001",
+        "kind": "parents"
+      },
+      {
+        "direction": "incoming",
+        "id": "FOBC-SW-0002",
+        "kind": "parents"
+      },
+      {
+        "direction": "incoming",
+        "id": "FOBC-SW-0003",
+        "kind": "parents"
+      }
+    ],
+    "path": ".rqtk/requirements/SYS/FOBC-SYS-0001.toml",
+    "requirement": {
+      "allocation": null,
+      "approval": null,
+      "category": "SYS",
+      "content_hash": null,
+      "criticality": null,
+      "id": "FOBC-SYS-0001",
+      "interface": null,
+      "maturity": null,
+      "notes": null,
+      "priority": "Critical",
+      "rationale": "Timely command execution is essential for mission operations and safe spacecraft control.",
+      "risk": null,
+      "state": "Approved",
+      "statement": "The OBC shall execute all ground-uplinked commands within 500 ms of receipt.",
+      "title": "On-Board Computer Command Execution",
+      "trace": {
+        "satisfies": [
+          "NEED-0001"
+        ]
+      },
+      "type": "Functional",
+      "validation": null,
+      "verification": {
+        "activities": [
+          {
+            "expected_result": "Command execution latency < 500 ms",
+            "id": "FOBC-VA-SYS-001-01",
+            "name": "Command latency test",
+            "procedure": null,
+            "status": "Passed"
+          }
+        ],
+        "level": "System",
+        "method": "Test",
+        "owner": null,
+        "phase": "Development",
+        "success_criteria": "All uplinked commands execute within 500 ms in 100% of test cases."
+      }
+    },
+    "status": "verified"
+  }
+}

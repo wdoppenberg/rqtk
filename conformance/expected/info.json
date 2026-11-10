@@ -1,0 +1,10 @@
+{
+  "result": {
+    "commit": "e9452b7ced4a843384f84f3bb7c5b80ec2137834",
+    "origin": {
+      "kind": "checkout",
+      "path": "$ROOT"
+    },
+    "project": "FireSat OBC"
+  }
+}

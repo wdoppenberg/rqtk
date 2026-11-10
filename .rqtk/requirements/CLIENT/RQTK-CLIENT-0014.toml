@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0014"
+title = "TypeScript client"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The `@rqtk/client` package shall expose the client to Node, Bun and Deno, with `open`, `openRef`, `openRemote` and `reload` returning Promises and data described by generated `.d.ts` types."
+rationale = "Portals and editor extensions are often written in TypeScript; loading off the event loop keeps them responsive."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "The TypeScript conformance run passes on Node, Bun and Deno, and opening does not block the event loop."
+
+[[verification.activities]]
+id = "VA-CLIENT-0014-01"
+name = "TypeScript opens and queries a repository"
+
+[[verification.activities]]
+id = "VA-CLIENT-0014-02"
+name = "Opening does not block the event loop"

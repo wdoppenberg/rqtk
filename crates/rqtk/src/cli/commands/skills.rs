@@ -1,11 +1,12 @@
 //! Agent skills shipped inside the binary, so installed skills always match the CLI that
 //! installed them.
 
-use std::{collections::BTreeMap, error::Error, path::Path, path::PathBuf};
+use std::{collections::BTreeMap, path::Path, path::PathBuf};
 
 use console::style;
 use serde::Serialize;
 
+use crate::cli::error::{CliError, IoContext};
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 struct Embedded {
@@ -58,7 +59,13 @@ Work is done when `rqtk lint` and `rqtk coverage --strict` both exit 0. Skills: 
 `rqtk-requirements`, `rqtk-verification`, `/to-requirements`, `/requirements-review`.";
 
 /// A skill's name, description and who can invoke it, read from its frontmatter.
-#[derive(Debug, Serialize)]
+/// `rqtk skills list --json`.
+#[derive(Serialize, schemars::JsonSchema)]
+pub struct SkillList<'a> {
+    pub skills: &'a [SkillInfo],
+}
+
+#[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct SkillInfo {
     pub name: String,
     pub description: String,
@@ -94,7 +101,18 @@ fn parse_frontmatter(content: &str) -> SkillInfo {
 }
 
 /// Where a family of agents reads project skills from.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, clap::ValueEnum)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    clap::ValueEnum,
+    schemars::JsonSchema,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum AgentTarget {
     /// `.agents/skills`: the shared location read by Codex, Cursor, GitHub Copilot, Gemini
@@ -113,7 +131,7 @@ impl AgentTarget {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 enum Action {
     Created,
@@ -125,8 +143,8 @@ enum Action {
     SkippedModified,
 }
 
-#[derive(Serialize)]
-struct Written {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Written {
     path: PathBuf,
     action: Action,
     /// For symlinks: where the link points, relative to the link's directory.
@@ -137,7 +155,7 @@ struct Written {
     block_added: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct Report {
     /// Skill directories installed into, relative to the repo root.
     dirs: Vec<PathBuf>,
@@ -172,10 +190,10 @@ impl Default for InstallArgs {
     }
 }
 
-pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
+pub fn list(ctx: &Ctx) -> Result<Exit, CliError> {
     let skills = skills();
     if ctx.json() {
-        output::json(&skills)?;
+        output::document("skills", &SkillList { skills: &skills })?;
         return Ok(Exit::Ok);
     }
     for s in &skills {
@@ -195,17 +213,17 @@ pub fn list(ctx: &Ctx) -> Result<Exit, Box<dyn Error>> {
     Ok(Exit::Ok)
 }
 
-pub fn install(ctx: &Ctx, args: &InstallArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn install(ctx: &Ctx, args: &InstallArgs) -> Result<Exit, CliError> {
     let report = execute(ctx, args)?;
     if ctx.json() {
-        output::json(&report)?;
+        output::document("skills-install", &report)?;
     } else {
         print(&report);
     }
     Ok(Exit::Ok)
 }
 
-pub fn execute(ctx: &Ctx, args: &InstallArgs) -> Result<Report, Box<dyn Error>> {
+pub fn execute(ctx: &Ctx, args: &InstallArgs) -> Result<Report, CliError> {
     let root = &ctx.root;
     // Resolve (and validate) the instruction files before writing anything.
     let instruction_files = instruction_targets(root, &args.instructions)?;
@@ -254,7 +272,7 @@ fn copy_skills(
     link_to: Option<&Path>,
     args: &InstallArgs,
     out: &mut Vec<Written>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), CliError> {
     let skill_names: Vec<&str> = FILES
         .iter()
         .filter_map(|f| f.path.strip_suffix("/SKILL.md"))
@@ -281,8 +299,8 @@ fn copy_skills(
             };
             if let Some(action) = action {
                 if action == Action::Linked && !args.dry_run {
-                    std::fs::create_dir_all(root.join(dir))?;
-                    symlink_dir(&target, &skill_dir)?;
+                    std::fs::create_dir_all(root.join(dir)).at(root.join(dir))?;
+                    symlink_dir(&target, &skill_dir).at(&skill_dir)?;
                 }
                 out.push(Written {
                     path: output::relative(&skill_dir, root),
@@ -313,9 +331,9 @@ fn copy_skills(
             }
             if !args.dry_run && matches!(action, Action::Created | Action::Updated) {
                 if let Some(parent) = path.parent() {
-                    std::fs::create_dir_all(parent)?;
+                    std::fs::create_dir_all(parent).at(parent)?;
                 }
-                std::fs::write(&path, file.content)?;
+                std::fs::write(&path, file.content).at(&path)?;
             }
             out.push(Written {
                 path: output::relative(&path, root),
@@ -326,10 +344,12 @@ fn copy_skills(
         }
     }
     if !args.dry_run && manifest != read_manifest(&root.join(dir)) {
+        let manifest_path = root.join(dir).join(MANIFEST);
         std::fs::write(
-            root.join(dir).join(MANIFEST),
+            &manifest_path,
             serde_json::to_string_pretty(&manifest)? + "\n",
-        )?;
+        )
+        .at(&manifest_path)?;
     }
     Ok(())
 }
@@ -429,11 +449,7 @@ fn instruction_targets(root: &Path, named: &[PathBuf]) -> Result<Vec<PathBuf>, U
 }
 
 /// Add or refresh the rqtk block in `target`, creating the file if needed.
-fn install_instructions(
-    root: &Path,
-    target: PathBuf,
-    dry_run: bool,
-) -> Result<Written, Box<dyn Error>> {
+fn install_instructions(root: &Path, target: PathBuf, dry_run: bool) -> Result<Written, CliError> {
     let existing = std::fs::read_to_string(&target).ok();
     let updated = super::splice_managed(
         existing.as_deref().unwrap_or(""),
@@ -447,7 +463,7 @@ fn install_instructions(
         Some(_) => Action::Updated,
     };
     if !dry_run && action != Action::Unchanged {
-        std::fs::write(&target, updated)?;
+        std::fs::write(&target, updated).at(&target)?;
     }
     let block_added = existing
         .as_deref()

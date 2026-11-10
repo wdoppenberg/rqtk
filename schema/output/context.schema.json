@@ -1,0 +1,1587 @@
+{
+  "$defs": {
+    "Acceptance": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validated_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "criteria",
+        "validated_by"
+      ],
+      "type": "object"
+    },
+    "ActivityEvidence": {
+      "description": "The latest recorded result for one verification activity.\n\nUnknown fields are ignored so that files written by a later rqtk still load.",
+      "properties": {
+        "commit": {
+          "description": "Commit checked out when the evidence was recorded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Verification activity ID.",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "requirement": {
+          "$ref": "#/$defs/RequirementId",
+          "description": "Requirement that owned the activity when the evidence was recorded."
+        },
+        "requirement_hash": {
+          "description": "The requirement's content hash when the evidence was recorded. If the requirement's\ncurrent hash differs, the evidence is stale and the activity is Suspect.",
+          "type": "string"
+        },
+        "tests": {
+          "description": "Test cases that produced the outcome, as `path::name`: the linked test's source file\nand the name the runner gave the case.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tests_hash": {
+          "description": "Hash of the linked tests' source when they last ran.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unchanged_tests": {
+          "description": "The requirement was re-verified after it changed, by the same tests that passed for\nits earlier wording. It stays Suspect until someone runs `rqtk review`.",
+          "type": "boolean"
+        },
+        "upstream": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Content hashes of the requirement's ancestors and of the needs they satisfy, when this\nversion of the requirement was first verified. A later change to any of them makes\nthe requirement Suspect until it is reviewed.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "requirement",
+        "requirement_hash",
+        "outcome",
+        "tests",
+        "commit"
+      ],
+      "type": "object"
+    },
+    "ActivityStatus": {
+      "description": "One activity's state.",
+      "oneOf": [
+        {
+          "description": "Linked tests passed against the requirement's current content.",
+          "properties": {
+            "state": {
+              "const": "passed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A linked test failed in the recorded evidence.",
+          "properties": {
+            "state": {
+              "const": "failed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Linked tests passed, but the requirement has changed since.",
+          "properties": {
+            "state": {
+              "const": "suspect",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Linked to tests, but no evidence has been recorded yet.",
+          "properties": {
+            "state": {
+              "const": "not_run",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Not linked to any test; the activity's hand-written `status` applies. Used for\ninspections, analyses and demonstrations.",
+          "properties": {
+            "state": {
+              "const": "manual",
+              "type": "string"
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "state",
+            "status"
+          ],
+          "type": "object"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "Allocation": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "software_modules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "source_files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "subsystems": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "approved_by": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "baselined_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "baselined_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ecr_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "baselined_by"
+      ],
+      "type": "object"
+    },
+    "ClosureStatus": {
+      "oneOf": [
+        {
+          "const": "verified",
+          "description": "Every activity passed (tests against current content, or manual Passed/Waived).",
+          "type": "string"
+        },
+        {
+          "const": "suspect",
+          "description": "A test passed for an earlier version of the requirement; re-verify.",
+          "type": "string"
+        },
+        {
+          "const": "failed",
+          "description": "At least one activity failed.",
+          "type": "string"
+        },
+        {
+          "const": "in_progress",
+          "description": "Some activities passed or started, not all.",
+          "type": "string"
+        },
+        {
+          "const": "planned",
+          "description": "Activities and success criteria defined, none executed yet.",
+          "type": "string"
+        },
+        {
+          "const": "gap",
+          "description": "No activities defined, or success criteria missing.",
+          "type": "string"
+        }
+      ]
+    },
+    "ConsumedRef": {
+      "description": "A `consumes` link: `<alias>:<ID>`, naming an interface requirement in the vendored\nsnapshot of the interface source `alias`.",
+      "type": "string"
+    },
+    "ConsumedSummary": {
+      "description": "A vendored interface requirement as seen from a consumer.",
+      "properties": {
+        "id": {
+          "description": "`<alias>:<ID>`.",
+          "type": "string"
+        },
+        "provider_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClosureStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The provider's verification status at the pinned commit. Informational: it does not\ncount toward this repository's coverage."
+        },
+        "resolved": {
+          "description": "Whether the vendored snapshot has it.",
+          "type": "boolean"
+        },
+        "statement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "statement",
+        "provider_status",
+        "resolved"
+      ],
+      "type": "object"
+    },
+    "Diagnostic": {
+      "description": "A single finding from loading or linting a requirement set.",
+      "properties": {
+        "code": {
+          "description": "Stable rule code, e.g. `RQ007`. See [`crate::rules::RULES`].",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The item the finding is about, if any."
+        }
+      },
+      "required": [
+        "severity",
+        "code",
+        "message",
+        "subject",
+        "location"
+      ],
+      "type": "object"
+    },
+    "Direction": {
+      "description": "Which end of a link an item is on.",
+      "oneOf": [
+        {
+          "const": "outgoing",
+          "description": "The item declares the link.",
+          "type": "string"
+        },
+        {
+          "const": "incoming",
+          "description": "The other item declares the link.",
+          "type": "string"
+        }
+      ]
+    },
+    "EntityRef": {
+      "description": "A reference to any tracked item.",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/RequirementId"
+            },
+            "kind": {
+              "const": "requirement",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/NeedId"
+            },
+            "kind": {
+              "const": "need",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            "kind": {
+              "const": "stakeholder",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ExternalTrace": {
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "ref"
+      ],
+      "type": "object"
+    },
+    "Interface": {
+      "additionalProperties": false,
+      "description": "`[interface]`: the requirement is an interface, specified by these definition files.",
+      "properties": {
+        "specs": {
+          "items": {
+            "$ref": "#/$defs/SpecEntry"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "InterfaceContext": {
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "consumers": {
+          "description": "Local requirements that consume it.",
+          "items": {
+            "$ref": "#/$defs/Summary"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "provider_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClosureStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requirement": {
+          "$ref": "#/$defs/Requirement"
+        }
+      },
+      "required": [
+        "id",
+        "alias",
+        "path",
+        "requirement",
+        "provider_status",
+        "consumers"
+      ],
+      "type": "object"
+    },
+    "Location": {
+      "description": "A position in a source file. `line` and `column` are 1-based.",
+      "properties": {
+        "column": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "line": {
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "line",
+        "column"
+      ],
+      "type": "object"
+    },
+    "Need": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Acceptance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/NeedId"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "priority": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stakeholders": {
+          "items": {
+            "$ref": "#/$defs/StakeholderId"
+          },
+          "type": "array"
+        },
+        "state": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "state",
+        "priority",
+        "statement",
+        "rationale",
+        "content_hash",
+        "acceptance"
+      ],
+      "type": "object"
+    },
+    "NeedContext": {
+      "properties": {
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          },
+          "type": "array"
+        },
+        "need": {
+          "$ref": "#/$defs/Need"
+        },
+        "path": {
+          "type": "string"
+        },
+        "satisfied_by": {
+          "items": {
+            "$ref": "#/$defs/Summary"
+          },
+          "type": "array"
+        },
+        "stakeholders": {
+          "items": {
+            "$ref": "#/$defs/Stakeholder"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "path",
+        "need",
+        "stakeholders",
+        "satisfied_by",
+        "diagnostics"
+      ],
+      "type": "object"
+    },
+    "NeedId": {
+      "description": "Identifier of a stakeholder need, e.g. `NEED-0001`.",
+      "type": "string"
+    },
+    "Outcome": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "Parameter": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "tolerance": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": true
+      },
+      "required": [
+        "name",
+        "operator",
+        "value",
+        "unit",
+        "tolerance"
+      ],
+      "type": "object"
+    },
+    "Requirement": {
+      "additionalProperties": false,
+      "description": "One requirement file. Scalars sit at the top level; related groups are tables.",
+      "properties": {
+        "allocation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Allocation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Approval"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "category": {
+          "type": "string"
+        },
+        "content_hash": {
+          "description": "Fingerprint of the semantic fields, see [`Requirement::compute_content_hash`].\nMaintained by `rqtk rehash`; checked by lint rule RQ021.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "criticality": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "custom": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "id": {
+          "$ref": "#/$defs/RequirementId"
+        },
+        "interface": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interface"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Marks the requirement as an interface that other repositories can consume, and names\nthe definition files (OpenAPI, protobuf, …) that specify it."
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "maturity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/$defs/Parameter"
+          },
+          "type": "array"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "risk": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Risk"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "string"
+        },
+        "statement": {
+          "description": "The normative statement, e.g. \"The system shall …\".",
+          "type": "string"
+        },
+        "tbd": {
+          "type": "boolean"
+        },
+        "tbr": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "trace": {
+          "$ref": "#/$defs/Traceability"
+        },
+        "type": {
+          "type": "string"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "category",
+        "type",
+        "state",
+        "priority",
+        "criticality",
+        "maturity",
+        "statement",
+        "rationale",
+        "notes",
+        "content_hash",
+        "verification",
+        "approval",
+        "validation",
+        "risk",
+        "allocation",
+        "interface"
+      ],
+      "type": "object"
+    },
+    "RequirementContext": {
+      "properties": {
+        "ancestors": {
+          "description": "Ancestors via `trace.parents`, nearest first.",
+          "items": {
+            "$ref": "#/$defs/Summary"
+          },
+          "type": "array"
+        },
+        "children": {
+          "description": "Requirements that list this one in `trace.parents`.",
+          "items": {
+            "$ref": "#/$defs/Summary"
+          },
+          "type": "array"
+        },
+        "consumes": {
+          "description": "Vendored interface requirements it consumes.",
+          "items": {
+            "$ref": "#/$defs/ConsumedSummary"
+          },
+          "type": "array"
+        },
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          },
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/ActivityEvidence"
+          },
+          "type": "array"
+        },
+        "links": {
+          "description": "Every other requirement link, in both directions.",
+          "items": {
+            "$ref": "#/$defs/TraceLink"
+          },
+          "type": "array"
+        },
+        "needs": {
+          "items": {
+            "$ref": "#/$defs/Summary"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        },
+        "requirement": {
+          "$ref": "#/$defs/Requirement"
+        },
+        "tests": {
+          "description": "`verifies` annotations for this requirement's activities.",
+          "items": {
+            "$ref": "#/$defs/SourceLink"
+          },
+          "type": "array"
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RequirementVerification"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "requirement",
+        "ancestors",
+        "children",
+        "links",
+        "needs",
+        "consumes",
+        "verification",
+        "tests",
+        "evidence",
+        "diagnostics"
+      ],
+      "type": "object"
+    },
+    "RequirementId": {
+      "description": "Identifier of a requirement, e.g. `FOBC-SYS-0001`.",
+      "type": "string"
+    },
+    "RequirementVerification": {
+      "properties": {
+        "activities": {
+          "description": "Each activity's ID and state, in file order.",
+          "items": {
+            "$ref": "#/$defs/ActivityStatus"
+          },
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/ClosureStatus"
+        },
+        "suspect_reasons": {
+          "description": "Why the requirement is Suspect, when it is.",
+          "items": {
+            "$ref": "#/$defs/SuspectReason"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "activities"
+      ],
+      "type": "object"
+    },
+    "Risk": {
+      "additionalProperties": false,
+      "properties": {
+        "fmea_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hazards": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mitigations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "safety_critical": {
+          "type": "boolean"
+        },
+        "security_sensitive": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "fmea_ref"
+      ],
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "error",
+        "warning"
+      ],
+      "type": "string"
+    },
+    "SourceLink": {
+      "description": "A `verifies` annotation found in source code.",
+      "properties": {
+        "activity": {
+          "description": "Verification activity ID named by the annotation.",
+          "type": "string"
+        },
+        "aliases": {
+          "description": "Other names runners report the test under: JUnit `@DisplayName` and\n`@ParameterizedTest(name = …)` (Gradle uses them), xUnit `DisplayName`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "case": {
+          "description": "One case of a table-driven or parameterised test.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "group": {
+          "description": "The annotation names a group of tests (`describe`, `context`) rather than one test.",
+          "type": "boolean"
+        },
+        "line": {
+          "description": "1-based line of the annotation.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "path": {
+          "description": "Path relative to the repository root.",
+          "type": "string"
+        },
+        "source_hash": {
+          "description": "Hash of the test's source (its attributes, declaration and body), used to tell\nwhether a test changed between runs.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suite": {
+          "description": "Suite the test runner reports with the name, such as `Suite` in GoogleTest's\n`TEST(Suite, Name)`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "test_line": {
+          "description": "1-based line of the test declaration.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "test_name": {
+          "description": "Name of the annotated test, or of the test group for a `describe` block. `None` when\nno test declaration follows the annotation.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "activity",
+        "path",
+        "line",
+        "test_name"
+      ],
+      "type": "object"
+    },
+    "SpecEntry": {
+      "additionalProperties": false,
+      "description": "One `[[interface.specs]]` entry.",
+      "properties": {
+        "element": {
+          "description": "The part of the definition the requirement governs: a JSON pointer such as\n`#/paths/~1users~1{id}/get` for OpenAPI; free-form for other formats.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "format": {
+          "description": "`openapi`, `protobuf`, `asyncapi`, `jsonschema` or `other`.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Repository-relative path. For formats other than `openapi`, a glob such as\n`proto/**/*.proto` is accepted.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "path",
+        "element"
+      ],
+      "type": "object"
+    },
+    "Stakeholder": {
+      "additionalProperties": false,
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/StakeholderAuthority"
+        },
+        "concerns": {
+          "$ref": "#/$defs/StakeholderConcerns"
+        },
+        "id": {
+          "$ref": "#/$defs/StakeholderId"
+        },
+        "name": {
+          "type": "string"
+        },
+        "organization": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "organization"
+      ],
+      "type": "object"
+    },
+    "StakeholderAuthority": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sign_off_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "approval_scope"
+      ],
+      "type": "object"
+    },
+    "StakeholderConcerns": {
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "secondary": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "StakeholderContext": {
+      "properties": {
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          },
+          "type": "array"
+        },
+        "needs": {
+          "items": {
+            "$ref": "#/$defs/Summary"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        },
+        "stakeholder": {
+          "$ref": "#/$defs/Stakeholder"
+        }
+      },
+      "required": [
+        "path",
+        "stakeholder",
+        "needs",
+        "diagnostics"
+      ],
+      "type": "object"
+    },
+    "StakeholderId": {
+      "description": "Identifier of a stakeholder, e.g. `STK-001`.",
+      "type": "string"
+    },
+    "Summary": {
+      "description": "A one-line reference to another item.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "statement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "statement"
+      ],
+      "type": "object"
+    },
+    "SuspectReason": {
+      "description": "Why recorded evidence no longer settles a requirement.",
+      "oneOf": [
+        {
+          "description": "The requirement changed after these activities' tests passed. Rerun them.",
+          "properties": {
+            "activities": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "requirement_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "activities"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The requirement changed, and the same tests that passed for its earlier wording passed\nagain. Update the tests, or confirm they still prove it with `rqtk review`.",
+          "properties": {
+            "activities": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "tests_unchanged",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "activities"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "An ancestor requirement, or a need one of them satisfies, changed since this\nrequirement was verified. Check it still fits, then `rqtk review` it.",
+          "properties": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "upstream_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "items"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "TraceLink": {
+      "description": "A link from or to the item in context, labelled with the `trace` field it comes from.",
+      "properties": {
+        "direction": {
+          "$ref": "#/$defs/Direction"
+        },
+        "field": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "field",
+        "direction",
+        "id",
+        "title"
+      ],
+      "type": "object"
+    },
+    "Traceability": {
+      "additionalProperties": false,
+      "properties": {
+        "conflicts_with": {
+          "items": {
+            "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "consumes": {
+          "description": "Interface requirements of other repositories this requirement relies on, as\n`<alias>:<ID>`.",
+          "items": {
+            "$ref": "#/$defs/ConsumedRef"
+          },
+          "type": "array"
+        },
+        "depends_on": {
+          "items": {
+            "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "derived_from": {
+          "items": {
+            "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "external": {
+          "items": {
+            "$ref": "#/$defs/ExternalTrace"
+          },
+          "type": "array"
+        },
+        "parents": {
+          "items": {
+            "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "refines": {
+          "items": {
+            "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "related": {
+          "items": {
+            "$ref": "#/$defs/RequirementId"
+          },
+          "type": "array"
+        },
+        "satisfies": {
+          "items": {
+            "$ref": "#/$defs/NeedId"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ValidationSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_criteria": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stakeholder": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StakeholderId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "method",
+        "stakeholder",
+        "acceptance_criteria",
+        "status"
+      ],
+      "type": "object"
+    },
+    "Verification": {
+      "additionalProperties": false,
+      "properties": {
+        "activities": {
+          "items": {
+            "$ref": "#/$defs/VerificationActivity"
+          },
+          "type": "array"
+        },
+        "level": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "phase": {
+          "type": "string"
+        },
+        "success_criteria": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "method",
+        "level",
+        "phase",
+        "owner",
+        "success_criteria"
+      ],
+      "type": "object"
+    },
+    "VerificationActivity": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "executed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected_result": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "procedure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "procedure",
+        "expected_result",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/context/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Everything relevant to one item (`rqtk context <ID> --json`).",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/RequirementContext",
+      "properties": {
+        "kind": {
+          "const": "requirement",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    {
+      "$ref": "#/$defs/NeedContext",
+      "properties": {
+        "kind": {
+          "const": "need",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    {
+      "$ref": "#/$defs/StakeholderContext",
+      "properties": {
+        "kind": {
+          "const": "stakeholder",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    {
+      "$ref": "#/$defs/InterfaceContext",
+      "description": "A vendored interface requirement (`<alias>:<ID>`), read-only.",
+      "properties": {
+        "kind": {
+          "const": "interface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    }
+  ],
+  "properties": {
+    "schema": {
+      "const": "rqtk/context/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "title": "ContextDoc",
+  "type": "object"
+}

@@ -1,0 +1,30 @@
+{
+  "result": {
+    "base": "v1",
+    "downstream": [],
+    "interfaces": [],
+    "needs": [],
+    "requirements": [
+      {
+        "change": "semantic",
+        "id": "FOBC-SW-0002"
+      }
+    ],
+    "reverify": [
+      {
+        "activity": "FOBC-VA-SW-002-01",
+        "done": false,
+        "reasons": [
+          {
+            "reason": "requirement_changed"
+          }
+        ],
+        "requirement": "FOBC-SW-0002",
+        "tests": [
+          "tests/test_obc.py:9 test_telemetry"
+        ]
+      }
+    ],
+    "schema": "rqtk/impact/2"
+  }
+}

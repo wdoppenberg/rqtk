@@ -1,0 +1,57 @@
+{
+  "$defs": {
+    "Commit": {
+      "description": "A commit that changed a requirement's file.",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "hash": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "RFC 3339.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "hash",
+        "author",
+        "timestamp",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/history/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "The commits that changed a requirement, newest first (`rqtk log`).",
+  "properties": {
+    "commits": {
+      "items": {
+        "$ref": "#/$defs/Commit"
+      },
+      "type": "array"
+    },
+    "id": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "rqtk/history/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "commits"
+  ],
+  "title": "HistoryDoc",
+  "type": "object"
+}

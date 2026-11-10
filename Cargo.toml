@@ -12,6 +12,7 @@ license = "MIT OR Apache-2.0"
 [workspace.dependencies]
 toml = "1.1.2"
 serde = "1"
+rqtk-client = { path = "crates/rqtk-client", version = "1.2.0" }
 rqtk-core = { path = "crates/rqtk-core", version = "0.2.0" }
 rqtk-export = { path = "crates/rqtk-export", version = "0.2.0" }
 rqtk-macros = { path = "crates/rqtk-macros", version = "0.2.0" }

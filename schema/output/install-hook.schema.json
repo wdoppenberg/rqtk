@@ -1,0 +1,24 @@
+{
+  "$id": "https://rqtk.dev/schema/install-hook/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`rqtk install-hook --json`.",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "hook": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "rqtk/install-hook/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "hook",
+    "action"
+  ],
+  "title": "Report",
+  "type": "object"
+}

@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0002"
+title = "Open a checkout"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall open a repository from a working-tree path."
+rationale = "The common case for scripts and editors: the repository is checked out locally."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "Opening a fixture checkout returns its requirements, needs and stakeholders."
+
+[[verification.activities]]
+id = "VA-CLIENT-0002-01"
+name = "Open a working tree"

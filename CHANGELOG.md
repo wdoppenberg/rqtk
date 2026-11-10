@@ -42,12 +42,69 @@ All notable changes to the `rqtk` command line. The format follows
 - Lint rules RQ032–RQ043 for spec files, OpenAPI documents, `consumes` links, vendored
   snapshots, config/lockfile drift and branch pins.
 
+- **`rqtk-client`, a Rust library for reading repositories.** Open a working tree, a tag,
+  baseline or commit (read from git, without a checkout) or a git URL (fetched into a per-user
+  cache). A repository is a snapshot: queries answer from the state at opening until
+  `reload()`. It lists requirements, needs, stakeholders and activities with their links in
+  both directions, filters requirements by a `Filter` given as data, and returns the same
+  views the CLI prints. A repository is `Send + Sync`, so one snapshot can serve queries from
+  many threads at once. Errors carry a stable code. The crate is released with the CLI's
+  version, and its public API follows semantic versioning.
+- **The client in Python.** The `rqtk` package has `rqtk.open(path, ref=…)` and
+  `rqtk.open_remote(url, ref)`, returning a `Repository` with the same queries and views as
+  the Rust client. Values are frozen dataclasses with the JSON's field names, and
+  enumerations are `Literal` strings (`rqtk.types`, generated from the published schemas).
+  Errors raise `rqtk.Error` with the same `code`. Calls release the GIL, and one repository
+  answers calls from several threads at the same time.
+- **The client in TypeScript: `@rqtk/client`** for Node, Bun and Deno. `open`, `openRef`,
+  `openRemote` and `reload` return Promises and load off the event loop; queries return the
+  client's JSON, typed by interfaces generated from the published schemas. Errors are
+  `RqtkError` with the same `code`. It is built for Linux x64 and arm64 (glibc 2.28 or
+  later, and musl), macOS arm64 and Windows x64; it is not on npm yet.
+- **One conformance suite for the three clients.** `conformance/` holds a fixture repository,
+  the calls to make and the results to expect, covering every view, filter field and error
+  code. Rust, Python and TypeScript (on Node, Bun and Deno) must all return them exactly.
+- **`rqtk baseline --list`** lists the baselines, oldest first.
+- **Published JSON Schemas for every `--json` document**, under `schema/output/` (and the
+  client's types under `schema/client/`). `rqtk schema` lists them next to the file kinds and
+  prints any of them.
+
+### Changed (breaking)
+- **`--json` output is version 2.** Every document has a `schema` field naming its shape and
+  version, such as `"rqtk/coverage/2"`. The views (`context`, `trace`, `coverage`, `lint`,
+  `impact`, `diff`, `baseline --list`, `log`) are now the client's documents, so the CLI and
+  the library always agree.
+- Errors printed with `--json` carry `schema: "rqtk/error/2"` and, when opening or querying
+  the repository failed, the client's error `code`.
+- An unknown ID in `trace` or `log` is now a usage error (exit code 2), as it already was in
+  `context`.
+- An unreadable `.rqtk/evidence.toml` is now a lint finding (`RQ100`) instead of an error
+  that stops `lint`, `coverage` and `context`.
+
+### Fixed
+- `scan` reads `.mjs`, `.cjs`, `.mts` and `.cts` files by default, so `verifies` tags in
+  ES-module and CommonJS test files are found without listing the extensions in `[scan]`.
+
 ### Removed
 - Intel macOS (`x86_64-apple-darwin`) release binaries and Python wheels. Apple Silicon,
   Linux and Windows builds continue; Intel Macs can still install with `cargo install rqtk`
   or from the source distribution.
 
 ### Upgrade notes
+- **Scripts that parse `--json`:** ignore the new `schema` field, or check it to know which
+  shape you have. Then, per command:
+  - `coverage`, `context`: each requirement's `activities` is a list of objects
+    (`{"id": …, "state": …}`). The `[id, state]` pairs and the duplicate `activity_states`
+    field are gone; read `activities`.
+  - `explain`: always `{"rules": […]}`, also for a single rule (`rqtk explain RQ001`).
+  - `skills list`: `{"skills": […]}` instead of a bare list.
+  - `interfaces list`: `{"sources": […]}` instead of a bare list.
+  - `schema` (the listing): `{"kinds": […]}`, each with `kind`, `category` (`file`,
+    `document` or `client`) and `describes`, instead of a list of `{kind, file}`.
+  - `diff`: the revisions are `from_ref` and `to_ref` (were `from` and `to`; `from` is
+    reserved in Python).
+  - `impact`: a test file now counts as changed when it differs from the base revision as it
+    was when rqtk read the repository, rather than when git was asked afterwards.
 - Requirement files with an `[interface]` table, configs with `[interfaces]`, and `consumes`
   links can't be read by rqtk 1.2. Requirements without them hash exactly as before.
 

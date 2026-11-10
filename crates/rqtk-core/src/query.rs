@@ -11,12 +11,13 @@ use crate::model::{
 use crate::repository::{RequirementSet, Validated};
 use crate::scan::SourceLink;
 use crate::status::RequirementVerification;
+use schemars::JsonSchema;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::{Path, PathBuf};
 
 /// A one-line reference to another item.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Summary {
     pub id: String,
     pub title: String,
@@ -24,17 +25,26 @@ pub struct Summary {
 }
 
 /// A link from or to the item in context, labelled with the `trace` field it comes from.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct TraceLink {
-    pub field: &'static str,
-    /// `outgoing` if the item in context declares the link, `incoming` if the other one does.
-    pub direction: &'static str,
+    pub field: String,
+    pub direction: Direction,
     pub id: String,
     pub title: Option<String>,
 }
 
+/// Which end of a link an item is on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum Direction {
+    /// The item declares the link.
+    Outgoing,
+    /// The other item declares the link.
+    Incoming,
+}
+
 /// A vendored interface requirement as seen from a consumer.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ConsumedSummary {
     /// `<alias>:<ID>`.
     pub id: String,
@@ -47,31 +57,31 @@ pub struct ConsumedSummary {
     pub resolved: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "lowercase")]
-pub enum Context<'a> {
-    Requirement(Box<RequirementContext<'a>>),
-    Need(NeedContext<'a>),
-    Stakeholder(StakeholderContext<'a>),
+pub enum Context {
+    Requirement(Box<RequirementContext>),
+    Need(NeedContext),
+    Stakeholder(StakeholderContext),
     /// A vendored interface requirement (`<alias>:<ID>`), read-only.
-    Interface(Box<InterfaceContext<'a>>),
+    Interface(Box<InterfaceContext>),
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct InterfaceContext<'a> {
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct InterfaceContext {
     pub id: String,
     pub alias: String,
     pub path: PathBuf,
-    pub requirement: &'a Requirement,
+    pub requirement: Requirement,
     pub provider_status: Option<crate::status::ClosureStatus>,
     /// Local requirements that consume it.
     pub consumers: Vec<Summary>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct RequirementContext<'a> {
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct RequirementContext {
     pub path: PathBuf,
-    pub requirement: &'a Requirement,
+    pub requirement: Requirement,
     /// Ancestors via `trace.parents`, nearest first.
     pub ancestors: Vec<Summary>,
     /// Requirements that list this one in `trace.parents`.
@@ -84,28 +94,28 @@ pub struct RequirementContext<'a> {
     pub verification: Option<RequirementVerification>,
     /// `verifies` annotations for this requirement's activities.
     pub tests: Vec<SourceLink>,
-    pub evidence: Vec<&'a ActivityEvidence>,
+    pub evidence: Vec<ActivityEvidence>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct NeedContext<'a> {
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct NeedContext {
     pub path: PathBuf,
-    pub need: &'a Need,
-    pub stakeholders: Vec<&'a Stakeholder>,
+    pub need: Need,
+    pub stakeholders: Vec<Stakeholder>,
     pub satisfied_by: Vec<Summary>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct StakeholderContext<'a> {
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+pub struct StakeholderContext {
     pub path: PathBuf,
-    pub stakeholder: &'a Stakeholder,
+    pub stakeholder: Stakeholder,
     pub needs: Vec<Summary>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ChangeKind {
     Added,
@@ -116,21 +126,21 @@ pub enum ChangeKind {
     Cosmetic,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ItemChange {
     pub id: String,
     pub change: ChangeKind,
 }
 
 /// A requirement that did not change itself but depends on one that did.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Downstream {
     pub id: String,
     /// The changed requirements or needs it is reached from.
     pub via: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 #[serde(tag = "reason", rename_all = "snake_case")]
 pub enum ReverifyReason {
     /// The requirement is new, or its content hash changed.
@@ -139,7 +149,7 @@ pub enum ReverifyReason {
     TestChanged { path: PathBuf },
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Reverify {
     pub activity: String,
     pub requirement: RequirementId,
@@ -152,7 +162,7 @@ pub struct Reverify {
 }
 
 /// What changed since `base` and what that puts at risk.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Impact {
     pub base: String,
     pub requirements: Vec<ItemChange>,
@@ -227,14 +237,14 @@ impl RequirementSet<Validated> {
     /// Everything relevant to one item, or `None` if no item has that ID.
     /// `diagnostics` should be the lint findings for the whole set; the ones about this item
     /// are included.
-    pub fn context<'a>(
-        &'a self,
+    pub fn context(
+        &self,
         id: &str,
         links: &[SourceLink],
-        evidence: &'a Evidence,
+        evidence: &Evidence,
         verification: &BTreeMap<RequirementId, RequirementVerification>,
         diagnostics: &[Diagnostic],
-    ) -> Option<Context<'a>> {
+    ) -> Option<Context> {
         let about = |subject: EntityRef| -> Vec<Diagnostic> {
             diagnostics
                 .iter()
@@ -257,8 +267,8 @@ impl RequirementSet<Validated> {
             for (field, target) in req.trace.requirement_links() {
                 if field != "parents" {
                     trace_links.push(TraceLink {
-                        field,
-                        direction: "outgoing",
+                        field: field.to_owned(),
+                        direction: Direction::Outgoing,
                         id: target.0.clone(),
                         title: self.requirements.get(target).map(|r| r.title.clone()),
                     });
@@ -268,8 +278,8 @@ impl RequirementSet<Validated> {
                 for (field, target) in other.trace.requirement_links() {
                     if field != "parents" && *target == req_id {
                         trace_links.push(TraceLink {
-                            field,
-                            direction: "incoming",
+                            field: field.to_owned(),
+                            direction: Direction::Incoming,
                             id: other_id.0.clone(),
                             title: Some(other.title.clone()),
                         });
@@ -285,7 +295,7 @@ impl RequirementSet<Validated> {
                 .collect();
             return Some(Context::Requirement(Box::new(RequirementContext {
                 path: self.relative(&self.files_by_id[&req_id]),
-                requirement: req,
+                requirement: req.clone(),
                 ancestors: view.upward.iter().map(|p| self.summary(p)).collect(),
                 children,
                 links: trace_links,
@@ -311,6 +321,7 @@ impl RequirementSet<Validated> {
                     .activities
                     .values()
                     .filter(|e| activities.contains(e.id.as_str()))
+                    .cloned()
                     .collect(),
                 diagnostics: about(EntityRef::Requirement(req_id.clone())),
             })));
@@ -321,7 +332,7 @@ impl RequirementSet<Validated> {
                 id: id.to_owned(),
                 alias: v.alias.clone(),
                 path: self.relative(&v.path),
-                requirement: &v.requirement,
+                requirement: v.requirement.clone(),
                 provider_status: v.provider_status,
                 consumers: self
                     .requirements
@@ -336,11 +347,12 @@ impl RequirementSet<Validated> {
         if let Some(need) = self.needs.get(&need_id) {
             return Some(Context::Need(NeedContext {
                 path: self.relative(&self.needs_by_id[&need_id]),
-                need,
+                need: need.clone(),
                 stakeholders: need
                     .stakeholders
                     .iter()
                     .filter_map(|s| self.stakeholders.get(s))
+                    .cloned()
                     .collect(),
                 satisfied_by: self
                     .requirements
@@ -356,7 +368,7 @@ impl RequirementSet<Validated> {
         let stakeholder = self.stakeholders.get(&stk_id)?;
         Some(Context::Stakeholder(StakeholderContext {
             path: self.relative(&self.stakeholders_by_id[&stk_id]),
-            stakeholder,
+            stakeholder: stakeholder.clone(),
             needs: self
                 .needs
                 .iter()
@@ -377,11 +389,41 @@ impl RequirementSet<Validated> {
         evidence: &Evidence,
         changed_files: &[PathBuf],
     ) -> Result<Impact, RqtkError> {
-        let base_reqs: BTreeMap<RequirementId, Requirement> = self
-            .git
-            .items_at_ref::<Requirement>(base, &self.root)?
-            .into_iter()
+        // A requirement whose file is byte-for-byte the same at `base` is unchanged, unless an
+        // interface's spec files changed: only the other files are parsed.
+        let base_blobs = self.git.blobs_at(base, &self.root)?;
+        // Paths as git has them: relative to the work tree, computed from one canonical prefix.
+        let prefix = self.git.relative(&self.root);
+        let in_git = |path: &Path| prefix.join(path.strip_prefix(&self.root).unwrap_or(path));
+        let unchanged: BTreeSet<&RequirementId> = self
+            .files_by_id
+            .iter()
+            .filter(|(id, path)| {
+                self.requirements[*id].interface.is_none()
+                    && self
+                        .blob_ids
+                        .get(*path)
+                        .is_some_and(|oid| base_blobs.get(&in_git(path)) == Some(oid))
+            })
+            .map(|(id, _)| id)
+            .collect();
+        let unchanged_paths: BTreeSet<PathBuf> = unchanged
+            .iter()
+            .map(|id| in_git(&self.files_by_id[*id]))
+            .collect();
+        let base_reqs: BTreeMap<RequirementId, Requirement> = base_blobs
+            .iter()
+            .filter(|(path, _)| {
+                path.extension().is_some_and(|e| e == "toml") && !unchanged_paths.contains(*path)
+            })
+            .filter_map(|(_, oid)| self.git.parse_blob::<Requirement>(*oid))
             .map(|r| (r.id.clone(), r))
+            .collect();
+        let current_reqs: BTreeMap<RequirementId, Requirement> = self
+            .requirements
+            .iter()
+            .filter(|(id, _)| !unchanged.contains(id))
+            .map(|(id, r)| (id.clone(), r.clone()))
             .collect();
         let base_needs: BTreeMap<NeedId, Need> = self
             .git
@@ -390,11 +432,19 @@ impl RequirementSet<Validated> {
             .map(|n| (n.id.clone(), n))
             .collect();
 
-        let base_files = self.git.spec_files_at(base, &self.repo_root)?;
+        // Spec files at `base` are read only when an interface requirement is compared.
+        let base_files = if base_reqs.values().any(|r| r.interface.is_some()) {
+            Some(self.git.spec_files_at(base, &self.repo_root)?)
+        } else {
+            None
+        };
         let requirements = compare(
             &base_reqs,
-            &self.requirements,
-            |_, r| crate::git::hash_in(r, &base_files),
+            &current_reqs,
+            |_, r| match &base_files {
+                Some(files) => crate::git::hash_in(r, files),
+                None => r.compute_content_hash(None),
+            },
             |id, _| self.content_hash(id),
         );
         let needs = compare(
@@ -458,16 +508,23 @@ impl RequirementSet<Validated> {
             .map(|c| c.id.as_str())
             .collect();
         let changed_files: BTreeSet<&Path> = changed_files.iter().map(PathBuf::as_path).collect();
+        let mut links_of: BTreeMap<&str, Vec<&SourceLink>> = BTreeMap::new();
+        for l in links {
+            links_of.entry(l.activity.as_str()).or_default().push(l);
+        }
         let mut reverify = Vec::new();
         for (req_id, req) in &self.requirements {
             for activity in &req.verification.activities {
+                let linked: Vec<&SourceLink> = links_of
+                    .get(activity.id.as_str())
+                    .cloned()
+                    .unwrap_or_default();
                 let mut reasons = Vec::new();
                 if changed_reqs.contains(req_id.0.as_str()) {
                     reasons.push(ReverifyReason::RequirementChanged);
                 }
-                let test_files: BTreeSet<&Path> = links
+                let test_files: BTreeSet<&Path> = linked
                     .iter()
-                    .filter(|l| l.activity == activity.id)
                     .map(|l| l.path.as_path())
                     .filter(|p| changed_files.contains(p))
                     .collect();
@@ -475,8 +532,6 @@ impl RequirementSet<Validated> {
                     path: p.to_path_buf(),
                 }));
                 if !reasons.is_empty() {
-                    let linked: Vec<&SourceLink> =
-                        links.iter().filter(|l| l.activity == activity.id).collect();
                     let tests = linked
                         .iter()
                         .map(|l| {
@@ -519,9 +574,23 @@ impl RequirementSet<Validated> {
 }
 
 impl RequirementSet<Validated> {
+    /// Requirements added, removed and modified between revisions `from` and `to`.
+    pub fn diff(&self, from: &str, to: &str) -> Result<crate::git::RequirementDiff, RqtkError> {
+        // Blobs loaded here need no second read to tell whether they are interfaces.
+        let known = self
+            .files_by_id
+            .iter()
+            .filter_map(|(id, path)| {
+                let oid = self.blob_ids.get(path)?;
+                Some((*oid, self.requirements[id].interface.is_some()))
+            })
+            .collect();
+        self.git
+            .diff_refs(from, to, &self.root, &self.repo_root, &known)
+    }
+
     /// Vendored interface requirements whose hash in the lockfile differs from `base`.
     fn interface_changes(&self, base: &str) -> Result<Vec<ItemChange>, RqtkError> {
-        use crate::spec::SpecFiles as _;
         let hashes = |lock: Option<&crate::vendor::Lockfile>| -> BTreeMap<String, String> {
             lock.into_iter()
                 .flat_map(|l| &l.sources)
@@ -534,15 +603,13 @@ impl RequirementSet<Validated> {
         };
         let base_lock = match self
             .git
-            .spec_files_at(base, &self.repo_root)?
-            .read(crate::vendor::LOCK_PATH)
+            .read_at(base, &self.repo_root, crate::vendor::LOCK_PATH)?
         {
-            Ok(Some(bytes)) => Some(
+            Some(bytes) => Some(
                 crate::vendor::Lockfile::parse(&String::from_utf8_lossy(&bytes))
                     .map_err(|e| crate::vendor::Lockfile::unreadable(&format!("at {base}: {e}")))?,
             ),
-            Ok(None) => None,
-            Err(e) => return Err(crate::vendor::Lockfile::unreadable(&e.to_string())),
+            None => None,
         };
         let before = hashes(base_lock.as_ref());
         let after = hashes(self.vendored.lock.as_ref());

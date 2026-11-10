@@ -2,8 +2,9 @@ use console::style;
 use regex::{Regex, RegexBuilder};
 use rqtk_core::{EntityRef, RequirementSet};
 use serde::Serialize;
-use std::{error::Error, path::Path, path::PathBuf};
+use std::{path::Path, path::PathBuf};
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit};
 
 pub struct SearchArgs {
@@ -12,16 +13,22 @@ pub struct SearchArgs {
     pub field: Option<Vec<String>>,
 }
 
-#[derive(Serialize)]
-struct FieldMatch<'a> {
+/// `rqtk search --json`.
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
+    hits: &'a [Hit<'a>],
+}
+
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct FieldMatch<'a> {
     field: &'static str,
     value: &'a str,
     /// Byte ranges of each match within `value`.
     ranges: Vec<(usize, usize)>,
 }
 
-#[derive(Serialize)]
-struct Hit<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Hit<'a> {
     subject: EntityRef,
     path: PathBuf,
     matches: Vec<FieldMatch<'a>>,
@@ -82,7 +89,7 @@ fn file_of<'a, S>(set: &'a RequirementSet<S>, subject: &EntityRef) -> &'a Path {
         .expect("item listed by the set has a file")
 }
 
-pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, CliError> {
     let set = RequirementSet::load_from_repo_root(&ctx.root)?;
     let re = RegexBuilder::new(&regex::escape(&args.pattern))
         .case_insensitive(args.ignore_case)
@@ -126,7 +133,7 @@ pub fn run(ctx: &Ctx, args: SearchArgs) -> Result<Exit, Box<dyn Error>> {
     }
 
     if ctx.json() {
-        output::json(&serde_json::json!({ "hits": hits }))?;
+        output::document("search", &Report { hits: &hits })?;
         return Ok(Exit::Ok);
     }
     for hit in &hits {

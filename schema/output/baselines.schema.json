@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "BaselineEntry": {
+      "description": "A baseline: an `rqtk/<name>` tag.",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "RFC 3339.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "tag",
+        "timestamp",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://rqtk.dev/schema/baselines/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Every baseline, oldest first (`rqtk baseline --list`).",
+  "properties": {
+    "baselines": {
+      "items": {
+        "$ref": "#/$defs/BaselineEntry"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/baselines/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "baselines"
+  ],
+  "title": "BaselinesDoc",
+  "type": "object"
+}

@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0021"
+title = "Shared across threads"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "One opened repository shall answer queries from several threads at the same time, in Rust and Python."
+rationale = "A dashboard serves every request from one snapshot; a lock per repository would queue those requests behind each other. TypeScript is left out: JavaScript calls a repository from one thread only, and a native object cannot pass between workers."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Queries on one repository from several threads give the same answers as on one thread, and in Python two calls on one repository run at the same time."
+
+[[verification.activities]]
+id = "VA-CLIENT-0021-01"
+name = "Rust: concurrent queries on one repository"
+
+[[verification.activities]]
+id = "VA-CLIENT-0021-02"
+name = "Python: calls on one repository overlap"

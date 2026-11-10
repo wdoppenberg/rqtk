@@ -1,9 +1,8 @@
-use std::error::Error;
-
 use rqtk_core::evidence::EVIDENCE_PATH;
 use rqtk_core::{RequirementId, RequirementSet, Review, SuspectReason};
 use serde::Serialize;
 
+use crate::cli::error::CliError;
 use crate::cli::output::{self, Ctx, Exit, Usage};
 
 pub struct ReviewArgs {
@@ -12,8 +11,8 @@ pub struct ReviewArgs {
     pub dry_run: bool,
 }
 
-#[derive(Serialize)]
-struct Report<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Report<'a> {
     review: &'a Review,
     /// The Suspect reasons this review settles.
     cleared: Vec<SuspectReason>,
@@ -24,7 +23,7 @@ struct Report<'a> {
 /// were kept as they are after it was reworded, or an ancestor or need changed. Clears the
 /// `tests_unchanged` and `upstream_changed` Suspect reasons until the requirement or its
 /// upstream changes again. A requirement whose own tests haven't been rerun stays Suspect.
-pub fn run(ctx: &Ctx, args: ReviewArgs) -> Result<Exit, Box<dyn Error>> {
+pub fn run(ctx: &Ctx, args: ReviewArgs) -> Result<Exit, CliError> {
     let (set, _) = RequirementSet::load_from_repo_root(&ctx.root)?.validate();
     super::refuse_vendored(&set, &args.id, "review")?;
     let id = RequirementId(args.id.clone());
@@ -55,11 +54,14 @@ pub fn run(ctx: &Ctx, args: ReviewArgs) -> Result<Exit, Box<dyn Error>> {
         .any(|r| matches!(r, SuspectReason::RequirementChanged { .. }));
 
     if ctx.json() {
-        output::json(&Report {
-            review: &review,
-            cleared,
-            written: !args.dry_run,
-        })?;
+        output::document(
+            "review",
+            &Report {
+                review: &review,
+                cleared,
+                written: !args.dry_run,
+            },
+        )?;
         return Ok(Exit::Ok);
     }
 

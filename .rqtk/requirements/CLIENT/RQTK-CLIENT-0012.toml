@@ -1,0 +1,22 @@
+id = "RQTK-CLIENT-0012"
+title = "Views equal the CLI"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "High"
+statement = "The client shall provide the context, trace, coverage, lint, impact, diff, baseline and history views, each equal to the `--json` output of the matching CLI command."
+rationale = "The CLI and the client must never disagree about a repository; making `--json` the serialisation of the client's types makes that checkable."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "For every conformance fixture, each view from the client equals the JSON the matching CLI command prints."
+
+[[verification.activities]]
+id = "VA-CLIENT-0012-01"
+name = "Client views equal CLI JSON"

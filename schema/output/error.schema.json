@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "ErrorBody": {
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Set when opening or querying the repository failed."
+        },
+        "kind": {
+          "description": "`usage` (exit code 2) or `error` (exit code 3).",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ErrorCode": {
+      "description": "What went wrong, as a stable code. Branch on this, not on the message.",
+      "oneOf": [
+        {
+          "const": "not_a_repository",
+          "description": "No `.rqtk/config.toml` at the repository root.",
+          "type": "string"
+        },
+        {
+          "const": "invalid_config",
+          "description": "`.rqtk/config.toml` exists but cannot be read or parsed.",
+          "type": "string"
+        },
+        {
+          "const": "unsupported_schema",
+          "description": "The repository uses a `schema_version` this rqtk does not read.",
+          "type": "string"
+        },
+        {
+          "const": "ref_not_found",
+          "description": "A ref, tag, baseline or commit that does not exist.",
+          "type": "string"
+        },
+        {
+          "const": "remote_refused",
+          "description": "A git URL whose transport is not allowed (only https and SSH, plus `file://` when\nexplicitly allowed).",
+          "type": "string"
+        },
+        {
+          "const": "remote_failed",
+          "description": "Fetching a remote repository failed.",
+          "type": "string"
+        },
+        {
+          "const": "not_found",
+          "description": "No requirement, need or stakeholder with the given ID.",
+          "type": "string"
+        },
+        {
+          "const": "git",
+          "description": "The operation needs git history the repository doesn't have, or git failed.",
+          "type": "string"
+        },
+        {
+          "const": "io",
+          "description": "Reading a file failed.",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "$id": "https://rqtk.dev/schema/error/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "The error document printed on stderr with `--json`.",
+  "properties": {
+    "error": {
+      "$ref": "#/$defs/ErrorBody"
+    },
+    "schema": {
+      "const": "rqtk/error/2",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "error"
+  ],
+  "title": "ErrorDoc",
+  "type": "object"
+}

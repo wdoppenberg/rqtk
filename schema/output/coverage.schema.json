@@ -1,0 +1,342 @@
+{
+  "$defs": {
+    "ActivityStatus": {
+      "description": "One activity's state.",
+      "oneOf": [
+        {
+          "description": "Linked tests passed against the requirement's current content.",
+          "properties": {
+            "state": {
+              "const": "passed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A linked test failed in the recorded evidence.",
+          "properties": {
+            "state": {
+              "const": "failed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Linked tests passed, but the requirement has changed since.",
+          "properties": {
+            "state": {
+              "const": "suspect",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Linked to tests, but no evidence has been recorded yet.",
+          "properties": {
+            "state": {
+              "const": "not_run",
+              "type": "string"
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Not linked to any test; the activity's hand-written `status` applies. Used for\ninspections, analyses and demonstrations.",
+          "properties": {
+            "state": {
+              "const": "manual",
+              "type": "string"
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "state",
+            "status"
+          ],
+          "type": "object"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "ClosureStatus": {
+      "oneOf": [
+        {
+          "const": "verified",
+          "description": "Every activity passed (tests against current content, or manual Passed/Waived).",
+          "type": "string"
+        },
+        {
+          "const": "suspect",
+          "description": "A test passed for an earlier version of the requirement; re-verify.",
+          "type": "string"
+        },
+        {
+          "const": "failed",
+          "description": "At least one activity failed.",
+          "type": "string"
+        },
+        {
+          "const": "in_progress",
+          "description": "Some activities passed or started, not all.",
+          "type": "string"
+        },
+        {
+          "const": "planned",
+          "description": "Activities and success criteria defined, none executed yet.",
+          "type": "string"
+        },
+        {
+          "const": "gap",
+          "description": "No activities defined, or success criteria missing.",
+          "type": "string"
+        }
+      ]
+    },
+    "ConsumedStatus": {
+      "description": "A consumed interface with the provider's status and its consumers here.",
+      "properties": {
+        "consumers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "`<alias>:<ID>`.",
+          "type": "string"
+        },
+        "provider_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClosureStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The provider's verification status at the pinned commit. Informational: it does not\ncount toward this repository's coverage."
+        },
+        "resolved": {
+          "description": "Whether the vendored snapshot has it.",
+          "type": "boolean"
+        },
+        "statement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "statement",
+        "provider_status",
+        "resolved",
+        "consumers"
+      ],
+      "type": "object"
+    },
+    "NeedStatus": {
+      "description": "Which requirements satisfy a need.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "satisfied_by": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "satisfied_by"
+      ],
+      "type": "object"
+    },
+    "RequirementStatus": {
+      "description": "One requirement's verification status.",
+      "properties": {
+        "activities": {
+          "description": "Each activity's ID and state, in file order.",
+          "items": {
+            "$ref": "#/$defs/ActivityStatus"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ClosureStatus"
+        },
+        "suspect_reasons": {
+          "description": "Why the requirement is Suspect, when it is.",
+          "items": {
+            "$ref": "#/$defs/SuspectReason"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "activities"
+      ],
+      "type": "object"
+    },
+    "SuspectReason": {
+      "description": "Why recorded evidence no longer settles a requirement.",
+      "oneOf": [
+        {
+          "description": "The requirement changed after these activities' tests passed. Rerun them.",
+          "properties": {
+            "activities": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "requirement_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "activities"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The requirement changed, and the same tests that passed for its earlier wording passed\nagain. Update the tests, or confirm they still prove it with `rqtk review`.",
+          "properties": {
+            "activities": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "tests_unchanged",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "activities"
+          ],
+          "type": "object"
+        },
+        {
+          "description": "An ancestor requirement, or a need one of them satisfies, changed since this\nrequirement was verified. Check it still fits, then `rqtk review` it.",
+          "properties": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "const": "upstream_changed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "items"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "https://rqtk.dev/schema/coverage/2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Need satisfaction and verification status (`rqtk coverage`).",
+  "properties": {
+    "consumed": {
+      "description": "Vendored interface requirements consumed here, with the provider's status. Not\ncounted in `summary`.",
+      "items": {
+        "$ref": "#/$defs/ConsumedStatus"
+      },
+      "type": "array"
+    },
+    "needs": {
+      "items": {
+        "$ref": "#/$defs/NeedStatus"
+      },
+      "type": "array"
+    },
+    "requirements": {
+      "items": {
+        "$ref": "#/$defs/RequirementStatus"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "rqtk/coverage/2",
+      "type": "string"
+    },
+    "summary": {
+      "additionalProperties": {
+        "format": "uint",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "description": "Number of requirements per status.",
+      "type": "object"
+    },
+    "unsatisfied_needs": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "summary",
+    "requirements",
+    "needs",
+    "unsatisfied_needs",
+    "consumed"
+  ],
+  "title": "CoverageDoc",
+  "type": "object"
+}

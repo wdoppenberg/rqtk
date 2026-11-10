@@ -1506,7 +1506,8 @@ fn list_shows_every_alias() {
         .assert()
         .success();
     let listed = json(rqtk(&c.root).args(["interfaces", "list"]));
-    let listed = listed.as_array().unwrap();
+    assert_eq!(listed["schema"], "rqtk/interfaces-list/2");
+    let listed = listed["sources"].as_array().unwrap();
     assert_eq!(listed.len(), 2);
     assert_eq!(listed[0]["alias"], "later");
     assert_eq!(listed[0]["commit"], Value::Null);

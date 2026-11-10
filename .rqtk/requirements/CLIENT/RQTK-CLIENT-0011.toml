@@ -1,0 +1,26 @@
+id = "RQTK-CLIENT-0011"
+title = "Requirement filter"
+category = "CLIENT"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "The client shall list the requirements that match a `Filter` on status, category, type, state, priority, ancestor, consumed interface and text, given as serialisable data identical in all three languages."
+rationale = "Most dashboard views are filtered lists; a filter defined as data lets a query language later parse into the same object."
+
+[trace]
+parents = ["RQTK-SYS-0007"]
+satisfies = ["NEED-0007"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "Each filter field selects exactly the matching fixture requirements, and a serialised filter gives the same result in all three languages."
+
+[[verification.activities]]
+id = "VA-CLIENT-0011-01"
+name = "Each filter field"
+
+[[verification.activities]]
+id = "VA-CLIENT-0011-02"
+name = "Serialised filters agree across languages"
