@@ -3029,7 +3029,10 @@ fn skills_list_names_model_and_user_invoked_skills() {
         .map(|s| s["name"].as_str().unwrap())
         .collect();
     assert_eq!(skills.len(), 6);
-    assert_eq!(user, ["to-requirements", "requirements-review", "design-review"]);
+    assert_eq!(
+        user,
+        ["to-requirements", "requirements-review", "design-review"]
+    );
 }
 
 fn actions(report: &serde_json::Value) -> Vec<(String, String)> {

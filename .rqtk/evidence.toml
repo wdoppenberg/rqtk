@@ -589,7 +589,7 @@ tests = [
     "crates/rqtk/tests/integration_test.rs::skills_list_names_model_and_user_invoked_skills",
 ]
 commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
-tests_hash = "1796d707b0cf307f+346d38c4700698fb+450c17e1fc6358d0+604338a4113ab960+6c9fd70ae49f677c+784709af2f71a172+b6a39a89cb670a2b+cd286f348afae487+e58e8334bb13f4e0"
+tests_hash = "1796d707b0cf307f+346d38c4700698fb+450c17e1fc6358d0+604338a4113ab960+784709af2f71a172+b6a39a89cb670a2b+cd286f348afae487+e1f827add0be31dd+e58e8334bb13f4e0"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
