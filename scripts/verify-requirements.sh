@@ -26,7 +26,9 @@ RUSTC_BOOTSTRAP=1 cargo test --workspace --exclude rqtk-py --tests \
 # The Python package's tests, against the extension built from this checkout, in a virtual
 # environment under target/ ($PYTHON picks the interpreter).
 venv="target/python"
-if [[ ! -x "$venv/bin/python" ]]; then
+# CI's Rust cache can restore target/ with part of a venv in it, so rebuild an incomplete one.
+if [[ ! -x "$venv/bin/python" || ! -x "$venv/bin/maturin" || ! -x "$venv/bin/pytest" ]]; then
+  rm -rf "$venv"
   "${PYTHON:-python3}" -m venv "$venv"
 fi
 "$venv/bin/python" -m pip install --quiet --disable-pip-version-check "maturin>=1.9,<2" pytest
