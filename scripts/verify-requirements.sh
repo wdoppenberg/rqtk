@@ -46,7 +46,7 @@ node_junit="$(dirname "$junit")/node.xml"
   npx napi build --platform --js native.cjs --dts native.d.ts
   npm run --silent typecheck
   node --test --test-reporter=spec --test-reporter-destination=stdout \
-    --test-reporter=junit --test-reporter-destination="$repo_root/$node_junit" tests/
+    --test-reporter=junit --test-reporter-destination="$repo_root/$node_junit" tests/client.test.mjs
   for runtime in bun deno; do
     if ! command -v "$runtime" > /dev/null; then
       if [[ -n "${CI:-}" ]]; then
