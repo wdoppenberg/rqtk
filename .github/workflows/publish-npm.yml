@@ -2,14 +2,11 @@ name: npm
 
 # Builds `@rqtk/client` (crates/rqtk-node) prebuilt: one package per platform holding the
 # addon, and the main package, which depends on them optionally so npm installs only the one
-# that matches. Each platform's packages are installed and opened on that platform. On a
-# version tag they are published to npm.
+# that matches. Each platform's packages are installed and opened on that platform. Publishing
+# them to npm is not set up yet.
 #
 # Linux addons are built in containers on runners of the same architecture: manylinux_2_28
 # for glibc (so they load on glibc 2.28 and later, like the Python wheels) and Alpine for musl.
-#
-# Publishing uses npm Trusted Publishing (no stored token): each of the seven packages on
-# npmjs.com trusts repository wdoppenberg/rqtk, workflow publish-npm.yml, environment npm.
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
@@ -176,28 +173,3 @@ jobs:
           npm install --no-audit --no-fund ./*.tgz
           node smoke-client.mjs ../crates/rqtk/tests/fixtures/firesat-obc
 
-  publish:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: smoke
-    runs-on: ubuntu-latest
-    environment:
-      name: npm
-      url: https://www.npmjs.com/package/@rqtk/client
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-      - uses: actions/download-artifact@v8
-        with:
-          name: npm-packages
-          path: dist
-      # The platform packages first, so the main package never points at a missing one.
-      - name: Publish
-        run: |
-          for tgz in dist/rqtk-client-*-[0-9]*.tgz; do
-            npm publish --provenance --access public "$tgz"
-          done
-          npm publish --provenance --access public dist/rqtk-client-[0-9]*.tgz

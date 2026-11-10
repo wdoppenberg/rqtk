@@ -59,8 +59,8 @@ All notable changes to the `rqtk` command line. The format follows
 - **The client in TypeScript: `@rqtk/client`** for Node, Bun and Deno. `open`, `openRef`,
   `openRemote` and `reload` return Promises and load off the event loop; queries return the
   client's JSON, typed by interfaces generated from the published schemas. Errors are
-  `RqtkError` with the same `code`. It installs prebuilt for Linux x64 and arm64 (glibc 2.28
-  or later, and musl), macOS arm64 and Windows x64, with no Rust toolchain.
+  `RqtkError` with the same `code`. It is built for Linux x64 and arm64 (glibc 2.28 or
+  later, and musl), macOS arm64 and Windows x64; it is not on npm yet.
 - **One conformance suite for the three clients.** `conformance/` holds a fixture repository,
   the calls to make and the results to expect, covering every view, filter field and error
   code. Rust, Python and TypeScript (on Node, Bun and Deno) must all return them exactly.

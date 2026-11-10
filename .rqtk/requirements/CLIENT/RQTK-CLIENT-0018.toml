@@ -20,3 +20,9 @@ success_criteria = "The release build produces a Python wheel and a Node package
 [[verification.activities]]
 id = "VA-CLIENT-0018-01"
 name = "Release matrix builds every platform"
+status = "Passed"
+executed_at = 2026-11-10
+evidence = [
+  "https://github.com/wdoppenberg/rqtk/actions/runs/42788975281",
+  "https://github.com/wdoppenberg/rqtk/actions/runs/42788975484",
+]

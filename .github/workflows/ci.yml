@@ -39,11 +39,6 @@ jobs:
       # this test run, and every requirement is verified against its current wording.
       - name: Test and verify requirements
         run: scripts/verify-requirements.sh
-        env:
-          # feat/client is built in four stages; requirements of the later ones are Planned
-          # until they land. Only this branch's pull request accepts that; master stays
-          # strict, and the script fails once nothing is unfinished.
-          RQTK_ALLOW_UNFINISHED: ${{ github.head_ref == 'feat/client' && '1' || '' }}
       # RQTK-CLIENT-0020's limits are for an optimised build on this runner.
       - name: Client performance (optimised)
         run: cargo test --release -p rqtk-client --test performance -- --nocapture
