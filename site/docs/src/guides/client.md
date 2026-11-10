@@ -2,7 +2,7 @@
 
 The client reads an rqtk repository from a program: its requirements, needs and stakeholders with their links, verification status, lint findings and change history. It gives the same answers as the command line, because the CLI is built on it: every view below is the same document `rqtk <command> --json` prints.
 
-It is one Rust library, `rqtk-client`, also available in Python as part of the `rqtk` package and in TypeScript as `@rqtk/client` (Node 18 or later, Bun and Deno). The client only reads. Changes go through the `rqtk` command line.
+It is one Rust library, `rqtk-client`, also available in Python as part of the `rqtk` package and in TypeScript as `@rqtk/client` (Node 18 or later, Bun and Deno). The client only reads. Changes go through the `rqtk` command line. The Python and npm packages come prebuilt for Linux x64 and arm64 (glibc 2.28 or later, and musl), macOS arm64 and Windows x64. All three languages pass one conformance suite (`conformance/` in the repository), so they return the same results for the same calls.
 
 ```toml
 # Rust

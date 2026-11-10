@@ -8,6 +8,8 @@ Read an [rqtk](https://rqtk.dev) repository from Node (18 or later), Bun or Deno
 npm install @rqtk/client
 ```
 
+Prebuilt for Linux x64 and arm64 (glibc 2.28 or later, and musl), macOS arm64 and Windows x64; npm installs only the addon for your platform.
+
 ```ts
 import { open } from "@rqtk/client";
 

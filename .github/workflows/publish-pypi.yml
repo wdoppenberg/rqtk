@@ -1,7 +1,8 @@
 name: PyPI
 
 # Builds the `rqtk` Python package (crates/rqtk-py): abi3 wheels for Linux (glibc and musl),
-# macOS and Windows, plus an sdist. On a version tag it publishes them to PyPI.
+# macOS and Windows, plus an sdist. Each wheel is installed and opened on its platform. On a
+# version tag they are published to PyPI.
 #
 # Publishing uses PyPI Trusted Publishing (no stored token). PyPI doesn't support it from
 # reusable workflows, so this runs on the tag itself rather than as a cargo-dist publish job.
@@ -18,6 +19,8 @@ on:
       - "crates/rqtk-core/**"
       - "schema/**"
       - "scripts/generate-client-types.py"
+      - "scripts/smoke-client.py"
+      - "Cargo.lock"
       - ".github/workflows/publish-pypi.yml"
   workflow_dispatch:
 
@@ -59,6 +62,47 @@ jobs:
           name: wheel-${{ matrix.os }}-${{ matrix.target }}-${{ matrix.manylinux || 'native' }}
           path: dist
 
+  # Install each wheel on its own platform and open a repository.
+  smoke:
+    name: smoke (${{ matrix.wheel }})
+    needs: wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { wheel: ubuntu-latest-x86_64-auto, os: ubuntu-latest, image: "python:3.12-slim-bullseye" }
+          - { wheel: ubuntu-latest-aarch64-auto, os: ubuntu-24.04-arm, image: "python:3.12-slim-bullseye" }
+          - { wheel: ubuntu-latest-x86_64-musllinux_1_2, os: ubuntu-latest, image: "python:3.12-alpine" }
+          - { wheel: ubuntu-latest-aarch64-musllinux_1_2, os: ubuntu-24.04-arm, image: "python:3.12-alpine" }
+          - { wheel: macos-26-aarch64-native, os: macos-26 }
+          - { wheel: windows-latest-x64-native, os: windows-latest }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          name: wheel-${{ matrix.wheel }}
+          path: dist
+      - name: Install and open in ${{ matrix.image }}
+        if: matrix.image
+        run: |
+          docker run --rm -v "$PWD:/w" -w /w "${{ matrix.image }}" sh -euc '
+            pip install --quiet --disable-pip-version-check dist/*.whl
+            python scripts/smoke-client.py crates/rqtk/tests/fixtures/firesat-obc
+            rqtk --version
+          '
+      - uses: actions/setup-python@v6
+        if: ${{ !matrix.image }}
+        with:
+          python-version: "3.12"
+      - name: Install and open
+        if: ${{ !matrix.image }}
+        shell: bash
+        run: |
+          python -m pip install --quiet --disable-pip-version-check dist/*.whl
+          python scripts/smoke-client.py crates/rqtk/tests/fixtures/firesat-obc
+          rqtk --version
+
   sdist:
     runs-on: ubuntu-latest
     steps:
@@ -83,7 +127,7 @@ jobs:
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [wheels, sdist]
+    needs: [smoke, sdist]
     runs-on: ubuntu-latest
     environment:
       name: pypi

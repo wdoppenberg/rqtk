@@ -21,3 +21,6 @@ crates/rqtk-node/node_modules/
 crates/rqtk-node/*.node
 crates/rqtk-node/native.cjs
 crates/rqtk-node/native.d.ts
+# Packaging: `napi create-npm-dirs` and the downloaded addons.
+crates/rqtk-node/npm/
+crates/rqtk-node/artifacts/
