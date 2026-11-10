@@ -8,7 +8,7 @@ The `rqtk` command line follows [semantic versioning](https://semver.org). Withi
 | Commands and flags | None removed or renamed. |
 | `--json` output | Fields are only added, never removed, renamed or retyped. Each document's `schema` field names its major version. |
 | `rqtk-client` | Its public API follows semantic versioning, released with the same version as the CLI. A test records every public item. |
-| The Python client (`rqtk.open`, `rqtk.types`) | Follows semantic versioning with the CLI's version. Its types are generated from the published schemas, so they change only when the JSON does. |
+| The Python client (`rqtk.open`, `rqtk.types`) and `@rqtk/client` | Follow semantic versioning with the CLI's version. Their types are generated from the published schemas, so they change only when the JSON does. |
 | Exit codes | 0, 1, 2 and 3 keep their meaning. |
 | Lint rule codes | A code keeps its meaning and is never reused. New rules may be added, so lint can find new problems after an upgrade. |
 | Content hash | Tagged with its version (`v1:`); a different algorithm gets a new tag. |

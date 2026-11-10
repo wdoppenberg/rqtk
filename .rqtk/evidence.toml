@@ -895,13 +895,48 @@ NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769
 RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
 
 [[activity]]
+id = "VA-CLIENT-0014-01"
+requirement = "RQTK-CLIENT-0014"
+requirement_hash = "v1:dd24337ef1f2cca80a2edcfca4224ea357d1b41ed5e387e723e8a5ac81b738e3"
+outcome = "passed"
+tests = [
+    "crates/rqtk-node/tests/client.test.mjs::a snapshot at a ref, and reload",
+    "crates/rqtk-node/tests/client.test.mjs::errors carry a code",
+    "crates/rqtk-node/tests/client.test.mjs::filters are data",
+    "crates/rqtk-node/tests/client.test.mjs::opens a checkout and lists its items",
+    "crates/rqtk-node/tests/client.test.mjs::remote repositories open through the cache",
+    "crates/rqtk-node/tests/client.test.mjs::views are exactly what the CLI prints",
+]
+commit = "e4741b90d590f09317289ae49b7952507c20e224"
+tests_hash = "25ede477d626edcc+422388d4fcb148df+4c9d51822acf5aa1+4dcc36c1ce5cba3a+676506a5e910d4a8+f37bb56ce58ce797"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
+id = "VA-CLIENT-0014-02"
+requirement = "RQTK-CLIENT-0014"
+requirement_hash = "v1:dd24337ef1f2cca80a2edcfca4224ea357d1b41ed5e387e723e8a5ac81b738e3"
+outcome = "passed"
+tests = ["crates/rqtk-node/tests/client.test.mjs::opening does not block the event loop"]
+commit = "e4741b90d590f09317289ae49b7952507c20e224"
+tests_hash = "cb4252500c07997e"
+
+[activity.upstream]
+NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
+NEED-0008 = "v1:c827a9a41aea19b7faad2fb9cd5bfef856792745d1b3d523d297b2aada088769"
+RQTK-SYS-0007 = "v1:8a44461f7d054b9d85f1758ddc1a571ef3c7c353e8fe4ef58c35d9121074a03f"
+
+[[activity]]
 id = "VA-CLIENT-0015-01"
 requirement = "RQTK-CLIENT-0015"
 requirement_hash = "v1:189e07573b9b9939b0947a96e564373e8718283671cea220ce6ce9d5d500e54a"
 outcome = "passed"
 tests = ["crates/rqtk-py/tests/test_types.py::test_field_names_are_the_schema_property_names"]
 commit = "fcba885d9751a37a0368e1b7a61575bfa8d4c3b9"
-tests_hash = "bd8a4fd1ec0c9e73"
+tests_hash = "6e58edf45a035c53"
 
 [activity.upstream]
 NEED-0007 = "v1:885fc6a7bbb2c84ce933170f0b199b8da39c599f74321e28f463efc70ca4d603"
@@ -1815,9 +1850,10 @@ tests = [
     "crates/rqtk/tests/integration_test.rs::lint_cross_checks_source_links",
     "crates/rqtk/tests/integration_test.rs::scan_honours_exclude_patterns",
     "crates/rqtk/tests/integration_test.rs::scan_lists_links_with_test_names",
+    "crates/rqtk/tests/integration_test.rs::scan_reads_module_flavoured_javascript_and_typescript_by_default",
 ]
-commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
-tests_hash = "0f39a0146ddf693e+1d6aa6d3e7e10229+48299fcd918877ef+59d4a58ff90a0d52+5dc6da9501499e30+6a94ccdf0b194d2a+7cfac3e218dc1892+8e0d2e11e85c971a+9a76a92ab019924b+9d3f30d25a89fe76+a0c628811215aede+be94af9ee3ae1d48+c31990d0df63f0da+c628c32bcef64703+cf6f9f5e74d88953"
+commit = "e4741b90d590f09317289ae49b7952507c20e224"
+tests_hash = "0f39a0146ddf693e+1d6aa6d3e7e10229+48299fcd918877ef+59d4a58ff90a0d52+5cdcfff2edcad2c1+5dc6da9501499e30+6a94ccdf0b194d2a+7cfac3e218dc1892+8e0d2e11e85c971a+9a76a92ab019924b+9d3f30d25a89fe76+a0c628811215aede+be94af9ee3ae1d48+c31990d0df63f0da+c628c32bcef64703+cf6f9f5e74d88953"
 
 [activity.upstream]
 NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf"

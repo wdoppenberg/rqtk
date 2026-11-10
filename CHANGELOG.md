@@ -56,6 +56,10 @@ All notable changes to the `rqtk` command line. The format follows
   enumerations are `Literal` strings (`rqtk.types`, generated from the published schemas).
   Errors raise `rqtk.Error` with the same `code`. Calls release the GIL, and one repository
   answers calls from several threads at the same time.
+- **The client in TypeScript: `@rqtk/client`** for Node, Bun and Deno. `open`, `openRef`,
+  `openRemote` and `reload` return Promises and load off the event loop; queries return the
+  client's JSON, typed by interfaces generated from the published schemas. Errors are
+  `RqtkError` with the same `code`.
 - **`rqtk baseline --list`** lists the baselines, oldest first.
 - **Published JSON Schemas for every `--json` document**, under `schema/output/` (and the
   client's types under `schema/client/`). `rqtk schema` lists them next to the file kinds and
@@ -72,6 +76,10 @@ All notable changes to the `rqtk` command line. The format follows
   `context`.
 - An unreadable `.rqtk/evidence.toml` is now a lint finding (`RQ100`) instead of an error
   that stops `lint`, `coverage` and `context`.
+
+### Fixed
+- `scan` reads `.mjs`, `.cjs`, `.mts` and `.cts` files by default, so `verifies` tags in
+  ES-module and CommonJS test files are found without listing the extensions in `[scan]`.
 
 ### Removed
 - Intel macOS (`x86_64-apple-darwin`) release binaries and Python wheels. Apple Silicon,

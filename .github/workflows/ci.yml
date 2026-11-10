@@ -27,6 +27,14 @@ jobs:
       - name: Nightly for the public API record
         run: rustup toolchain install nightly-2026-06-22 --profile minimal
 
+      # The TypeScript client's tests run on Node (preinstalled), Bun and Deno.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.9.6
+
       # rqtk tracks its own requirements: every file lints, the committed evidence matches
       # this test run, and every requirement is verified against its current wording.
       - name: Test and verify requirements

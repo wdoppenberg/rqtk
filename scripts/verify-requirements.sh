@@ -34,8 +34,36 @@ VIRTUAL_ENV="$repo_root/$venv" "$venv/bin/maturin" develop --quiet -m crates/rqt
 python_junit="$(dirname "$junit")/pytest.xml"
 "$venv/bin/python" -m pytest -q crates/rqtk-py/tests --junitxml "$python_junit"
 
+# The TypeScript package's tests, against the addon built from this checkout. Node's results
+# are the evidence; Bun and Deno run the same tests, and CI requires both. The tests compare
+# views with the CLI's, so build it first. Remote opens use a cache under target/.
 cargo build -p rqtk
+export RQTK_CACHE_DIR="$repo_root/target/client-cache"
+node_junit="$(dirname "$junit")/node.xml"
+(
+  cd crates/rqtk-node
+  npm ci --silent --no-audit --no-fund
+  npx napi build --platform --js native.cjs --dts native.d.ts
+  npm run --silent typecheck
+  node --test --test-reporter=spec --test-reporter-destination=stdout \
+    --test-reporter=junit --test-reporter-destination="$repo_root/$node_junit" tests/
+  for runtime in bun deno; do
+    if ! command -v "$runtime" > /dev/null; then
+      if [[ -n "${CI:-}" ]]; then
+        echo "error: $runtime is required in CI" >&2
+        exit 1
+      fi
+      echo "warning: $runtime is not installed; skipping its run of the TypeScript tests" >&2
+      continue
+    fi
+    case "$runtime" in
+      bun) bun test tests/client.test.mjs ;;
+      deno) deno test --allow-all tests/client.test.mjs ;;
+    esac
+  done
+)
+
 ./target/debug/rqtk lint
 # shellcheck disable=SC2086
-./target/debug/rqtk verify $mode --results "$junit" "$python_junit"
+./target/debug/rqtk verify $mode --results "$junit" "$python_junit" "$node_junit"
 ./target/debug/rqtk coverage --strict

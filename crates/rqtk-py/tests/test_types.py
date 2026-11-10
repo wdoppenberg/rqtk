@@ -5,6 +5,7 @@ from __future__ import annotations
 import dataclasses
 import importlib.util
 import json
+import re
 import shutil
 import typing
 from pathlib import Path
@@ -73,10 +74,27 @@ def field_names(cls: type) -> set[str]:
     return {f.name for f in dataclasses.fields(cls)}
 
 
+def typescript_interfaces() -> dict[str, set[str]]:
+    """Each interface in the generated `types.d.ts` and its fields."""
+    text = (REPO / "crates/rqtk-node/types.d.ts").read_text()
+    interfaces = {}
+    for name, body in re.findall(r"^export interface (\w+) \{\n(.*?)^\}", text, re.M | re.S):
+        interfaces[name] = set(re.findall(r"^  readonly (\w+)\??:", body, re.M))
+    return interfaces
+
+
 @rqtk.verifies("VA-CLIENT-0015-01")
 def test_field_names_are_the_schema_property_names() -> None:
     named = schemas()
+    typescript = typescript_interfaces()
     checked = 0
+
+    def check(cls: type, expected: set[str]) -> None:
+        nonlocal checked
+        assert field_names(cls) == expected, f"Python {cls.__name__}"
+        assert typescript.pop(cls.__name__) == expected, f"TypeScript {cls.__name__}"
+        checked += 1
+
     for name, schema in named.items():
         generated = getattr(t, name)
         if "oneOf" in schema and all("properties" in v for v in schema["oneOf"]):
@@ -84,13 +102,11 @@ def test_field_names_are_the_schema_property_names() -> None:
             variants = typing.get_args(generated)
             assert len(variants) == len(schema["oneOf"]), name
             for variant, variant_schema in zip(variants, schema["oneOf"]):
-                expected = properties(schema, named) | properties(variant_schema, named)
-                assert field_names(variant) == expected, variant.__name__
-                checked += 1
+                check(variant, properties(schema, named) | properties(variant_schema, named))
         elif schema.get("type") == "object" and "properties" in schema:
-            assert field_names(generated) == properties(schema, named), name
-            checked += 1
+            check(generated, properties(schema, named))
     assert checked > 50
+    assert typescript == {}, f"TypeScript interfaces without a schema: {sorted(typescript)}"
 
     # The error is an exception, with the fields of the client's error.
     error = json.loads((SCHEMA / "client/client-error.schema.json").read_text())
