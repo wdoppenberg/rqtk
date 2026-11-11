@@ -9,7 +9,7 @@ required_dirs = []
 
 [project]
 name = "rqtk"
-version = "1.2.0"
+version = "2.0.0-rc.1"
 
 [identification]
 id_pattern = "^RQTK-(SYS|CLI|CORE|CLIENT)-\\d{4}$"

@@ -6,6 +6,8 @@ All notable changes to the `rqtk` command line. The format follows
 
 ## [Unreleased]
 
+## [2.0.0-rc.1] — 2026-11-11
+
 ### Changed
 - **`rqtk init` abbreviates the project name as the default ID prefix:** `firesat-obc` gets
   `FOBC-SYS-0001` instead of `REQ-SYS-0001`. A single word is kept whole (`shop` gives `SHOP`);
