@@ -19,3 +19,6 @@ success_criteria = "The skill is user-invoked, interviews in rounds with a recom
 [[verification.activities]]
 id = "VA-CLI-0031-01"
 name = "Init skill inspected"
+status = "Passed"
+executed_at = 2026-11-11
+evidence = ["Inspected by Wouter Doppenberg: crates/rqtk/skills/rqtk-init/ at the head of PR #15 (https://github.com/wdoppenberg/rqtk/pull/15)"]

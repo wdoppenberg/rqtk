@@ -19,3 +19,6 @@ success_criteria = "Reading the skill, each process step names what it produces 
 [[verification.activities]]
 id = "VA-CLI-0029-01"
 name = "Process skill inspected"
+status = "Passed"
+executed_at = 2026-11-11
+evidence = ["Inspected by Wouter Doppenberg: crates/rqtk/skills/rqtk-process/ at the head of PR #15 (https://github.com/wdoppenberg/rqtk/pull/15)"]

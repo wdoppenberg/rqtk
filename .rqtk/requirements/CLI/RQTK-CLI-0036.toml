@@ -19,3 +19,6 @@ success_criteria = "Inspection of the installed rqtk skill: it writes nothing, p
 [[verification.activities]]
 id = "VA-CLI-0036-01"
 name = "Status skill inspected"
+status = "Passed"
+executed_at = 2026-11-11
+evidence = ["Inspected by Wouter Doppenberg: crates/rqtk/skills/rqtk/ at the head of PR #15 (https://github.com/wdoppenberg/rqtk/pull/15)"]
