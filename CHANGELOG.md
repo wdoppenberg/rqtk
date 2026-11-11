@@ -6,7 +6,50 @@ All notable changes to the `rqtk` command line. The format follows
 
 ## [Unreleased]
 
+## [2.0.0-rc.1] — 2026-11-11
+
+### Changed
+- **`rqtk init` abbreviates the project name as the default ID prefix:** `firesat-obc` gets
+  `FOBC-SYS-0001` instead of `REQ-SYS-0001`. A single word is kept whole (`shop` gives `SHOP`);
+  of several words, those of up to three characters are kept whole and longer ones give their
+  first letter (`payment-service` gives `PS`). It falls back to `REQ` when the result doesn't
+  start with a letter. `rqtk init --json` reports it as `prefix`; change
+  `identification.prefix` to any other. Existing configurations are unchanged.
+- **The user-invoked skills carry the `rqtk-` prefix:** `to-requirements` is now
+  `/rqtk-to-requirements`, and `requirements-review` is `/rqtk-diff-review`, so it no longer
+  shares a name with the requirements review gate. `rqtk skills install` removes the skills under their old names (`to-requirements`,
+  `requirements-review`). It keeps any file you edited, unless `--force` is given.
+
 ### Added
+
+- **`/rqtk`, `/rqtk-decompose`, and one shape for every skill you run.** `/rqtk` places each
+  scope on a step of the process from lint, coverage and the review records, and recommends the
+  next skill. `/rqtk-decompose <ID>` turns the design you've made into the requirements one
+  level below `<ID>`, a category per component. Every user-invoked skill now says what it reads,
+  writes and leaves to you, asks in rounds, and hands over what changed, what is open and what
+  comes next; `rqtk-process` maps each step to its skill and lists the decisions that stay with
+  people.
+
+- **User requirements, between needs and system requirements.** A category takes
+  `layer = "user"` or `layer = "system"`, and `rqtk init` now defines `USR` (the root, user
+  layer) and `SYS` (level 2, system layer). Lint warns about a user requirement that satisfies
+  no need (RQ044), a system requirement that satisfies a need directly (RQ045), and a system
+  requirement without a user requirement as a parent (RQ046). Configurations without layers
+  are unaffected.
+- **`/rqtk-init`: set up `.rqtk/` by interviewing the engineer.** The agent grills the
+  engineer in rounds about the project's stakeholders, boundary, needs, user requirements and
+  system requirements, treating the system as a black box, and writes each stage with rqtk once
+  the engineer confirms it. It stops before the design. In an existing project it reads the code
+  for facts and gaps, and raises what it finds as questions about what the system must do.
+- **Design reviews and the systems engineering process, as agent skills.** `rqtk-process`
+  takes an agent through needs, system requirements, decomposition, interfaces, allocation and
+  verification, says which review gate closes each step, and has the agent warn before it
+  implements a requirement that hasn't passed its gate. `/rqtk-design-review <gate> [ID]` holds a
+  requirements review, PDR, CDR or readiness review over the whole set or one requirement's
+  subtree: facts from rqtk, a verdict per criterion, numbered findings, and a record in
+  `.rqtk/reviews/`. The decision, state changes and `rqtk baseline` stay with the user, and
+  `approval.approved_by` is never filled in by the agent. A project tailors its gates, states
+  and criteria in `.rqtk/reviews/PROCESS.md`. The existing skills point at both.
 - **Interfaces across repositories.** A requirement with an `[interface]` table is an
   interface other repositories can consume, specified by `[[interface.specs]]` entries
   (`format`, `path`, `element`). The spec content is part of the content hash.

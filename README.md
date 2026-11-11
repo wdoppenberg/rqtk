@@ -10,8 +10,9 @@ Requirements are TOML files, checked in alongside code. Baselines are git tags. 
 .rqtk/
   config.toml            ← project config and validation rules
   requirements/
-    SYS/FOBC-SYS-0001.toml
-    SW/FOBC-SW-0001.toml
+    USR/FOBC-USR-0001.toml   ← user requirements: what users must be able to do
+    SYS/FOBC-SYS-0001.toml   ← system requirements: what the system must do for that
+    SW/FOBC-SW-0001.toml     ← derived requirements, per part of the design
   needs/NEED-0001.toml
   stakeholders/STK-0001.toml
 ```
@@ -33,8 +34,8 @@ assumptions = ["All subsystems expose a standardised telemetry interface as defi
 notes = "Applies to nominal mode only."
 
 [trace]
-satisfies = ["NEED-0001"]
-# parents, derived_from, refines, conflicts_with, depends_on, related — all just IDs
+parents = ["FOBC-USR-0001"]  # the user requirement it serves, which satisfies NEED-0001
+# satisfies, derived_from, refines, conflicts_with, depends_on, related — all just IDs
 # external = [{type = "JIRA", ref = "OBC-42"}]
 
 [verification]
@@ -155,26 +156,39 @@ rqtk lint && rqtk coverage --strict        # exit 0 means done
 
 ## Agent skills
 
-rqtk ships four small [agent skills](https://agentskills.io) that bring requirements into an agentic coding flow, for Claude Code, Codex, Cursor, Copilot, Gemini CLI and any other agent that reads skills. They don't replace your process. They slot into it, and they are designed to sit beside [mattpocock/skills](https://github.com/mattpocock/skills): grill → spec → tickets → implement (TDD) → review.
+rqtk ships nine small [agent skills](https://agentskills.io) that bring requirements into an agentic coding flow, for Claude Code, Codex, Cursor, Copilot, Gemini CLI and any other agent that reads skills. They don't replace your process. They slot into it, and they are designed to sit beside [mattpocock/skills](https://github.com/mattpocock/skills): grill → spec → tickets → implement (TDD) → review.
 
 | Skill | Invoked by | What it does |
 |---|---|---|
 | `rqtk-requirements` | agent or you | Reading and writing `.rqtk/`: find the governing requirement, read its briefing (`rqtk context`), author needs and requirements that lint clean. |
 | `rqtk-verification` | agent or you | The proof loop: link a test with `verifies`, run it, `rqtk verify`, finish when `rqtk lint` and `rqtk coverage --strict` exit 0. Uses a `tdd` skill for red → green when one is installed. |
-| `/to-requirements` | you | After `/to-spec` (or any discussion): turns the spec into needs and requirements with verification activities, quizzes you on the draft, writes them, lints. |
-| `/requirements-review` | you | The requirements axis of a review, next to `/code-review`: `rqtk impact` facts, then a per-requirement verdict (implemented / partial / wrong / untested) and untraced changes. |
+| `rqtk-process` | agent or you | The systems engineering process: needs → user and system requirements → architecture → decomposition, interfaces and allocation → verification, with a review gate closing each step. Warns before implementing a requirement that hasn't passed its gate. |
+| `/rqtk` | you | Where things stand: places each scope on a step of the process from lint, coverage and the review records, and recommends the next skill. Writes nothing. |
+| `/rqtk-init` | you | Sets up `.rqtk/` for a new or existing project by interviewing you about its stakeholders, boundary, needs, user requirements and system requirements, and on request their verification. It stops before the design. In an existing project it reads the code for facts and gaps, and asks what the system must do rather than describing what it does. |
+| `/rqtk-to-requirements` | you | After `/to-spec` (or any discussion): turns the spec into needs, user and system requirements with verification activities, quizzes you on the draft, writes them, lints. |
+| `/rqtk-decompose` | you | After you've made the design: turns it into the requirements one level below a given requirement, a category per component, with interfaces and allocation, ending at the PDR. |
+| `/rqtk-diff-review` | you | The requirements axis of a review, next to `/code-review`: `rqtk impact` facts, then a per-requirement verdict (implemented / partial / wrong / untested) and untraced changes. |
+| `/rqtk-design-review` | you | A review gate (requirements review, PDR, CDR, readiness) over the whole set or one requirement's subtree: rqtk facts, a verdict per criterion, findings, and a record in `.rqtk/reviews/`. You decide; state changes and the baseline are yours. |
 
-The two agent-invoked skills carry reusable discipline and fire when a task touches requirements. The two user-invoked skills orchestrate and cost no context until you type them. None of them restate `--help`. They point at `rqtk context`, `rqtk schema` and `rqtk explain`, and record only what the CLI can't tell an agent: the conventions, the reasons, and the completion criterion.
+The three agent-invoked skills carry reusable discipline and fire when a task touches requirements. The six user-invoked skills orchestrate and cost no context until you type them. They share one shape: what each reads, writes and leaves to you; steps that end on a clear condition; questions in rounds with a recommended answer; and a hand-over naming what changed, what is open and which skill comes next. None of them restate `--help`. They point at `rqtk context`, `rqtk schema` and `rqtk explain`, and record only what the CLI can't tell an agent: the conventions, the reasons, and the completion criterion.
 
-Where they fit:
+Where they fit, next to [mattpocock/skills](https://github.com/mattpocock/skills):
 
 ```
-/grill-with-docs → /to-spec → /to-requirements → /to-tickets → /implement → /code-review + /requirements-review
-                                   │                 │             │
-                            needs + requirements   tickets cite   tests cite activity IDs,
-                            with activity IDs      requirement    rqtk verify records evidence,
-                                                   and activity   done = lint + coverage --strict
-                                                   IDs
+                 /rqtk  ── where each scope stands, and what's next ──
+  what (black box)                                         proof
+  ────────────────                                         ─────
+  /rqtk-init              grill → /to-spec                 /rqtk-design-review readiness
+  (a whole project)       → /rqtk-to-requirements                     ▲
+     needs, user and system requirements                  /to-tickets → /implement (TDD)
+              ▼                                           tests cite activity IDs; rqtk verify
+  /rqtk-design-review requirements                        /code-review + /rqtk-diff-review
+              ▼                                                       ▲
+  how: the architecture, with any design method                       │
+  (e.g. codebase-design)                                              │
+              ▼                                                       │
+  /rqtk-decompose <ID>  → /rqtk-design-review pdr                     │
+  /rqtk-decompose ...   → /rqtk-design-review cdr  ───────────────────┘
 ```
 
 ### Install

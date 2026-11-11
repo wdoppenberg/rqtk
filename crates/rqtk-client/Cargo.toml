@@ -1,7 +1,7 @@
 [package]
 name = "rqtk-client"
 # Released in lockstep with the rqtk CLI (RQTK-CLIENT-0019).
-version = "1.2.0"
+version.workspace = true
 description = "Read rqtk repositories from Rust: requirements, links, verification status, lint findings and change history."
 edition.workspace = true
 rust-version.workspace = true

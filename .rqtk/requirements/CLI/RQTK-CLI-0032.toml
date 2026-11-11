@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0032"
+title = "Renamed skills retired"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "When rqtk skills install runs, rqtk shall remove each skill an earlier rqtk installed under a name it no longer ships, keeping every file of it that was edited locally unless --force is given."
+rationale = "The user-invoked skills were renamed to the rqtk- prefix; without retiring the old directories, an upgraded repository would offer each of them twice under two names."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "After installing over a repository with the old skill names, their links and unedited files are gone, an edited file is kept and reported as kept, and --force removes it too."
+
+[[verification.activities]]
+id = "VA-CLI-0032-01"
+name = "Retired skills removed, edits kept"

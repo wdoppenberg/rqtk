@@ -1,6 +1,6 @@
 {
   "name": "@rqtk/client",
-  "version": "1.2.0",
+  "version": "2.0.0-rc.1",
   "description": "Read rqtk requirements repositories from Node, Bun and Deno: requirements, needs, stakeholders, verification status and history.",
   "license": "MIT OR Apache-2.0",
   "homepage": "https://rqtk.dev",

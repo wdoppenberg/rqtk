@@ -12,11 +12,16 @@ fn manifest(rel: &str) -> toml::Table {
     toml::from_str(&text).unwrap()
 }
 
+/// The package's version, following `version.workspace = true` to `[workspace.package]`.
 fn package_version(rel: &str) -> String {
-    manifest(rel)["package"]["version"]
-        .as_str()
-        .unwrap()
-        .to_owned()
+    let version = &manifest(rel)["package"]["version"];
+    let version = match version.get("workspace") {
+        Some(toml::Value::Boolean(true)) => {
+            &manifest("Cargo.toml")["workspace"]["package"]["version"]
+        }
+        _ => version,
+    };
+    version.as_str().unwrap().to_owned()
 }
 
 #[verifies("VA-CLIENT-0019-01")]

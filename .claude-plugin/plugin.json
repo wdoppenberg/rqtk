@@ -1,7 +1,7 @@
 {
   "name": "rqtk-skills",
   "version": "1.0.0",
-  "description": "Agent skills for requirements tracked with rqtk: read and write requirements, prove them with tests, turn specs into requirements, and review diffs against them.",
+  "description": "Agent skills for requirements tracked with rqtk: see where a project stands, set it up by interviewing the engineer, read and write requirements, turn specs and designs into requirements, prove them with tests, review diffs against them, and run the design review gates of a systems engineering process.",
   "license": "MIT OR Apache-2.0",
   "keywords": [
     "requirements",
@@ -14,8 +14,13 @@
   "skills": [
     "./crates/rqtk/skills/rqtk-requirements",
     "./crates/rqtk/skills/rqtk-verification",
-    "./crates/rqtk/skills/to-requirements",
-    "./crates/rqtk/skills/requirements-review"
+    "./crates/rqtk/skills/rqtk-to-requirements",
+    "./crates/rqtk/skills/rqtk-diff-review",
+    "./crates/rqtk/skills/rqtk-process",
+    "./crates/rqtk/skills/rqtk-design-review",
+    "./crates/rqtk/skills/rqtk-init",
+    "./crates/rqtk/skills/rqtk-decompose",
+    "./crates/rqtk/skills/rqtk"
   ],
   "repository": "https://github.com/wdoppenberg/rqtk"
 }

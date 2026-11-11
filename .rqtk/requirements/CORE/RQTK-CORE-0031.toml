@@ -1,0 +1,21 @@
+id = "RQTK-CORE-0031"
+title = "User and system layer checks"
+category = "CORE"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "When the configuration marks categories as user or system layers, rqtk lint shall warn about each user requirement that satisfies no need, and about each system requirement that satisfies a need directly or has no user requirement as a parent."
+rationale = "Needs are met by what users can do from outside the system, and the system requirements make that possible; a need linked straight to a system requirement, or a system requirement serving no user requirement, breaks the chain a review walks."
+
+[trace]
+parents = ["RQTK-SYS-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "A fixture with a user layer gets RQ044 for a user requirement without a need, RQ045 for a system requirement with satisfies, and RQ046 for a system requirement whose only parent is another system requirement; a configuration without layers gets none."
+
+[[verification.activities]]
+id = "VA-CORE-0031-01"
+name = "Layer rules fire only with layers"

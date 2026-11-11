@@ -19,6 +19,11 @@
           "const": "skipped_modified",
           "description": "The file differs from the shipped version and `--force` was not given.",
           "type": "string"
+        },
+        {
+          "const": "removed",
+          "description": "A retired skill's file or link, removed because rqtk wrote it and it is unedited.",
+          "type": "string"
         }
       ]
     },

@@ -113,6 +113,18 @@ pub struct InterfaceSource {
 }
 
 impl Config {
+    /// The layer of a category, if it has one.
+    pub fn layer_of(&self, category: &str) -> Option<Layer> {
+        self.categories.get(category).and_then(|c| c.layer)
+    }
+
+    /// Whether any category is in the user layer.
+    pub fn has_user_layer(&self) -> bool {
+        self.categories
+            .values()
+            .any(|c| c.layer == Some(Layer::User))
+    }
+
     /// The pattern requirement IDs must match: `identification.id_pattern`, or one derived
     /// from the prefix, separator, category keys and padding.
     pub fn id_pattern(&self) -> String {
@@ -222,6 +234,8 @@ pub struct IdentificationScheme {
     pub id_pattern: Option<String>,
     #[serde(default = "default_separator")]
     pub id_separator: String,
+    /// The first part of every requirement ID, as in `<prefix>-SYS-0001`. `rqtk init` defaults
+    /// it to an abbreviation of the project name.
     #[serde(default = "default_prefix")]
     pub prefix: String,
     #[serde(default = "default_padding")]
@@ -238,6 +252,21 @@ pub struct Category {
     /// to `true` for orphan detection to work.
     #[serde(default)]
     pub is_root: bool,
+    /// The layer this category's requirements belong to: `user` requirements satisfy needs,
+    /// and `system` requirements derive from user requirements (RQ044–RQ046). Categories
+    /// that decompose the system leave it unset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layer: Option<Layer>,
+}
+
+/// What a category's requirements describe.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum Layer {
+    /// What users must be able to do with the system, from outside it. Satisfies needs.
+    User,
+    /// What the system must do or be for the user requirements to be met.
+    System,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

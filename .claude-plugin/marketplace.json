@@ -8,7 +8,7 @@
     {
       "name": "rqtk-skills",
       "source": "./",
-      "description": "Read and write requirements, prove them with tests, turn specs into requirements, and review diffs against them.",
+      "description": "See where a project stands, set it up by interviewing the engineer, read and write requirements, turn specs and designs into requirements, prove them with tests, review diffs against them, and run design review gates.",
       "category": "engineering",
       "keywords": ["requirements", "traceability", "verification"]
     }

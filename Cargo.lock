@@ -3184,7 +3184,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk"
-version = "1.2.0"
+version = "2.0.0-rc.1"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -3212,7 +3212,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-client"
-version = "1.2.0"
+version = "2.0.0-rc.1"
 dependencies = [
  "public-api",
  "rqtk-core",
@@ -3228,7 +3228,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-core"
-version = "0.2.0"
+version = "0.3.0-rc.1"
 dependencies = [
  "chrono",
  "gix",
@@ -3254,7 +3254,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-export"
-version = "0.2.0"
+version = "0.3.0-rc.1"
 dependencies = [
  "clap",
  "rqtk-core",
@@ -3266,7 +3266,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-macros"
-version = "0.2.0"
+version = "0.3.0-rc.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3278,7 +3278,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-node"
-version = "1.2.0"
+version = "2.0.0-rc.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -3290,7 +3290,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-py"
-version = "1.2.0"
+version = "2.0.0-rc.1"
 dependencies = [
  "pyo3",
  "pyo3-build-config 0.28.3",
@@ -3303,7 +3303,7 @@ dependencies = [
 
 [[package]]
 name = "rqtk-report"
-version = "0.2.0"
+version = "0.3.0-rc.1"
 dependencies = [
  "chrono",
  "rqtk-core",

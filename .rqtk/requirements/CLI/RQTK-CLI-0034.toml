@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0034"
+title = "User and system layers by default"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "When rqtk init creates a configuration, rqtk shall define a root user-requirement category USR and a system-requirement category SYS one level below it."
+rationale = "User requirements are the fundamental layer between stakeholder needs and system requirements; new projects should start with it, while existing configurations without layers keep working."
+
+[trace]
+parents = ["RQTK-SYS-0004"]
+
+[verification]
+method = "Test"
+level = "Unit"
+phase = "Development"
+success_criteria = "The configuration rqtk init writes declares USR with layer user and is_root, and SYS with layer system at level 2; rqtk add assigns IDs in both and lint passes."
+
+[[verification.activities]]
+id = "VA-CLI-0034-01"
+name = "Init defines the layers"

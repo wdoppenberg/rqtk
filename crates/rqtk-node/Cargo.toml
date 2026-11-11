@@ -1,7 +1,7 @@
 [package]
 name = "rqtk-node"
 # Released to npm as `@rqtk/client`, in step with the rqtk command line.
-version = "1.2.0"
+version.workspace = true
 description = "The @rqtk/client npm package: the rqtk client for Node, Bun and Deno."
 edition.workspace = true
 rust-version.workspace = true

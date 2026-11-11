@@ -1,3 +1,10 @@
+//! The requirement model behind rqtk: loading `.rqtk/`, lint rules, verification evidence and
+//! git integration.
+//!
+//! This crate is internal to rqtk: it is published so that `cargo install rqtk` can build, and
+//! stays at 0.x, so any minor version may break it. To read an rqtk repository from Rust, use
+//! [`rqtk-client`](https://docs.rs/rqtk-client), which follows semantic versioning with the CLI.
+
 pub mod diagnostic;
 pub mod error;
 pub mod evidence;
@@ -30,11 +37,12 @@ pub use git::{
 };
 pub use model::{
     Acceptance, Allocation, Approval, Category, Config, ConsumedRef, CriticalityPolicy, EntityRef,
-    ExternalTrace, IdentificationScheme, Interface, InterfaceSource, LifecyclePolicy, Need, NeedId,
-    Parameter, PriorityPolicy, ProjectMeta, ProjectOrganization, RepositoryLayout, Requirement,
-    RequirementId, Risk, SCHEMA_VERSION, ScaffoldInput, ScanConfig, SpecEntry, Stakeholder,
-    StakeholderAuthority, StakeholderConcerns, StakeholderId, Standard, Traceability, TypePolicy,
-    ValidationRules, ValidationSpec, Verification, VerificationActivity, VerificationPolicy,
+    ExternalTrace, IdentificationScheme, Interface, InterfaceSource, Layer, LifecyclePolicy, Need,
+    NeedId, Parameter, PriorityPolicy, ProjectMeta, ProjectOrganization, RepositoryLayout,
+    Requirement, RequirementId, Risk, SCHEMA_VERSION, ScaffoldInput, ScanConfig, SpecEntry,
+    Stakeholder, StakeholderAuthority, StakeholderConcerns, StakeholderId, Standard, Traceability,
+    TypePolicy, ValidationRules, ValidationSpec, Verification, VerificationActivity,
+    VerificationPolicy,
 };
 pub use repository::{
     Loaded, RequirementSet, SatisfactionStatus, StaleHash, TraceView, Validated, load_config,

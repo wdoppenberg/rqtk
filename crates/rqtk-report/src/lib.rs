@@ -1,4 +1,8 @@
 //! Renders a requirement set as a single self-contained Markdown document.
+//!
+//! This crate is internal to rqtk: it is published so that `cargo install rqtk` can build, and
+//! stays at 0.x, so any minor version may break it. To read an rqtk repository from Rust, use
+//! [`rqtk-client`](https://docs.rs/rqtk-client), which follows semantic versioning with the CLI.
 
 use chrono::NaiveDate;
 use rqtk_core::{

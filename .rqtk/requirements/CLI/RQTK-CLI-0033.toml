@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0033"
+title = "ID prefix abbreviated from the project name"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "When rqtk init creates a configuration, rqtk shall default the requirement ID prefix to an abbreviation of the project name, keeping a single word whole and, of several words, keeping words of up to three characters whole and the first letter of longer ones, in upper case, or to REQ when the abbreviation does not start with a letter."
+rationale = "IDs are cited in tickets, test code and traces across repositories; a prefix naming the system tells the reader which system an ID belongs to, where REQ in every project says nothing."
+
+[trace]
+parents = ["RQTK-SYS-0004"]
+
+[verification]
+method = "Test"
+level = "Integration"
+phase = "Development"
+success_criteria = "rqtk init in projects named shop, firesat-obc, payment-service, @acme/shop and 3d-viewer writes prefix SHOP, FOBC, PS, SHOP and REQ, reports it in its JSON, and rqtk add then assigns IDs with that prefix."
+
+[[verification.activities]]
+id = "VA-CLI-0033-01"
+name = "Prefix abbreviated from the project name"

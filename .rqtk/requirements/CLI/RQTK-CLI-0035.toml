@@ -1,0 +1,24 @@
+id = "RQTK-CLI-0035"
+title = "Decomposition skill"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk shall ship a skill, run only by the user, that turns a design the user has made into the requirements one level below a given requirement, adding a category per component, and writes only the children the user confirms."
+rationale = "Between the requirements review and PDR the user makes the design with any method; the requirements of each part should follow that design, cite it, and together cover their parent."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Inspection"
+level = "Unit"
+phase = "Development"
+success_criteria = "Inspection of the installed rqtk-decompose skill: it reads the design rather than inventing one, stops when there is none, derives one level per run with rationales citing the design, and ends at the PDR."
+
+[[verification.activities]]
+id = "VA-CLI-0035-01"
+name = "Decomposition skill inspected"
+status = "Passed"
+executed_at = 2026-11-11
+evidence = ["Inspected by Wouter Doppenberg: crates/rqtk/skills/rqtk-decompose/ at the head of PR #15 (https://github.com/wdoppenberg/rqtk/pull/15)"]

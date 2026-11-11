@@ -1,6 +1,6 @@
 [package]
 name = "rqtk-report"
-version = "0.2.0"
+version = "0.3.0-rc.1"
 description = "Markdown report generation for rqtk requirement sets."
 edition.workspace = true
 rust-version.workspace = true

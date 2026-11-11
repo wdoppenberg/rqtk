@@ -18,10 +18,20 @@ Find the requirement that governs the behaviour and read its **briefing**:
 
 The statement is the contract. When the task contradicts it, stop and say so: changing a requirement is the user's decision, and a reworded requirement makes its passing tests **Suspect** until they run again.
 
+Where the requirement stands in the process (the review gate it has passed, and what changing it reopens) is in the `rqtk-process` skill, which also says what to do before implementing one that is still Draft.
+
 ## Writing requirements
 
 - Create items with `rqtk add`, `rqtk add-need`, `rqtk add-stakeholder` and `rqtk add-activity`. Run with `--dry-run` first to show the user what will be written. rqtk assigns IDs; use the ID it prints (`--json` has it as `id`).
+- Requirements come in layers, each a category with a `layer` in `.rqtk/config.toml`. A **user requirement** (`USR` by default) says what someone outside the system must be able to do with it, as "The operator shall be able to …", and `satisfies` needs. A **system requirement** (`SYS`) says what the system must do or be for that, seen from its boundary, and lists the user requirements it serves in `parents`. Categories below follow the design and decompose system requirements. A project whose categories have no `layer` satisfies needs from its root category.
 - A statement is one sentence with the project's shall keyword and a measurable criterion. Split a compound requirement into several.
+- A statement says **what** the system must do or be, and leaves **how** to the design: the capability and its measure, not the mechanism. "The service shall tell operators within 60 s that ingestion has stopped", not "The service shall raise a Grafana alert". The test: if a better way to meet the need turned up, would the statement have to change? Then it holds a solution. Find what the solution achieves and write that; keep the solution in `notes` as a design candidate.
+
+  A solution belongs in a statement only when it is imposed, and the rationale names who imposes it:
+  - a **constraint** set by a stakeholder, regulation, standard or contract: a mandated platform, language, protocol or supplier (type `Constraint`);
+  - an **interface** other systems already rely on: a file format, an API, a command line (type `Interface`);
+  - a **design decision** taken one level up, below the system layer: the parent's how is the child's what, so a subsystem requirement may name the component or approach the design chose for its parent (type `Design` when it fixes how rather than what).
+- Decompose one level at a time, and flag what isn't known yet with `tbd = true` or `tbr = true` and the open question in `notes`; the `rqtk-process` skill has the decomposition rules.
 - Every requirement carries a `rationale` (why it exists), its parents and the needs it satisfies, success criteria, and one activity per independently testable behaviour. `rqtk add` sets all of it:
 
   ```bash

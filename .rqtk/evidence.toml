@@ -548,6 +548,47 @@ NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc
 RQTK-SYS-0003 = "v1:5169fc2b6cba136e2aa709bcdc0ef4ce76ee4df78993b736cc39df141f097681"
 
 [[activity]]
+id = "VA-CLI-0032-01"
+requirement = "RQTK-CLI-0032"
+requirement_hash = "v1:b970c6fb3cd7d3592e38f3c84596cd5667db5d92dbf4b0ded68530687e508319"
+outcome = "passed"
+tests = ["crates/rqtk/tests/integration_test.rs::skills_install_retires_renamed_skills_but_keeps_edits"]
+commit = "31f05bbab0b5daa3b358c23901b8705d83e54d87"
+tests_hash = "3979d97ea31f8c3a"
+
+[activity.upstream]
+NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
+RQTK-SYS-0003 = "v1:5169fc2b6cba136e2aa709bcdc0ef4ce76ee4df78993b736cc39df141f097681"
+
+[[activity]]
+id = "VA-CLI-0033-01"
+requirement = "RQTK-CLI-0033"
+requirement_hash = "v1:82a4d31fe6649e086347ea62774273db810858d32ff4d5154caeac642b53c509"
+outcome = "passed"
+tests = ["crates/rqtk/tests/integration_test.rs::init_derives_the_id_prefix_from_the_project_name"]
+commit = "31f05bbab0b5daa3b358c23901b8705d83e54d87"
+tests_hash = "4e5400a23d02b7f1"
+
+[activity.upstream]
+NEED-0001 = "v1:2cebce2c1a9ceac05984bb32d65ed028d786d4ed22d87bf7fa8a2180d2c9fe77"
+NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf"
+RQTK-SYS-0004 = "v1:7734ccd142a6e02978586ba7fb734fcfab00e3b50a4acc8a5d0d4571dffeac3a"
+
+[[activity]]
+id = "VA-CLI-0034-01"
+requirement = "RQTK-CLI-0034"
+requirement_hash = "v1:728378463c41fbfa6d2785b7698fa3defccffafbfa45d78b1ac9646dc2cfbc88"
+outcome = "passed"
+tests = ["crates/rqtk/tests/integration_test.rs::init_defines_user_and_system_layers"]
+commit = "31f05bbab0b5daa3b358c23901b8705d83e54d87"
+tests_hash = "d8ce49c46a851298"
+
+[activity.upstream]
+NEED-0001 = "v1:2cebce2c1a9ceac05984bb32d65ed028d786d4ed22d87bf7fa8a2180d2c9fe77"
+NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf"
+RQTK-SYS-0004 = "v1:7734ccd142a6e02978586ba7fb734fcfab00e3b50a4acc8a5d0d4571dffeac3a"
+
+[[activity]]
 id = "VA-CLI-004-01"
 requirement = "RQTK-CLI-0004"
 requirement_hash = "v1:e2f6abcdd00d840eacb20fd3d5caac2fb1d0a8b80077377853af5666fc70a051"
@@ -589,7 +630,7 @@ tests = [
     "crates/rqtk/tests/integration_test.rs::skills_list_names_model_and_user_invoked_skills",
 ]
 commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
-tests_hash = "02e1393c6e6ae196+346d38c4700698fb+450c17e1fc6358d0+600e448eac6e6a70+604338a4113ab960+784709af2f71a172+b6a39a89cb670a2b+cd286f348afae487+e58e8334bb13f4e0"
+tests_hash = "2991b0c4d8cb02b0+450c17e1fc6358d0+52e889142808d1e4+6ac4881c94553a68+77e7c7f17a9943f8+784709af2f71a172+9c5343ea263ba8cf+cd286f348afae487+e58e8334bb13f4e0"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
@@ -618,7 +659,7 @@ requirement_hash = "v1:73200ee334c47c2aae94a79a3ca8d65686f6c5084b1cc1c409da784eb
 outcome = "passed"
 tests = ["crates/rqtk/tests/integration_test.rs::documented_commands_and_flags_exist"]
 commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
-tests_hash = "5ce686776c9b6f50"
+tests_hash = "2588921cc8bc5096"
 
 [activity.upstream]
 NEED-0003 = "v1:15126426291002770867f850f31b3adda90a4ee23a7cfb5f06fd6a2a04d9fecc"
@@ -1876,6 +1917,20 @@ NEED-0006 = "v1:9d80504b623bd828020f488f356fc72155d780b82211de951559dec997de7b2b
 RQTK-SYS-0006 = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
 
 [[activity]]
+id = "VA-CORE-0031-01"
+requirement = "RQTK-CORE-0031"
+requirement_hash = "v1:b3fab3b4325a9d2fb0154f6ff0bfe1dd1686943d36a7609955c0cbff54af4556"
+outcome = "passed"
+tests = ["crates/rqtk/tests/integration_test.rs::layer_rules_fire_only_with_layers"]
+commit = "31f05bbab0b5daa3b358c23901b8705d83e54d87"
+tests_hash = "201445c412100316"
+
+[activity.upstream]
+NEED-0001 = "v1:2cebce2c1a9ceac05984bb32d65ed028d786d4ed22d87bf7fa8a2180d2c9fe77"
+NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf"
+RQTK-SYS-0004 = "v1:7734ccd142a6e02978586ba7fb734fcfab00e3b50a4acc8a5d0d4571dffeac3a"
+
+[[activity]]
 id = "VA-CORE-004-01"
 requirement = "RQTK-CORE-0004"
 requirement_hash = "v1:32f6856143c332184a5243980128da32bbdcb4cf604f36013910460a76e47146"
@@ -2172,14 +2227,15 @@ NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf
 [[activity]]
 id = "VA-SYS-005-01"
 requirement = "RQTK-SYS-0005"
-requirement_hash = "v1:7d7c307a05924bc504822fed0027b589665ad1866d65a04dfb5994792ed9f9a1"
+requirement_hash = "v1:4484db742fd1db24bc77baa745bd170c9057726dd20e0aefc023061c77b35b24"
 outcome = "passed"
 tests = [
     "crates/rqtk/tests/integration_test.rs::changed_parent_leaves_children_suspect_until_reviewed",
     "crates/rqtk/tests/integration_test.rs::review_settles_unchanged_tests_but_not_an_unrun_change",
 ]
-commit = "03be2991507b8d39cb15936f9f3a33513373f11f"
+commit = "31f05bbab0b5daa3b358c23901b8705d83e54d87"
 tests_hash = "3dd20d15ddd1f032+d5d47776588bdff7"
+unchanged_tests = true
 
 [activity.upstream]
 NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf"
@@ -2273,3 +2329,13 @@ NEED-0004 = "v1:204d60a5b67fdedb914ace53324abae2c271f879b1b81382c32ed43e49d142c5
 NEED-0005 = "v1:aa0cfa26404a1023670b07753530d9e3bd9a2b706ac970a634f3024479e392a3"
 NEED-0006 = "v1:9d80504b623bd828020f488f356fc72155d780b82211de951559dec997de7b2b"
 RQTK-SYS-0006 = "v1:8abc324b1de2a67b0acf455a8975579b22ffe0a5dcb50f0291b34ad208f0c086"
+
+[[review]]
+requirement = "RQTK-SYS-0005"
+requirement_hash = "v1:4484db742fd1db24bc77baa745bd170c9057726dd20e0aefc023061c77b35b24"
+date = "2026-11-10"
+commit = "31f05bbab0b5daa3b358c23901b8705d83e54d87"
+note = "wording aligned with behaviour (requirements review F-2)"
+
+[review.upstream]
+NEED-0002 = "v1:feaff26cdd9b64e47de377b3249048689fd7adeefc39234e2972e9c24fffaeaf"

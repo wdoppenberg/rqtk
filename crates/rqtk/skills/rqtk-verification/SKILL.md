@@ -20,7 +20,7 @@ A requirement is **verified** only by recorded test results, never by editing a 
 
    Run `rqtk scan` and check the link shows the test's name, not "(no test declaration)". The test checks what the statement demands, through the public interface. When a `tdd` skill is available, call the Skill tool with "tdd" for the red → green loop; this skill adds the traceability on top.
 3. **Record the results.** Run the tests with JUnit output, then `rqtk verify --results <junit.xml>`. An activity passes only when every test linked to it ran and passed. A partial run leaves other activities' evidence untouched. `verify` exits 1 on a failing test, on a linked test name that matches several tests (rename one), and when no result matched any link.
-4. **Close out.** Done means `rqtk lint` and `rqtk coverage --strict` both exit 0: every requirement Verified. Commit `.rqtk/evidence.toml` together with the code.
+4. **Close out.** Done means `rqtk lint` and `rqtk coverage --strict` both exit 0: every requirement Verified. Commit `.rqtk/evidence.toml` together with the code. A readiness review (`/rqtk-design-review readiness`) then closes the scope; see the `rqtk-process` skill.
 
 ## JUnit output per ecosystem
 
