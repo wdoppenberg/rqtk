@@ -3,6 +3,11 @@ members = ["crates/*"]
 resolver = "3"
 
 [workspace.package]
+# The released surface: the rqtk CLI, rqtk-client, the Python package (rqtk-py) and
+# @rqtk/client (rqtk-node, whose package.json carries a copy) take this version, in lockstep.
+# The internal library crates (rqtk-core, rqtk-export, rqtk-report, rqtk-macros) keep their own
+# 0.x versions: bump their minor version in every release that changes them.
+version = "2.0.0-rc.1"
 edition = "2024"
 rust-version = "1.88"
 repository = "https://github.com/wdoppenberg/rqtk"

@@ -1,3 +1,9 @@
+//! JSON, CSV and Markdown export of an rqtk requirement set.
+//!
+//! This crate is internal to rqtk: it is published so that `cargo install rqtk` can build, and
+//! stays at 0.x, so any minor version may break it. To read an rqtk repository from Rust, use
+//! [`rqtk-client`](https://docs.rs/rqtk-client), which follows semantic versioning with the CLI.
+
 mod csv;
 pub mod error;
 mod json;

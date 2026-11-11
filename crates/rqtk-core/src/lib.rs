@@ -1,3 +1,10 @@
+//! The requirement model behind rqtk: loading `.rqtk/`, lint rules, verification evidence and
+//! git integration.
+//!
+//! This crate is internal to rqtk: it is published so that `cargo install rqtk` can build, and
+//! stays at 0.x, so any minor version may break it. To read an rqtk repository from Rust, use
+//! [`rqtk-client`](https://docs.rs/rqtk-client), which follows semantic versioning with the CLI.
+
 pub mod diagnostic;
 pub mod error;
 pub mod evidence;

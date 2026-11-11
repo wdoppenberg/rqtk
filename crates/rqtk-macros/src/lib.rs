@@ -1,3 +1,10 @@
+//! `#[verifies("VA-…")]` links a Rust test to an rqtk verification activity, checked at compile
+//! time; `#[requirements_docs]` renders the requirement set as rustdoc.
+//!
+//! Prefer `#[rqtk::verifies]` from the `rqtk` crate (`features = ["macros"]`): the attribute
+//! follows the CLI's semantic versioning there. This crate stays at 0.x, so any minor version
+//! may change the rest of it.
+
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
