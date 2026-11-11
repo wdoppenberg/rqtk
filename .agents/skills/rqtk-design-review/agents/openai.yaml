@@ -1,0 +1,5 @@
+interface:
+  display_name: "rqtk: Design Review"
+  short_description: "Run a review gate (requirements, PDR, CDR, readiness) and record it"
+policy:
+  allow_implicit_invocation: false

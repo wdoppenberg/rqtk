@@ -30,11 +30,12 @@ pub use git::{
 };
 pub use model::{
     Acceptance, Allocation, Approval, Category, Config, ConsumedRef, CriticalityPolicy, EntityRef,
-    ExternalTrace, IdentificationScheme, Interface, InterfaceSource, LifecyclePolicy, Need, NeedId,
-    Parameter, PriorityPolicy, ProjectMeta, ProjectOrganization, RepositoryLayout, Requirement,
-    RequirementId, Risk, SCHEMA_VERSION, ScaffoldInput, ScanConfig, SpecEntry, Stakeholder,
-    StakeholderAuthority, StakeholderConcerns, StakeholderId, Standard, Traceability, TypePolicy,
-    ValidationRules, ValidationSpec, Verification, VerificationActivity, VerificationPolicy,
+    ExternalTrace, IdentificationScheme, Interface, InterfaceSource, Layer, LifecyclePolicy, Need,
+    NeedId, Parameter, PriorityPolicy, ProjectMeta, ProjectOrganization, RepositoryLayout,
+    Requirement, RequirementId, Risk, SCHEMA_VERSION, ScaffoldInput, ScanConfig, SpecEntry,
+    Stakeholder, StakeholderAuthority, StakeholderConcerns, StakeholderId, Standard, Traceability,
+    TypePolicy, ValidationRules, ValidationSpec, Verification, VerificationActivity,
+    VerificationPolicy,
 };
 pub use repository::{
     Loaded, RequirementSet, SatisfactionStatus, StaleHash, TraceView, Validated, load_config,

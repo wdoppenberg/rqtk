@@ -10,7 +10,7 @@ In a git repository:
 rqtk init
 ```
 
-This creates `.rqtk/config.toml` with a starter policy, named after your project. Add `--agents` to also install the [agent skills](../guides/agents.md), `--hook` for a pre-commit hook that lints before every commit, and `--example` for an example stakeholder and need. Everything except history (`impact`, `diff`, `log`, `baseline`) works outside a git repository too.
+This creates `.rqtk/config.toml` with a starter policy, named after your project, and two layers of requirements: user requirements (`USR`, what users must be able to do) and system requirements (`SYS`, what the system must do for that), as [Writing requirements](../guides/requirements.md#user-and-system-requirements) explains. Requirement IDs start with an abbreviation of the project name (`shop` gives `SHOP-SYS-0001`, `firesat-obc` gives `FOBC-SYS-0001`); set `identification.prefix` to use another. Add `--agents` to also install the [agent skills](../guides/agents.md), `--hook` for a pre-commit hook that lints before every commit, and `--example` for an example stakeholder and need. Everything except history (`impact`, `diff`, `log`, `baseline`) works outside a git repository too.
 
 ## 2. Add a requirement
 
@@ -23,7 +23,7 @@ rqtk add --category SYS --type Functional \
   --activity "Boot time test"
 ```
 
-rqtk assigns the next free ID (here `REQ-SYS-0001`) and writes `.rqtk/requirements/SYS/REQ-SYS-0001.toml`, with a verification activity `VA-SYS-0001-01`:
+rqtk assigns the next free ID (here `REQ-SYS-0001`, in a project whose prefix is `REQ`) and writes `.rqtk/requirements/SYS/REQ-SYS-0001.toml`, with a verification activity `VA-SYS-0001-01`:
 
 ```toml
 [verification]
@@ -37,7 +37,7 @@ id = "VA-SYS-0001-01"
 name = "Boot time test"
 ```
 
-`--parent` and `--satisfies` link it to the requirement it derives from and the need it serves; `rqtk add-activity` adds more activities later. Then check it:
+`--parent` links it to the user requirement it serves (lint warns until it has one, RQ046), and `--satisfies` links a user requirement to the need it serves; `rqtk add-activity` adds more activities later. Then check it:
 
 ```bash
 rqtk lint

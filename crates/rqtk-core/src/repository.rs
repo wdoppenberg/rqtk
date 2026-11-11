@@ -3,9 +3,9 @@ use crate::error::RqtkError;
 use crate::git::GitContext;
 use crate::io::edit_toml_file;
 use crate::model::{
-    Config, EntityRef, Need, NeedId, Requirement, RequirementId, SCHEMA_VERSION, ScaffoldInput,
-    Stakeholder, StakeholderAuthority, StakeholderConcerns, StakeholderId, Traceability,
-    Verification,
+    Config, EntityRef, Layer, Need, NeedId, Requirement, RequirementId, SCHEMA_VERSION,
+    ScaffoldInput, Stakeholder, StakeholderAuthority, StakeholderConcerns, StakeholderId,
+    Traceability, Verification,
 };
 use crate::validation::{has_path_to_root, is_single_shall_sentence_violation};
 
@@ -549,6 +549,37 @@ impl RequirementSet<Loaded> {
                         format!("satisfies references unknown need `{need_id}`"),
                     ));
                 }
+            }
+            match cfg.layer_of(&req.category) {
+                Some(Layer::User) if req.trace.satisfies.is_empty() => issues.push(finding(
+                    "RQ044",
+                    "trace.satisfies",
+                    "user requirement satisfies no need".to_owned(),
+                )),
+                Some(Layer::System) if cfg.has_user_layer() => {
+                    if !req.trace.satisfies.is_empty() {
+                        issues.push(finding(
+                            "RQ045",
+                            "trace.satisfies",
+                            "system requirement satisfies a need directly; needs are satisfied by user requirements".to_owned(),
+                        ));
+                    }
+                    let from_user = req.trace.parents.iter().any(|p| {
+                        self.requirements.get(p).is_some_and(|parent| {
+                            cfg.layer_of(&parent.category) == Some(Layer::User)
+                        })
+                    });
+                    let rq012 = req.trace.parents.is_empty()
+                        && parent_required.contains(req.category.as_str());
+                    if !from_user && !rq012 {
+                        issues.push(finding(
+                            "RQ046",
+                            "trace.parents",
+                            "system requirement has no user requirement as a parent".to_owned(),
+                        ));
+                    }
+                }
+                _ => {}
             }
             if let Some(stk_id) = req.validation.as_ref().and_then(|v| v.stakeholder.as_ref())
                 && !self.stakeholders.contains_key(stk_id)

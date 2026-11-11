@@ -10,6 +10,20 @@ rqtk tracks three kinds of item, each a TOML file named after its ID:
 
 Requirements *satisfy* needs, *decompose* into child requirements through `trace.parents`, and are proven by *verification activities*. Every link is by ID, and `rqtk lint` checks that every link resolves.
 
+## User and system requirements
+
+Requirements come in layers, each a category in `.rqtk/config.toml`:
+
+| Layer | Category (by default) | Says | Links |
+|---|---|---|---|
+| **User** | `USR` | what a user must be able to do with the system, seen from outside it: "The operator shall be able to …" | `satisfies` the needs it serves |
+| **System** | `SYS` | what the system must do or be for the user requirements to be met | `parents` = the user requirements it serves |
+| below | your subsystems | what each part of the design must do | `parents` = the requirement it decomposes |
+
+Both user and system requirements say *what*, never *how*: the design comes after them, and the categories below `SYS` follow the design. Lint warns when a user requirement satisfies no need (RQ044), when a system requirement satisfies a need directly (RQ045), and when it has no user requirement as a parent (RQ046).
+
+A category joins a layer with `layer = "user"` or `layer = "system"`. A configuration without layers, as `rqtk init` wrote before 1.3, keeps working unchanged: needs are then satisfied by the root category's requirements. To adopt layers, add a `USR` category at level 1 with `is_root = true` and `layer = "user"`, move `SYS` to level 2 with `layer = "system"`, and give each system requirement the user requirement it serves as a parent.
+
 ## Creating items
 
 ```bash
@@ -17,10 +31,14 @@ rqtk add-stakeholder --name "Operator" --role "Runs the ground station"
 rqtk add-need --title "Fast recovery" \
   --statement "Operators need the unit back within seconds after a restart." \
   --stakeholders STK-0001
+rqtk add --category USR --type Performance --title "Back in service quickly" \
+  --statement "The operator shall be able to use the unit again within 10 seconds of restarting it." \
+  --rationale "Operators restart the unit during a pass." \
+  --satisfies NEED-0001 --method Demonstration
 rqtk add --category SYS --type Functional --title "Fast boot" \
   --statement "The system shall boot in under 5 seconds." \
-  --rationale "Operators restart the unit during a pass." \
-  --satisfies NEED-0001 \
+  --rationale "Leaves half of the operator's 10 seconds for reconnecting." \
+  --parent REQ-USR-0001 \
   --criteria "Boot completes in under 5 s on reference hardware." \
   --activity "Boot time test"
 ```

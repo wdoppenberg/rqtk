@@ -19,6 +19,8 @@ pub struct Report {
     /// The project name written to the config, taken from the project manifest or the
     /// directory name.
     project: String,
+    /// The requirement ID prefix written to the config, derived from the project name.
+    prefix: String,
     warnings: Vec<String>,
     /// The pre-commit hook, when `--hook` installed it.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -59,8 +61,9 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, CliError> {
     }
 
     let project = project_name(root);
+    let prefix = default_prefix(&project);
     let mut files: Vec<(PathBuf, String)> =
-        vec![(config_path, default_config_toml(req_dir, &project))];
+        vec![(config_path, default_config_toml(req_dir, &project, &prefix))];
     if args.example {
         files.push((
             root.join(".rqtk/stakeholders/STK-0001.toml"),
@@ -79,7 +82,10 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, CliError> {
                 .to_owned(),
         );
     }
-    let dirs = [root.join(req_dir).join("SYS")];
+    let dirs = [
+        root.join(req_dir).join("USR"),
+        root.join(req_dir).join("SYS"),
+    ];
 
     if !dry_run {
         for dir in &dirs {
@@ -114,9 +120,36 @@ pub fn execute(ctx: &Ctx, args: &InitArgs<'_>) -> Result<Report, CliError> {
         created,
         dry_run,
         project,
+        prefix,
         warnings,
         hook,
     })
+}
+
+/// The default ID prefix for a project: an abbreviation of its name, after any npm scope.
+/// One word is kept whole (`shop` gives `SHOP`). Of several words, those of up to three
+/// characters are kept whole, as they are usually acronyms already, and longer ones give
+/// their first letter: `firesat-obc` gives `FOBC`, `payment-service` gives `PS`. `REQ` when
+/// the result doesn't start with a letter. It is only a default; projects pick their own.
+fn default_prefix(project: &str) -> String {
+    let name = project.rsplit('/').next().unwrap_or(project);
+    let words: Vec<&str> = name
+        .split(|c: char| !c.is_ascii_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+    let prefix: String = match words.as_slice() {
+        [word] => word.to_string(),
+        words => words
+            .iter()
+            .map(|w| if w.len() <= 3 { w } else { &w[..1] })
+            .collect(),
+    }
+    .to_ascii_uppercase();
+    if prefix.starts_with(|c: char| c.is_ascii_alphabetic()) {
+        prefix
+    } else {
+        "REQ".to_owned()
+    }
 }
 
 /// The project's name from its manifest (Cargo.toml, pyproject.toml, package.json, go.mod),
@@ -167,7 +200,10 @@ pub fn print(report: &Report) {
         .iter()
         .map(|p| p.display().to_string())
         .collect();
-    let mut pairs: Vec<(&str, &str)> = vec![("project", report.project.as_str())];
+    let mut pairs: Vec<(&str, &str)> = vec![
+        ("project", report.project.as_str()),
+        ("prefix", report.prefix.as_str()),
+    ];
     pairs.extend(shown.iter().map(|p| ("create", p.as_str())));
     let hook = report.hook.as_ref().map(|h| h.display().to_string());
     if let Some(hook) = &hook {
@@ -200,7 +236,7 @@ statement = "The system shall fulfil this example stakeholder need."
 rationale = "Example rationale."
 "#;
 
-fn default_config_toml(requirements_dir: &str, project: &str) -> String {
+fn default_config_toml(requirements_dir: &str, project: &str, prefix: &str) -> String {
     let project = project.replace('\\', "\\\\").replace('"', "\\\"");
     format!(
         r#"schema_version = 1
@@ -218,13 +254,19 @@ version = "0.1.0"
 
 [identification]
 id_separator = "-"
-prefix = "REQ"
+prefix = "{prefix}"
 zero_padding = 4
+
+[categories.USR]
+name = "User"
+level = 1
+is_root = true
+layer = "user"
 
 [categories.SYS]
 name = "System"
-level = 1
-is_root = true
+level = 2
+layer = "system"
 
 [types]
 allowed = ["Functional", "Performance", "Interface", "Constraint", "Design"]

@@ -14,7 +14,7 @@ satisfies = ["NEED-0002"]
 method = "Test"
 level = "System"
 phase = "Release"
-success_criteria = "Recorded passes verify, recorded failures fail, and a changed requirement becomes Suspect until its tests pass again."
+success_criteria = "Recorded passes verify, recorded failures fail, and a changed requirement becomes Suspect."
 
 [[verification.activities]]
 id = "VA-SYS-002-01"

@@ -14,6 +14,17 @@
           "description": "Marks this category as a traceability root. At least one category should set this\nto `true` for orphan detection to work.",
           "type": "boolean"
         },
+        "layer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Layer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The layer this category's requirements belong to: `user` requirements satisfy needs,\nand `system` requirements derive from user requirements (RQ044–RQ046). Categories\nthat decompose the system leave it unset."
+        },
         "level": {
           "format": "uint8",
           "maximum": 255,
@@ -61,6 +72,7 @@
         },
         "prefix": {
           "default": "REQ",
+          "description": "The first part of every requirement ID, as in `<prefix>-SYS-0001`. `rqtk init` defaults\nit to an abbreviation of the project name.",
           "type": "string"
         },
         "zero_padding": {
@@ -90,6 +102,21 @@
         "ref"
       ],
       "type": "object"
+    },
+    "Layer": {
+      "description": "What a category's requirements describe.",
+      "oneOf": [
+        {
+          "const": "user",
+          "description": "What users must be able to do with the system, from outside it. Satisfies needs.",
+          "type": "string"
+        },
+        {
+          "const": "system",
+          "description": "What the system must do or be for the user requirements to be met.",
+          "type": "string"
+        }
+      ]
     },
     "LifecyclePolicy": {
       "additionalProperties": false,

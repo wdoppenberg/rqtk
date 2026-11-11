@@ -1,0 +1,5 @@
+interface:
+  display_name: "rqtk: Status"
+  short_description: "Where each scope stands, and the next skill to run"
+policy:
+  allow_implicit_invocation: false

@@ -18,6 +18,10 @@
         "null"
       ]
     },
+    "prefix": {
+      "description": "The requirement ID prefix written to the config, derived from the project name.",
+      "type": "string"
+    },
     "project": {
       "description": "The project name written to the config, taken from the project manifest or the\ndirectory name.",
       "type": "string"
@@ -38,6 +42,7 @@
     "created",
     "dry_run",
     "project",
+    "prefix",
     "warnings"
   ],
   "title": "Report",

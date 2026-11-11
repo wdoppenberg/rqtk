@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0031"
+title = "Initialization interview skill"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk shall ship a skill, run only by the user, that sets up `.rqtk/` for a new or existing project by interviewing the engineer about the project's stakeholders, boundary, needs, user requirements and system requirements, and optionally their verification, without asking about the system's design, and records only the answers the engineer confirms."
+rationale = "The requirements of a project are mostly in its engineers' heads; reading the code shows what a system does, not what it must do. An interview that proposes and challenges, with the engineer deciding, draws them out where synthesising from a spec cannot."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Inspection"
+level = "System"
+phase = "Development"
+success_criteria = "The skill is user-invoked, interviews in rounds with a recommended answer per question, covers setup, stakeholders, needs and system requirements with decomposition and verification on request, writes each stage with rqtk only after the engineer confirms it, records open questions as tbd or tbr, and names every rqtk command and flag correctly."
+
+[[verification.activities]]
+id = "VA-CLI-0031-01"
+name = "Init skill inspected"

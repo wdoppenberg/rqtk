@@ -1491,6 +1491,48 @@ fn init_names_the_project_and_leaves_examples_opt_in() {
     assert!(repo_root.join(".rqtk/needs/NEED-0001.toml").exists());
 }
 
+#[verifies("VA-CLI-0033-01")]
+#[test]
+fn init_derives_the_id_prefix_from_the_project_name() {
+    for (manifest, file, prefix) in [
+        ("package.json", r#"{ "name": "shop" }"#, "SHOP"),
+        ("Cargo.toml", "[package]\nname = \"firesat-obc\"\n", "FOBC"),
+        ("package.json", r#"{ "name": "payment-service" }"#, "PS"),
+        ("package.json", r#"{ "name": "@acme/shop" }"#, "SHOP"),
+        ("package.json", r#"{ "name": "3d-viewer" }"#, "REQ"),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let repo_root = dir.path();
+        fs::write(repo_root.join(manifest), file).unwrap();
+        let (code, report) = json_stdout(repo_root, &["init"]);
+        assert_eq!(code, 0);
+        assert_eq!(report["prefix"], prefix, "{file}");
+        let config = fs::read_to_string(repo_root.join(".rqtk/config.toml")).unwrap();
+        assert!(
+            config.contains(&format!("prefix = \"{prefix}\"")),
+            "{config}"
+        );
+        let (_, added) = json_stdout(
+            repo_root,
+            &[
+                "add",
+                "--category",
+                "SYS",
+                "--type",
+                "Functional",
+                "--title",
+                "Boots",
+                "--statement",
+                "The system shall boot.",
+                "--rationale",
+                "It must start.",
+            ],
+        );
+        assert_eq!(added["id"], format!("{prefix}-SYS-0001"), "{added}");
+        rqtk(repo_root).arg("lint").assert().success();
+    }
+}
+
 #[verifies("VA-CLI-004-01")]
 #[test]
 fn init_hook_installs_the_pre_commit_hook() {
@@ -3028,10 +3070,17 @@ fn skills_list_names_model_and_user_invoked_skills() {
         .filter(|s| s["user_invoked"] == true)
         .map(|s| s["name"].as_str().unwrap())
         .collect();
-    assert_eq!(skills.len(), 6);
+    assert_eq!(skills.len(), 9);
     assert_eq!(
         user,
-        ["to-requirements", "requirements-review", "design-review"]
+        [
+            "rqtk-to-requirements",
+            "rqtk-diff-review",
+            "rqtk-design-review",
+            "rqtk-init",
+            "rqtk-decompose",
+            "rqtk"
+        ]
     );
 }
 
@@ -3078,7 +3127,7 @@ fn skills_install_defaults_to_shared_dir_with_claude_links() {
     for file in ["SKILL.md", "gates.md", "process-template.md"] {
         assert!(
             repo_root
-                .join(".claude/skills/design-review")
+                .join(".claude/skills/rqtk-design-review")
                 .join(file)
                 .is_file(),
             "{file}"
@@ -3099,12 +3148,12 @@ fn skills_install_for_one_agent_family_or_as_copies() {
     json_stdout(&claude_only, &["skills", "install", "--for", "claude"]);
     assert!(
         claude_only
-            .join(".claude/skills/to-requirements/SKILL.md")
+            .join(".claude/skills/rqtk-to-requirements/SKILL.md")
             .is_file()
     );
     assert!(
         !claude_only
-            .join(".claude/skills/to-requirements")
+            .join(".claude/skills/rqtk-to-requirements")
             .is_symlink()
     );
     assert!(!claude_only.join(".agents").exists());
@@ -3116,22 +3165,26 @@ fn skills_install_for_one_agent_family_or_as_copies() {
     );
     assert!(
         universal_only
-            .join(".agents/skills/to-requirements/SKILL.md")
+            .join(".agents/skills/rqtk-to-requirements/SKILL.md")
             .is_file()
     );
     assert!(!universal_only.join(".claude").exists());
 
     let (_dir, copies) = write_fixture(BASE_CONFIG, &[]);
     json_stdout(&copies, &["skills", "install", "--copy"]);
-    assert!(!copies.join(".claude/skills/to-requirements").is_symlink());
+    assert!(
+        !copies
+            .join(".claude/skills/rqtk-to-requirements")
+            .is_symlink()
+    );
     assert!(
         copies
-            .join(".claude/skills/to-requirements/SKILL.md")
+            .join(".claude/skills/rqtk-to-requirements/SKILL.md")
             .is_file()
     );
     assert!(
         copies
-            .join(".agents/skills/to-requirements/SKILL.md")
+            .join(".agents/skills/rqtk-to-requirements/SKILL.md")
             .is_file()
     );
 }
@@ -3239,7 +3292,7 @@ fn skills_install_into_a_custom_dir() {
     assert_eq!(report["dirs"], serde_json::json!(["tools/skills"]));
     assert!(
         repo_root
-            .join("tools/skills/requirements-review/SKILL.md")
+            .join("tools/skills/rqtk-diff-review/SKILL.md")
             .is_file()
     );
     assert!(!repo_root.join(".agents").exists() && !repo_root.join(".claude").exists());
@@ -3444,7 +3497,11 @@ fn skills_install_upgrades_untouched_files_but_keeps_edits() {
     fs::write(dir.join("rqtk-requirements/SKILL.md"), old).unwrap();
     manifest["rqtk-requirements/SKILL.md"] = format!("{:x}", Sha256::digest(old)).into();
     fs::write(&manifest_path, manifest.to_string()).unwrap();
-    fs::write(dir.join("to-requirements/SKILL.md"), "my own version\n").unwrap();
+    fs::write(
+        dir.join("rqtk-to-requirements/SKILL.md"),
+        "my own version\n",
+    )
+    .unwrap();
 
     let (_, report) = json_stdout(&repo_root, &["skills", "install", "--for", "universal"]);
     let acts = actions(&report);
@@ -3457,7 +3514,7 @@ fn skills_install_upgrades_untouched_files_but_keeps_edits() {
     );
     assert!(
         acts.contains(&(
-            ".agents/skills/to-requirements/SKILL.md".into(),
+            ".agents/skills/rqtk-to-requirements/SKILL.md".into(),
             "skipped_modified".into()
         )),
         "{report}"
@@ -3467,9 +3524,77 @@ fn skills_install_upgrades_untouched_files_but_keeps_edits() {
         old
     );
     assert_eq!(
-        fs::read_to_string(dir.join("to-requirements/SKILL.md")).unwrap(),
+        fs::read_to_string(dir.join("rqtk-to-requirements/SKILL.md")).unwrap(),
         "my own version\n"
     );
+}
+
+#[verifies("VA-CLI-0032-01")]
+#[cfg(unix)]
+#[test]
+fn skills_install_retires_renamed_skills_but_keeps_edits() {
+    use sha2::{Digest, Sha256};
+    let (_dir, repo_root) = write_fixture(BASE_CONFIG, &[]);
+    json_stdout(&repo_root, &["skills", "install"]);
+    let agents = repo_root.join(".agents/skills");
+    let claude = repo_root.join(".claude/skills");
+    let manifest_path = agents.join(".rqtk-skills.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&manifest_path).unwrap()).unwrap();
+
+    // What rqtk 1.2 left behind: skills under their old names, recorded in the manifest and
+    // linked from .claude/skills; one of them edited since.
+    let old_files = [
+        ("to-requirements/SKILL.md", "old to-requirements\n"),
+        ("to-requirements/agents/openai.yaml", "old yaml\n"),
+        ("requirements-review/SKILL.md", "old requirements-review\n"),
+    ];
+    for (path, content) in old_files {
+        let file = agents.join(path);
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, content).unwrap();
+        manifest[path] = format!("{:x}", Sha256::digest(content)).into();
+    }
+    fs::write(&manifest_path, manifest.to_string()).unwrap();
+    fs::write(agents.join("requirements-review/SKILL.md"), "my notes\n").unwrap();
+    for name in ["to-requirements", "requirements-review"] {
+        std::os::unix::fs::symlink(format!("../../.agents/skills/{name}"), claude.join(name))
+            .unwrap();
+    }
+
+    let (_, report) = json_stdout(&repo_root, &["skills", "install"]);
+    let acts = actions(&report);
+    for removed in [
+        ".agents/skills/to-requirements/SKILL.md",
+        ".agents/skills/to-requirements/agents/openai.yaml",
+        ".claude/skills/to-requirements",
+        ".claude/skills/requirements-review",
+    ] {
+        assert!(
+            acts.contains(&(removed.into(), "removed".into())),
+            "{removed}: {report}"
+        );
+    }
+    assert!(
+        acts.contains(&(
+            ".agents/skills/requirements-review/SKILL.md".into(),
+            "skipped_modified".into()
+        )),
+        "{report}"
+    );
+    assert!(!agents.join("to-requirements").exists());
+    assert!(fs::symlink_metadata(claude.join("to-requirements")).is_err());
+    assert_eq!(
+        fs::read_to_string(agents.join("requirements-review/SKILL.md")).unwrap(),
+        "my notes\n"
+    );
+    let manifest = fs::read_to_string(&manifest_path).unwrap();
+    assert!(!manifest.contains("\"to-requirements/"), "{manifest}");
+    assert!(agents.join("rqtk-to-requirements/SKILL.md").is_file());
+
+    // --force removes the edited file too, and the emptied directory with it.
+    json_stdout(&repo_root, &["skills", "install", "--force"]);
+    assert!(!agents.join("requirements-review").exists());
 }
 
 // ── 1.0: JSON output contract ────────────────────────────────────────────────
@@ -3628,5 +3753,149 @@ fn own_requirements_carry_the_released_version() {
         config.lines().any(|line| line == expected),
         "[project] version in .rqtk/config.toml should be {}",
         env!("CARGO_PKG_VERSION")
+    );
+}
+
+// ── user and system layers ───────────────────────────────────────────────────
+
+#[verifies("VA-CORE-0031-01")]
+#[test]
+fn layer_rules_fire_only_with_layers() {
+    let config = BASE_CONFIG_WITH_STAKEHOLDERS
+        .replace("(SYS)", "(SYS|SUB)")
+        .replace(
+            "is_root = true\n",
+            "is_root = true\nlayer = \"user\"\n\n[categories.SUB]\nname = \"Subsystem\"\nlevel = 2\nlayer = \"system\"\n",
+        );
+    assert!(config.contains("layer = \"system\""), "{config}");
+    let need = "id = \"NEED-0001\"\ntitle = \"A need\"\nstate = \"Draft\"\nstatement = \"Users need it.\"\n";
+    let with = |req: String, trace: &str| format!("{req}\n[trace]\n{trace}\n");
+    let reqs = [
+        // A user requirement with a need, and one without (RQ044).
+        (
+            "SYS/TEST-SYS-0001.toml",
+            with(valid_req("TEST-SYS-0001"), "satisfies = [\"NEED-0001\"]"),
+        ),
+        ("SYS/TEST-SYS-0002.toml", valid_req("TEST-SYS-0002")),
+        // A system requirement derived properly, one satisfying a need (RQ045),
+        // and one whose only parent is a system requirement (RQ046).
+        (
+            "SUB/TEST-SUB-0001.toml",
+            with(valid_req("TEST-SUB-0001"), "parents = [\"TEST-SYS-0001\"]"),
+        ),
+        (
+            "SUB/TEST-SUB-0002.toml",
+            with(
+                valid_req("TEST-SUB-0002"),
+                "parents = [\"TEST-SYS-0001\"]\nsatisfies = [\"NEED-0001\"]",
+            ),
+        ),
+        (
+            "SUB/TEST-SUB-0003.toml",
+            with(valid_req("TEST-SUB-0003"), "parents = [\"TEST-SUB-0001\"]"),
+        ),
+    ];
+    let reqs: Vec<(&str, &str)> = reqs.iter().map(|(p, c)| (*p, c.as_str())).collect();
+    let needs = [("NEED-0001.toml", need)];
+
+    let (_dir, repo_root) = write_fixture_full(&config, &reqs, &[], &needs);
+    let (code, report) = json_stdout(&repo_root, &["lint"]);
+    assert_eq!(code, 0, "warnings only: {report}");
+    let mut found: Vec<(String, String)> = report["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| {
+            (
+                d["code"].as_str().unwrap().to_owned(),
+                d["subject"]["id"].as_str().unwrap_or_default().to_owned(),
+            )
+        })
+        .filter(|(code, _)| code.starts_with("RQ04") && code.as_str() >= "RQ044")
+        .collect();
+    found.sort();
+    let expected = [
+        ("RQ044", "TEST-SYS-0002"),
+        ("RQ045", "TEST-SUB-0002"),
+        ("RQ046", "TEST-SUB-0003"),
+    ];
+    let expected: Vec<(String, String)> = expected
+        .iter()
+        .map(|(c, i)| ((*c).to_owned(), (*i).to_owned()))
+        .collect();
+    assert_eq!(found, expected, "{report}");
+
+    // The same files without layers raise none of them.
+    let plain = config
+        .replace("layer = \"user\"\n", "")
+        .replace("layer = \"system\"\n", "");
+    let (_dir, repo_root) = write_fixture_full(&plain, &reqs, &[], &needs);
+    let (_, report) = json_stdout(&repo_root, &["lint"]);
+    let text = report.to_string();
+    for code in ["RQ044", "RQ045", "RQ046"] {
+        assert!(!text.contains(code), "{report}");
+    }
+}
+
+#[verifies("VA-CLI-0034-01")]
+#[test]
+fn init_defines_user_and_system_layers() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo_root = dir.path();
+    fs::write(repo_root.join("package.json"), r#"{ "name": "shop" }"#).unwrap();
+    rqtk(repo_root).arg("init").assert().success();
+    let config = fs::read_to_string(repo_root.join(".rqtk/config.toml")).unwrap();
+    assert!(
+        config.contains(
+            "[categories.USR]\nname = \"User\"\nlevel = 1\nis_root = true\nlayer = \"user\"\n"
+        ),
+        "{config}"
+    );
+    assert!(
+        config.contains("[categories.SYS]\nname = \"System\"\nlevel = 2\nlayer = \"system\"\n"),
+        "{config}"
+    );
+    rqtk(repo_root)
+        .args([
+            "add-need",
+            "--title",
+            "Checkout",
+            "--statement",
+            "Shoppers need to pay for their basket.",
+        ])
+        .assert()
+        .success();
+    let add = |category: &str, extra: &[&str]| {
+        let mut args = vec![
+            "add",
+            "--category",
+            category,
+            "--type",
+            "Functional",
+            "--title",
+            "T",
+            "--statement",
+            "The shopper shall be able to pay.",
+            "--rationale",
+            "R.",
+            "--method",
+            "Test",
+        ];
+        args.extend_from_slice(extra);
+        json_stdout(repo_root, &args).1["id"]
+            .as_str()
+            .unwrap()
+            .to_owned()
+    };
+    let user = add("USR", &["--satisfies", "NEED-0001"]);
+    assert_eq!(user, "SHOP-USR-0001");
+    let system = add("SYS", &["--parent", &user]);
+    assert_eq!(system, "SHOP-SYS-0001");
+    let (code, report) = json_stdout(repo_root, &["lint"]);
+    assert_eq!(code, 0, "{report}");
+    assert_eq!(
+        report["diagnostics"].as_array().unwrap().len(),
+        0,
+        "{report}"
     );
 }

@@ -53,4 +53,4 @@ Reviews recorded with `rqtk review` live in the same file, so they reach the mai
 
 ## Pull request review
 
-`rqtk impact origin/main --json` lists the requirements a pull request changes, the requirements downstream of them, and the activities to re-verify. It is a good input for a review bot, or for the `/requirements-review` [agent skill](agents.md).
+`rqtk impact origin/main --json` lists the requirements a pull request changes, the requirements downstream of them, and the activities to re-verify. It is a good input for a review bot, or for the `/rqtk-diff-review` [agent skill](agents.md).

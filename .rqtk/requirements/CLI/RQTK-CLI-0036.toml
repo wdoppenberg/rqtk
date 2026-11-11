@@ -1,0 +1,21 @@
+id = "RQTK-CLI-0036"
+title = "Status skill"
+category = "CLI"
+type = "Functional"
+state = "Draft"
+priority = "Medium"
+statement = "rqtk shall ship a skill, run only by the user, that places each scope of the requirement set on a step of the systems engineering process from lint, coverage and the review records, and recommends the next skill to run, without writing anything."
+rationale = "Users of nine skills need one place that tells them where they are and what comes next."
+
+[trace]
+parents = ["RQTK-SYS-0003"]
+
+[verification]
+method = "Inspection"
+level = "Unit"
+phase = "Development"
+success_criteria = "Inspection of the installed rqtk skill: it writes nothing, places every scope on a step of the rqtk-process table from rqtk's facts, and ends on one recommended next command."
+
+[[verification.activities]]
+id = "VA-CLI-0036-01"
+name = "Status skill inspected"

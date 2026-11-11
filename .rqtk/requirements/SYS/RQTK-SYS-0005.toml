@@ -4,7 +4,7 @@ category = "SYS"
 type = "Functional"
 state = "Approved"
 priority = "Critical"
-statement = "rqtk shall keep a requirement Suspect after it or anything it derives from changes, until tests changed for it pass or a review is recorded."
+statement = "rqtk shall keep a requirement Suspect after it or anything it derives from changes, until its tests have passed against its current content and either those tests changed for it or a review is recorded."
 rationale = "Rerunning unchanged tests, or tests of a child whose parent changed, proves nothing about the new wording; without this, contradictions go green."
 
 [trace]
@@ -14,7 +14,7 @@ satisfies = ["NEED-0002"]
 method = "Test"
 level = "System"
 phase = "Release"
-success_criteria = "Unchanged tests after a change, and a changed parent or need, leave the requirement Suspect through reruns and commits until its tests change or `rqtk review` records a review."
+success_criteria = "Unchanged tests after a change, and a changed parent or need, leave the requirement Suspect through reruns and commits until its tests change or `rqtk review` records a review; a review recorded before the tests of a reworded requirement run again leaves it Suspect."
 
 [[verification.activities]]
 id = "VA-SYS-005-01"

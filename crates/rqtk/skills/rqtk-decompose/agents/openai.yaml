@@ -1,0 +1,5 @@
+interface:
+  display_name: "rqtk: Decompose"
+  short_description: "Derive the requirements of each part of the design"
+policy:
+  allow_implicit_invocation: false

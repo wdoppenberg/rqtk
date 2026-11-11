@@ -26,16 +26,31 @@ const FILES: &[Embedded] = embed![
     "rqtk-requirements/agents/openai.yaml",
     "rqtk-verification/SKILL.md",
     "rqtk-verification/agents/openai.yaml",
-    "to-requirements/SKILL.md",
-    "to-requirements/agents/openai.yaml",
-    "requirements-review/SKILL.md",
-    "requirements-review/agents/openai.yaml",
+    "rqtk-to-requirements/SKILL.md",
+    "rqtk-to-requirements/agents/openai.yaml",
+    "rqtk-diff-review/SKILL.md",
+    "rqtk-diff-review/agents/openai.yaml",
     "rqtk-process/SKILL.md",
     "rqtk-process/agents/openai.yaml",
-    "design-review/SKILL.md",
-    "design-review/gates.md",
-    "design-review/process-template.md",
-    "design-review/agents/openai.yaml",
+    "rqtk-design-review/SKILL.md",
+    "rqtk-design-review/gates.md",
+    "rqtk-design-review/process-template.md",
+    "rqtk-design-review/agents/openai.yaml",
+    "rqtk-init/SKILL.md",
+    "rqtk-init/agents/openai.yaml",
+    "rqtk-decompose/SKILL.md",
+    "rqtk-decompose/agents/openai.yaml",
+    "rqtk/SKILL.md",
+    "rqtk/agents/openai.yaml",
+];
+
+/// Skills an earlier rqtk installed under a name it no longer ships. Installing removes
+/// them, unless they were edited locally, so a renamed skill doesn't show up twice.
+const RETIRED: &[&str] = &[
+    "to-requirements",
+    "requirements-review",
+    "design-review",
+    "rqtk-requirements-review",
 ];
 
 /// Records, per installed file, the hash of the content rqtk wrote. A file whose content still
@@ -62,8 +77,9 @@ const BLOCK_BODY: &str = "\
 Requirements, stakeholder needs and verification evidence live in `.rqtk/`, managed with the \
 `rqtk` CLI. Before changing behaviour, read the governing requirement with `rqtk context <ID>`. \
 Work is done when `rqtk lint` and `rqtk coverage --strict` both exit 0. Skills: \
-`rqtk-requirements`, `rqtk-verification`, `rqtk-process`, `/to-requirements`, \
-`/requirements-review`, `/design-review`.";
+`rqtk-requirements`, `rqtk-verification`, `rqtk-process`; run by you: `/rqtk` (where things \
+stand), `/rqtk-init`, `/rqtk-to-requirements`, `/rqtk-decompose`, `/rqtk-design-review`, \
+`/rqtk-diff-review`.";
 
 /// A skill's name, description and who can invoke it, read from its frontmatter.
 /// `rqtk skills list --json`.
@@ -148,6 +164,8 @@ enum Action {
     Linked,
     /// The file differs from the shipped version and `--force` was not given.
     SkippedModified,
+    /// A retired skill's file or link, removed because rqtk wrote it and it is unedited.
+    Removed,
 }
 
 #[derive(Serialize, schemars::JsonSchema)]
@@ -285,6 +303,7 @@ fn copy_skills(
         .filter_map(|f| f.path.strip_suffix("/SKILL.md"))
         .collect();
     let mut manifest = read_manifest(&root.join(dir));
+    retire_skills(root, dir, args, &mut manifest, out)?;
     for name in skill_names {
         let skill_dir = root.join(dir).join(name);
         if let Some(shared) = link_to
@@ -361,6 +380,91 @@ fn copy_skills(
     Ok(())
 }
 
+/// Remove the [`RETIRED`] skills from `dir`: links outright, and files only when they still
+/// hold what an earlier rqtk wrote (or with `--force`). An edited file is kept and reported.
+fn retire_skills(
+    root: &Path,
+    dir: &Path,
+    args: &InstallArgs,
+    manifest: &mut BTreeMap<String, String>,
+    out: &mut Vec<Written>,
+) -> Result<(), CliError> {
+    for name in RETIRED {
+        let skill_dir = root.join(dir).join(name);
+        let Ok(meta) = std::fs::symlink_metadata(&skill_dir) else {
+            continue;
+        };
+        if meta.file_type().is_symlink() {
+            let link_target = std::fs::read_link(&skill_dir).ok();
+            if !args.dry_run {
+                std::fs::remove_file(&skill_dir).at(&skill_dir)?;
+            }
+            out.push(Written {
+                path: output::relative(&skill_dir, root),
+                action: Action::Removed,
+                link_target,
+                block_added: false,
+            });
+            continue;
+        }
+        let mut files = Vec::new();
+        files_under(&skill_dir, &mut files).at(&skill_dir)?;
+        files.sort();
+        for path in files {
+            let rel = path
+                .strip_prefix(root.join(dir))
+                .expect("under the skills dir")
+                .to_string_lossy()
+                .replace('\\', "/");
+            let pristine = std::fs::read_to_string(&path)
+                .is_ok_and(|text| manifest.get(&rel) == Some(&sha256(&text)));
+            let action = if pristine || args.force {
+                if !args.dry_run {
+                    std::fs::remove_file(&path).at(&path)?;
+                }
+                manifest.remove(&rel);
+                Action::Removed
+            } else {
+                Action::SkippedModified
+            };
+            out.push(Written {
+                path: output::relative(&path, root),
+                action,
+                link_target: None,
+                block_added: false,
+            });
+        }
+        if !args.dry_run {
+            remove_empty_dirs(&skill_dir);
+        }
+    }
+    Ok(())
+}
+
+fn files_under(dir: &Path, out: &mut Vec<PathBuf>) -> std::io::Result<()> {
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        if entry.file_type()?.is_dir() {
+            files_under(&entry.path(), out)?;
+        } else {
+            out.push(entry.path());
+        }
+    }
+    Ok(())
+}
+
+/// Remove `dir` and its subdirectories bottom-up where they are empty; keep any that aren't.
+fn remove_empty_dirs(dir: &Path) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if entry.file_type().is_ok_and(|t| t.is_dir()) {
+                remove_empty_dirs(&entry.path());
+            }
+        }
+    }
+    let _ = std::fs::remove_dir(dir);
+}
+
 #[cfg(unix)]
 fn symlink_dir(target: &Path, link: &Path) -> std::io::Result<()> {
     std::os::unix::fs::symlink(target, link)
@@ -380,6 +484,7 @@ pub fn print(report: &Report) {
             Action::Linked => style(format!("link {verb}")).green(),
             Action::Unchanged => style("unchanged".to_owned()).dim(),
             Action::SkippedModified => style("kept (edited locally)".to_owned()).red(),
+            Action::Removed => style(format!("remove {verb}")).yellow(),
         };
         match &f.link_target {
             Some(target) => println!(

@@ -4,7 +4,7 @@ category = "CLI"
 type = "Functional"
 state = "Draft"
 priority = "High"
-statement = "rqtk shall ship a skill that agents invoke themselves which describes the systems engineering process from stakeholder needs through decomposition, interfaces and allocation to verification, the review gate that closes each step, and a warning to the user before an agent implements a requirement that has not passed its gate."
+statement = "rqtk shall ship a skill that agents invoke themselves which describes the systems engineering process from stakeholder needs through user and system requirements, architecture, decomposition, interfaces and allocation to verification, the skill and the review gate for each step, the decisions that stay with people, and a warning to the user before an agent implements a requirement that has not passed its gate."
 rationale = "Agents follow the process only if it is in their context; a requirement implemented before its review should be the user's choice, never a silent one."
 
 [trace]
